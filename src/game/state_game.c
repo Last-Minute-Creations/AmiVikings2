@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "state_game.h"
 #include <ace/managers/viewport/tilebuffer.h>
 #include <ace/managers/viewport/simplebuffer.h>
@@ -7,21 +11,13 @@
 #include <ace/managers/blit.h>
 #include <ace/utils/palette.h>
 #include "bob_new.h"
+#include "entity_erik.h"
+#include "assets.h"
+#include "tile.h"
 
 #define HUD_BPP 5
 #define MAIN_BPP 6
-#define BOB_COUNT 6
-
-typedef enum tTile {
-	TILE_EMPTY,
-	TILE_FLOOR_FLAT,
-	TILE_FLOOR_RAMP16_LEFT,
-	TILE_FLOOR_RAMP16_RIGHT,
-	TILE_FLOOR_RAMP8_LEFT_START,
-	TILE_FLOOR_RAMP8_LEFT_END,
-	TILE_FLOOR_RAMP8_RIGHT_START,
-	TILE_FLOOR_RAMP8_TIGHT_END,
-} tTile;
+#define BOB_COUNT 5
 
 static tView *s_pView;
 static tVPort *s_pVpMain, *s_pVpHud;
@@ -29,22 +25,49 @@ static tTileBufferManager *s_pBufferMain;
 static tSimpleBufferManager *s_pBufferHud;
 
 static tBitMap *s_pTileset;
-static tBitMap *s_pHudBaelog;
-static tBitMap *s_pBobBmErik, *s_pBobBmErikMask;
-
 static tBobNew s_pBobs[BOB_COUNT];
 
 void loadMap(void) {
-	// s_pBufferMain
+	tileReset();
+
+	// Test 1 - stop at blocks on sides
+	tileSetType(3, 5, TILE_FLOOR_FLAT);
+	s_pBufferMain->pTileData[3][5] = TILE_FLOOR_FLAT;
+
+	tileSetType(3, 7, TILE_FLOOR_FLAT);
 	s_pBufferMain->pTileData[3][7] = TILE_FLOOR_FLAT;
+
+	tileSetType(4, 7, TILE_FLOOR_FLAT);
 	s_pBufferMain->pTileData[4][7] = TILE_FLOOR_FLAT;
+
+	tileSetType(5, 7, TILE_FLOOR_FLAT);
 	s_pBufferMain->pTileData[5][7] = TILE_FLOOR_FLAT;
+
+	tileSetType(6, 7, TILE_FLOOR_FLAT);
 	s_pBufferMain->pTileData[6][7] = TILE_FLOOR_FLAT;
-	s_pBufferMain->pTileData[7][7] = TILE_FLOOR_RAMP16_RIGHT;
-	s_pBufferMain->pTileData[8][8] = TILE_FLOOR_FLAT;
-	s_pBufferMain->pTileData[9][8] = TILE_FLOOR_FLAT;
-	s_pBufferMain->pTileData[10][7] = TILE_FLOOR_RAMP16_LEFT;
-	s_pBufferMain->pTileData[11][7] = TILE_FLOOR_FLAT;
+
+	tileSetType(7, 7, TILE_FLOOR_FLAT);
+	s_pBufferMain->pTileData[7][7] = TILE_FLOOR_FLAT;
+
+	tileSetType(8, 7, TILE_FLOOR_FLAT);
+	s_pBufferMain->pTileData[8][7] = TILE_FLOOR_FLAT;
+
+	tileSetType(8, 6, TILE_FLOOR_FLAT);
+	s_pBufferMain->pTileData[8][6] = TILE_FLOOR_FLAT;
+
+	tileSetType(10, 6, TILE_FLOOR_FLAT);
+	s_pBufferMain->pTileData[10][6] = TILE_FLOOR_FLAT;
+
+	// Text X
+	// s_pBufferMain->pTileData[3][7] = TILE_FLOOR_FLAT;
+	// s_pBufferMain->pTileData[4][7] = TILE_FLOOR_FLAT;
+	// s_pBufferMain->pTileData[5][7] = TILE_FLOOR_FLAT;
+	// s_pBufferMain->pTileData[6][7] = TILE_FLOOR_FLAT;
+	// s_pBufferMain->pTileData[7][7] = TILE_FLOOR_RAMP16_RIGHT;
+	// s_pBufferMain->pTileData[8][8] = TILE_FLOOR_FLAT;
+	// s_pBufferMain->pTileData[9][8] = TILE_FLOOR_FLAT;
+	// s_pBufferMain->pTileData[10][7] = TILE_FLOOR_RAMP16_LEFT;
+	// s_pBufferMain->pTileData[11][7] = TILE_FLOOR_FLAT;
 }
 
 void stateGameCreate(void) {
@@ -91,29 +114,30 @@ void stateGameCreate(void) {
 		TAG_TILEBUFFER_VPORT, s_pVpMain,
 	TAG_END);
 
-	s_pHudBaelog = bitmapCreateFromFile("data/hud/baelog.bm", 0);
-	s_pBobBmErik = bitmapCreateFromFile("data/erik.bm", 0);
-	s_pBobBmErikMask = bitmapCreateFromFile("data/erik_mask.bm", 0);
+	assetsGlobalCreate();
 
 	bobNewManagerCreate(
 		s_pBufferMain->pScroll->pFront, s_pBufferMain->pScroll->pBack,
 		s_pBufferMain->pScroll->uwBmAvailHeight
 	);
 
+	// Init entities
+	entityManagerReset();
 	for(UBYTE i = 0; i < BOB_COUNT; ++i) {
-		bobNewInit(&s_pBobs[i], 32, 32, 1, s_pBobBmErik, s_pBobBmErikMask, 32 + 48 * i, 32);
+		bobNewInit(&s_pBobs[i], 32, 32, 1, g_pBobBmErik, g_pBobBmErikMask, 32 + 48 * (i + 1), 32);
 	}
+	entityAdd(&entityErikCreate()->sBase);
 
 	bobNewReallocateBgBuffers();
 
 	systemUnuse();
 
 	// Erik
-	blitCopy(s_pHudBaelog, 0, 0, s_pBufferHud->pBack, 16, 16, 32, 24, MINTERM_COOKIE);
+	blitCopy(g_pHudBaelog, 0, 0, s_pBufferHud->pBack, 16, 16, 32, 24, MINTERM_COOKIE);
 	// Baelog
-	blitCopy(s_pHudBaelog, 0, 0, s_pBufferHud->pBack, 88, 16, 32, 24, MINTERM_COOKIE);
+	blitCopy(g_pHudBaelog, 0, 0, s_pBufferHud->pBack, 88, 16, 32, 24, MINTERM_COOKIE);
 	// Olaf
-	blitCopy(s_pHudBaelog, 0, 0, s_pBufferHud->pBack, 168, 16, 32, 24, MINTERM_COOKIE);
+	blitCopy(g_pHudBaelog, 0, 0, s_pBufferHud->pBack, 168, 16, 32, 24, MINTERM_COOKIE);
 
 	loadMap();
 
@@ -132,6 +156,7 @@ void stateGameLoop(void) {
 	for(UBYTE i = 0; i < BOB_COUNT; ++i) {
 		bobNewPush(&s_pBobs[i]);
 	}
+	entityManagerProcess();
 
 	bobNewPushingDone();
 
@@ -149,9 +174,7 @@ void stateGameDestroy(void) {
 	viewLoad(0);
 	systemUse();
 	bobNewManagerDestroy();
-	bitmapDestroy(s_pHudBaelog);
-	bitmapDestroy(s_pBobBmErik);
-	bitmapDestroy(s_pBobBmErikMask);
+	assetsGlobalDestroy();
 	bitmapDestroy(s_pTileset);
 	viewDestroy(s_pView);
 }

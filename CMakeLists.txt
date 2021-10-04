@@ -57,6 +57,7 @@ if(AMIGA AND BUILD_GAME)
 		add_executable(${LV2_EXECUTABLE} ${GAME_src})
 	endif()
 
+	target_compile_options(${LV2_EXECUTABLE} PUBLIC -Wall -Wextra)
 	target_include_directories(${LV2_EXECUTABLE} PRIVATE ${PROJECT_SOURCE_DIR}/src/game)
 	target_link_libraries(${LV2_EXECUTABLE} ace)
 
