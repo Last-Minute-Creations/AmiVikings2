@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.5)
-project(AmiLostVikings2)
+project(AmiVikigs2)
 
 # Adhere to GNU filesystem layout conventions
 include(GNUInstallDirs)
@@ -39,21 +39,21 @@ if(AMIGA AND BUILD_GAME)
 	file(GLOB GAME_src src/game/*.cpp src/game/*.c src/game/*.h)
 
 	if(ELF2HUNK)
-		set(LV2_EXECUTABLE LostVikings2.elf)
-		set(LV2_OUTPUT_EXECUTABLE LostVikings2.exe)
+		set(LV2_EXECUTABLE AmiVikings2.elf)
+		set(LV2_OUTPUT_EXECUTABLE AmiVikings2.exe)
 		add_executable(${LV2_EXECUTABLE} ${GAME_src})
-		target_link_libraries(${LV2_EXECUTABLE} -Wl,-Map=LostVikings2.map)
+		target_link_libraries(${LV2_EXECUTABLE} -Wl,-Map=AmiVikings2.map)
 		add_custom_command(
 			TARGET ${LV2_EXECUTABLE} POST_BUILD
 			COMMAND ${ELF2HUNK} ${LV2_EXECUTABLE} ${LV2_OUTPUT_EXECUTABLE}
 		)
 		add_custom_command(
 			TARGET ${LV2_EXECUTABLE} POST_BUILD
-			COMMAND ${OBJDUMP} --disassemble -S ${LV2_EXECUTABLE} > LostVikings2.s
+			COMMAND ${OBJDUMP} --disassemble -S ${LV2_EXECUTABLE} > AmiVikings2.s
 		)
 	else()
-		SET(LV2_EXECUTABLE LostVikings2)
-		SET(LV2_OUTPUT_EXECUTABLE LostVikings2)
+		SET(LV2_EXECUTABLE AmiVikings2)
+		SET(LV2_OUTPUT_EXECUTABLE AmiVikings2)
 		add_executable(${LV2_EXECUTABLE} ${GAME_src})
 	endif()
 

@@ -1,4 +1,4 @@
-# AmiLostVikigs2
+# AmiVikigs2
 
 Clean room implementation of SNES version of Lost Vikings 2 for Classic Amigas.
 All graphics/music assets are automatically extracted from ROM file and fitted to Amiga constraints using the diff files and automated operations.
