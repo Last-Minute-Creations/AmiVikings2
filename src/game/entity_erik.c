@@ -24,7 +24,7 @@ tEntityErik *entityErikCreate(void) {
 
 void entityErikProcess(tEntityErik *pEntity) {
 	tUwCoordYX sNewPos = {.ulYX = pEntity->sPos.ulYX};
-	UBYTE isMovingX = 0;
+	BYTE bMovingX = 0;
 	if(keyCheck(KEY_UP)) {
 		sNewPos.uwY -= 2;
 	}
@@ -32,76 +32,104 @@ void entityErikProcess(tEntityErik *pEntity) {
 		sNewPos.uwY += 1;
 	}
 	if(keyCheck(KEY_LEFT)) {
-		sNewPos.uwX -= 1;
-		isMovingX = 1;
+		bMovingX = -1;
 	}
 	if(keyCheck(KEY_RIGHT)) {
-		sNewPos.uwX += 1;
-		isMovingX = 1;
+		bMovingX = 1;
 	}
 
-	// X collision
-	UWORD uwLeftTileX = (sNewPos.uwX - ERIK_OFFS_LEFT) >> TILE_SHIFT;
-	UWORD uwRightTileX = (sNewPos.uwX + ERIK_OFFS_RIGHT) >> TILE_SHIFT;
-	UWORD uwLowerTileY = (sNewPos.uwY + ERIK_SIZE - 1) >> TILE_SHIFT;
-	UWORD uwUpperTileY = uwLowerTileY - 1;
-	if(isMovingX) {
-		UBYTE isRecalcTileX = 0;
-		if(
-			tileIsSolid(uwRightTileX, uwLowerTileY) ||
-			tileIsSolid(uwRightTileX, uwUpperTileY)
-		) {
-			sNewPos.uwX = (uwRightTileX << TILE_SHIFT) - (1 + ERIK_OFFS_RIGHT);
-			isRecalcTileX = 1;
-		}
-		else if(
-			tileIsSolid(uwLeftTileX, uwLowerTileY) ||
-			tileIsSolid(uwLeftTileX, uwUpperTileY)
-		) {
-			sNewPos.uwX = ((uwLeftTileX + 1) << TILE_SHIFT) + ERIK_OFFS_LEFT;
-			isRecalcTileX = 1;
-		}
-		if(isRecalcTileX) {
-			uwLeftTileX = (sNewPos.uwX - ERIK_OFFS_LEFT) >> TILE_SHIFT;
-			uwRightTileX = (sNewPos.uwX + ERIK_OFFS_RIGHT) >> TILE_SHIFT;
-		}
-	}
+	{
+		// Gravity - not proper
+		sNewPos.uwY += 1;
+		UWORD uwLeftTileX = (sNewPos.uwX - ERIK_OFFS_LEFT) >> TILE_SHIFT;
+		UWORD uwRightTileX = (sNewPos.uwX + ERIK_OFFS_RIGHT) >> TILE_SHIFT;
+		UWORD uwBottomTileY = (sNewPos.uwY + ERIK_SIZE) >> TILE_SHIFT;
+		UWORD uwMidTileX = sNewPos.uwX >> TILE_SHIFT;
+		UBYTE isFallingLeft = !tileIsSolid(uwLeftTileX, uwBottomTileY);
+		UBYTE isFallingRight = !tileIsSolid(uwRightTileX, uwBottomTileY);
+		UBYTE isFallingMid = !tileIsSolid(uwMidTileX, uwBottomTileY);
+		if(isFallingMid) {
+			if(isFallingLeft && isFallingRight) {
+				// Just fall through
+			}
+			else {
+				// No falling now
+				UWORD uwBottomPosY = uwBottomTileY << TILE_SHIFT;
+				sNewPos.uwY = uwBottomPosY - ERIK_SIZE;
 
-	// Gravity - not proper
-	sNewPos.uwY += 1;
-	UWORD uwBottomTileY = (sNewPos.uwY + ERIK_SIZE) >> TILE_SHIFT;
-	UWORD uwMidTileX = sNewPos.uwX >> TILE_SHIFT;
-	UBYTE isFallingLeft = !tileIsSolid(uwLeftTileX, uwBottomTileY);
-	UBYTE isFallingRight = !tileIsSolid(uwRightTileX, uwBottomTileY);
-	UBYTE isFallingMid = !tileIsSolid(uwMidTileX, uwBottomTileY);
-	if(isFallingMid) {
-		if(isFallingLeft && isFallingRight) {
-			// Just fall through
+				if(isFallingLeft) {
+					// Check if there's a room to fall to the left
+					UWORD uwNextLeftTile = (sNewPos.uwX - 20) >> TILE_SHIFT;
+					if(
+						!bMovingX && !tileIsSolid(uwNextLeftTile, uwBottomTileY) &&
+						!tileIsSolid(uwNextLeftTile, uwBottomTileY - 1) &&
+						!tileIsSolid(uwNextLeftTile, uwBottomTileY - 2)
+					) {
+						// Slide to the left
+						--sNewPos.uwX;
+					}
+				}
+				else { // isFallingRight
+					// Check if there's a room to fall to the right
+					UWORD uwNextRightTile = (sNewPos.uwX + 19) >> TILE_SHIFT;
+					if(
+						!bMovingX && !tileIsSolid(uwNextRightTile, uwBottomTileY) &&
+						!tileIsSolid(uwNextRightTile, uwBottomTileY - 1) &&
+						!tileIsSolid(uwNextRightTile, uwBottomTileY - 2)
+					) {
+						// Slide to the right
+						++sNewPos.uwX;
+					}
+				}
+			}
 		}
 		else {
-			// No falling now
+			// No falling
 			UWORD uwBottomPosY = uwBottomTileY << TILE_SHIFT;
 			sNewPos.uwY = uwBottomPosY - ERIK_SIZE;
+		}
+	}
 
-			if(isFallingLeft) {
-				// Check if there's a room to fall to the left
+	{
+		// Collision with ceiling
+		UWORD uwLeftTileX = (sNewPos.uwX - ERIK_OFFS_LEFT) >> TILE_SHIFT;
+		UWORD uwRightTileX = (sNewPos.uwX + ERIK_OFFS_RIGHT) >> TILE_SHIFT;
+		UWORD uwMidTileX = sNewPos.uwX >> TILE_SHIFT;
+		UWORD uwTopTileY = sNewPos.uwY >> TILE_SHIFT;
+		UBYTE isCeilMid = tileIsSolid(uwMidTileX, uwTopTileY);
+		UBYTE isCeilLeft = tileIsSolid(uwLeftTileX, uwTopTileY);
+		UBYTE isCeilRight = tileIsSolid(uwRightTileX, uwTopTileY);
+		if(isCeilMid) {
+				// Stop on ceiling
+				UWORD uwTopPosY = (uwTopTileY + 1) << TILE_SHIFT;
+				sNewPos.uwY = uwTopPosY;
+		}
+		else if(isCeilLeft || isCeilRight) {
+			if(!isCeilLeft) {
+				// Stop on ceiling
+				UWORD uwTopPosY = (uwTopTileY + 1) << TILE_SHIFT;
+				sNewPos.uwY = uwTopPosY;
+				// Check if there's a room to slide to the left
 				UWORD uwNextLeftTile = (sNewPos.uwX - 20) >> TILE_SHIFT;
 				if(
-					!isMovingX && !tileIsSolid(uwNextLeftTile, uwBottomTileY) &&
-					!tileIsSolid(uwNextLeftTile, uwBottomTileY - 1) &&
-					!tileIsSolid(uwNextLeftTile, uwBottomTileY - 2)
+					!bMovingX && !tileIsSolid(uwNextLeftTile, uwTopTileY) &&
+					!tileIsSolid(uwNextLeftTile, uwTopTileY - 1) &&
+					!tileIsSolid(uwNextLeftTile, uwTopTileY - 2)
 				) {
 					// Slide to the left
 					--sNewPos.uwX;
 				}
 			}
-			else { // isFallingRight
-				// Check if there's a room to fall to the right
+			else { // !isCeilRight
+				// Stop on ceiling
+				UWORD uwTopPosY = (uwTopTileY + 1) << TILE_SHIFT;
+				sNewPos.uwY = uwTopPosY;
+				// Check if there's a room to slide to the right
 				UWORD uwNextRightTile = (sNewPos.uwX + 19) >> TILE_SHIFT;
 				if(
-					!isMovingX && !tileIsSolid(uwNextRightTile, uwBottomTileY) &&
-					!tileIsSolid(uwNextRightTile, uwBottomTileY - 1) &&
-					!tileIsSolid(uwNextRightTile, uwBottomTileY - 2)
+					!bMovingX && !tileIsSolid(uwNextRightTile, uwTopTileY) &&
+					!tileIsSolid(uwNextRightTile, uwTopTileY - 1) &&
+					!tileIsSolid(uwNextRightTile, uwTopTileY - 2)
 				) {
 					// Slide to the right
 					++sNewPos.uwX;
@@ -109,51 +137,29 @@ void entityErikProcess(tEntityErik *pEntity) {
 			}
 		}
 	}
-	else {
-		// No falling
-		UWORD uwBottomPosY = uwBottomTileY << TILE_SHIFT;
-		sNewPos.uwY = uwBottomPosY - ERIK_SIZE;
-	}
 
-	// Collision with ceiling
-	UWORD uwTopTileY = sNewPos.uwY >> TILE_SHIFT;
-	UBYTE isCeilMid = tileIsSolid(uwMidTileX, uwTopTileY);
-	UBYTE isCeilLeft = tileIsSolid(uwLeftTileX, uwTopTileY);
-	UBYTE isCeilRight = tileIsSolid(uwRightTileX, uwTopTileY);
-	if(isCeilMid) {
-			// Stop on ceiling
-			UWORD uwTopPosY = (uwTopTileY + 1) << TILE_SHIFT;
-			sNewPos.uwY = uwTopPosY;
-	}
-	else if(isCeilLeft || isCeilRight) {
-		if(!isCeilLeft) {
-			// Stop on ceiling
-			UWORD uwTopPosY = (uwTopTileY + 1) << TILE_SHIFT;
-			sNewPos.uwY = uwTopPosY;
-			// Check if there's a room to slide to the left
-			UWORD uwNextLeftTile = (sNewPos.uwX - 20) >> TILE_SHIFT;
+	{
+		// X collision
+		sNewPos.uwX += bMovingX;
+		UWORD uwLeftTileX = (sNewPos.uwX - ERIK_OFFS_LEFT) >> TILE_SHIFT;
+		UWORD uwRightTileX = (sNewPos.uwX + ERIK_OFFS_RIGHT) >> TILE_SHIFT;
+		UWORD uwUpperTileY = (sNewPos.uwY) >> TILE_SHIFT;
+		UWORD uwMidTileY = (sNewPos.uwY + 16) >> TILE_SHIFT;
+		UWORD uwLowerTileY = (sNewPos.uwY + ERIK_SIZE - 1) >> TILE_SHIFT;
+		if(bMovingX) {
 			if(
-				!isMovingX && !tileIsSolid(uwNextLeftTile, uwTopTileY) &&
-				!tileIsSolid(uwNextLeftTile, uwTopTileY - 1) &&
-				!tileIsSolid(uwNextLeftTile, uwTopTileY - 2)
+				tileIsSolid(uwRightTileX, uwUpperTileY) ||
+				tileIsSolid(uwRightTileX, uwMidTileY) ||
+				tileIsSolid(uwRightTileX, uwLowerTileY)
 			) {
-				// Slide to the left
-				--sNewPos.uwX;
+				sNewPos.uwX = (uwRightTileX << TILE_SHIFT) - (1 + ERIK_OFFS_RIGHT);
 			}
-		}
-		else { // !isCeilRight
-			// Stop on ceiling
-			UWORD uwTopPosY = (uwTopTileY + 1) << TILE_SHIFT;
-			sNewPos.uwY = uwTopPosY;
-			// Check if there's a room to slide to the right
-			UWORD uwNextRightTile = (sNewPos.uwX + 19) >> TILE_SHIFT;
-			if(
-				!isMovingX && !tileIsSolid(uwNextRightTile, uwTopTileY) &&
-				!tileIsSolid(uwNextRightTile, uwTopTileY - 1) &&
-				!tileIsSolid(uwNextRightTile, uwTopTileY - 2)
+			else if(
+				tileIsSolid(uwLeftTileX, uwUpperTileY) ||
+				tileIsSolid(uwLeftTileX, uwMidTileY) ||
+				tileIsSolid(uwLeftTileX, uwLowerTileY)
 			) {
-				// Slide to the right
-				++sNewPos.uwX;
+				sNewPos.uwX = ((uwLeftTileX + 1) << TILE_SHIFT) + ERIK_OFFS_LEFT;
 			}
 		}
 	}
