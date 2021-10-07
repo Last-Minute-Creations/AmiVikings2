@@ -10,7 +10,7 @@
 			"name": "Amiga 500 2m chip",
 			"config": "A500",
 			"chipmem": "2m",
-			"program": "${workspaceFolder}/build/LostVikings2",
+			"program": "${workspaceFolder}/build/AmiVikings2",
 			"kickstart": "C:/Users/tehKa/Documents/Amiga files/WinUAE/kick13.rom",
 			"internalConsoleOptions": "openOnSessionStart"
 		},
@@ -19,7 +19,7 @@
 			"request": "launch",
 			"name": "Amiga 1200",
 			"config": "A1200",
-			"program": "${workspaceFolder}/build/LostVikings2",
+			"program": "${workspaceFolder}/build/AmiVikings2",
 			"kickstart": "C:/Users/tehKa/Documents/Amiga files/WinUAE/kick31.rom",
 			"internalConsoleOptions": "openOnSessionStart"
 		}
