@@ -9,6 +9,8 @@
 
 #define ERIK_SIZE 32
 #define TILE_SHIFT 4
+#define ERIK_OFFS_RIGHT 9
+#define ERIK_OFFS_LEFT 10
 
 tEntityErik *entityErikCreate(void) {
 	tEntityErik *pErik = memAllocFast(sizeof(*pErik));
@@ -38,11 +40,29 @@ void entityErikProcess(tEntityErik *pEntity) {
 		isMovingX = 1;
 	}
 
+	// X collision
+	UWORD uwLeftTileX = (sNewPos.uwX - ERIK_OFFS_LEFT) >> TILE_SHIFT;
+	UWORD uwRightTileX = (sNewPos.uwX + ERIK_OFFS_RIGHT) >> TILE_SHIFT;
+	UWORD uwLowerTileY = (sNewPos.uwY + ERIK_SIZE - 1) >> TILE_SHIFT;
+	UWORD uwUpperTileY = uwLowerTileY - 1;
+	if(isMovingX) {
+		if(
+			tileIsSolid(uwRightTileX, uwLowerTileY) ||
+			tileIsSolid(uwRightTileX, uwUpperTileY)
+		) {
+			sNewPos.uwX = (uwRightTileX << TILE_SHIFT) - (1 + ERIK_OFFS_RIGHT);
+		}
+		else if(
+			tileIsSolid(uwLeftTileX, uwLowerTileY) ||
+			tileIsSolid(uwLeftTileX, uwUpperTileY)
+		) {
+			sNewPos.uwX = ((uwLeftTileX + 1) << TILE_SHIFT) + ERIK_OFFS_LEFT;
+		}
+	}
+
 	// Gravity - not proper
 	sNewPos.uwY += 1;
 	UWORD uwBottomTileY = (sNewPos.uwY + ERIK_SIZE) >> TILE_SHIFT;
-	UWORD uwLeftTileX = (sNewPos.uwX - 10) >> TILE_SHIFT;
-	UWORD uwRightTileX = (sNewPos.uwX + 9) >> TILE_SHIFT;
 	UWORD uwMidTileX = sNewPos.uwX >> TILE_SHIFT;
 	UBYTE isFallingLeft = !tileIsSolid(uwLeftTileX, uwBottomTileY);
 	UBYTE isFallingRight = !tileIsSolid(uwRightTileX, uwBottomTileY);
@@ -51,37 +71,35 @@ void entityErikProcess(tEntityErik *pEntity) {
 		if(isFallingLeft && isFallingRight) {
 			// Just fall through
 		}
-		else if(isFallingLeft) {
-			// Check if there's a room to fall to the left
-			UWORD uwNextLeftTile = (sNewPos.uwX - 20) >> TILE_SHIFT;
-			if(
-				!isMovingX && !tileIsSolid(uwNextLeftTile, uwBottomTileY) &&
-				!tileIsSolid(uwNextLeftTile, uwBottomTileY - 1) &&
-				!tileIsSolid(uwNextLeftTile, uwBottomTileY - 2)
-			) {
-				// Slide to the left
-				--sNewPos.uwX;
-			}
-
+		else {
 			// No falling now
 			UWORD uwBottomPosY = uwBottomTileY << TILE_SHIFT;
 			sNewPos.uwY = uwBottomPosY - ERIK_SIZE;
-		}
-		else { // isFallingRight
-			// Check if there's a room to fall to the right
-			UWORD uwNextRightTile = (sNewPos.uwX + 19) >> TILE_SHIFT;
-			if(
-				!isMovingX && !tileIsSolid(uwNextRightTile, uwBottomTileY) &&
-				!tileIsSolid(uwNextRightTile, uwBottomTileY - 1) &&
-				!tileIsSolid(uwNextRightTile, uwBottomTileY - 2)
-			) {
-				// Slide to the right
-				++sNewPos.uwX;
-			}
 
-			// No falling now
-			UWORD uwBottomPosY = uwBottomTileY << TILE_SHIFT;
-			sNewPos.uwY = uwBottomPosY - ERIK_SIZE;
+			if(isFallingLeft) {
+				// Check if there's a room to fall to the left
+				UWORD uwNextLeftTile = (sNewPos.uwX - 20) >> TILE_SHIFT;
+				if(
+					!isMovingX && !tileIsSolid(uwNextLeftTile, uwBottomTileY) &&
+					!tileIsSolid(uwNextLeftTile, uwBottomTileY - 1) &&
+					!tileIsSolid(uwNextLeftTile, uwBottomTileY - 2)
+				) {
+					// Slide to the left
+					--sNewPos.uwX;
+				}
+			}
+			else { // isFallingRight
+				// Check if there's a room to fall to the right
+				UWORD uwNextRightTile = (sNewPos.uwX + 19) >> TILE_SHIFT;
+				if(
+					!isMovingX && !tileIsSolid(uwNextRightTile, uwBottomTileY) &&
+					!tileIsSolid(uwNextRightTile, uwBottomTileY - 1) &&
+					!tileIsSolid(uwNextRightTile, uwBottomTileY - 2)
+				) {
+					// Slide to the right
+					++sNewPos.uwX;
+				}
+			}
 		}
 	}
 	else {
@@ -90,7 +108,7 @@ void entityErikProcess(tEntityErik *pEntity) {
 		sNewPos.uwY = uwBottomPosY - ERIK_SIZE;
 	}
 
-	pEntity->sPos = sNewPos;
+	pEntity->sPos.ulYX = sNewPos.ulYX;
 	BYTE bFrameOffsX = -6;
 	pEntity->sBase.sBob.sPos.uwX = pEntity->sPos.uwX -10 + bFrameOffsX;
 	pEntity->sBase.sBob.sPos.uwY = pEntity->sPos.uwY;
