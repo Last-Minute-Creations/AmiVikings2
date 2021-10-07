@@ -46,17 +46,24 @@ void entityErikProcess(tEntityErik *pEntity) {
 	UWORD uwLowerTileY = (sNewPos.uwY + ERIK_SIZE - 1) >> TILE_SHIFT;
 	UWORD uwUpperTileY = uwLowerTileY - 1;
 	if(isMovingX) {
+		UBYTE isRecalcTileX = 0;
 		if(
 			tileIsSolid(uwRightTileX, uwLowerTileY) ||
 			tileIsSolid(uwRightTileX, uwUpperTileY)
 		) {
 			sNewPos.uwX = (uwRightTileX << TILE_SHIFT) - (1 + ERIK_OFFS_RIGHT);
+			isRecalcTileX = 1;
 		}
 		else if(
 			tileIsSolid(uwLeftTileX, uwLowerTileY) ||
 			tileIsSolid(uwLeftTileX, uwUpperTileY)
 		) {
 			sNewPos.uwX = ((uwLeftTileX + 1) << TILE_SHIFT) + ERIK_OFFS_LEFT;
+			isRecalcTileX = 1;
+		}
+		if(isRecalcTileX) {
+			uwLeftTileX = (sNewPos.uwX - ERIK_OFFS_LEFT) >> TILE_SHIFT;
+			uwRightTileX = (sNewPos.uwX + ERIK_OFFS_RIGHT) >> TILE_SHIFT;
 		}
 	}
 
@@ -106,6 +113,49 @@ void entityErikProcess(tEntityErik *pEntity) {
 		// No falling
 		UWORD uwBottomPosY = uwBottomTileY << TILE_SHIFT;
 		sNewPos.uwY = uwBottomPosY - ERIK_SIZE;
+	}
+
+	// Collision with ceiling
+	UWORD uwTopTileY = sNewPos.uwY >> TILE_SHIFT;
+	UBYTE isCeilMid = tileIsSolid(uwMidTileX, uwTopTileY);
+	UBYTE isCeilLeft = tileIsSolid(uwLeftTileX, uwTopTileY);
+	UBYTE isCeilRight = tileIsSolid(uwRightTileX, uwTopTileY);
+	if(isCeilMid) {
+			// Stop on ceiling
+			UWORD uwTopPosY = (uwTopTileY + 1) << TILE_SHIFT;
+			sNewPos.uwY = uwTopPosY;
+	}
+	else if(isCeilLeft || isCeilRight) {
+		if(!isCeilLeft) {
+			// Stop on ceiling
+			UWORD uwTopPosY = (uwTopTileY + 1) << TILE_SHIFT;
+			sNewPos.uwY = uwTopPosY;
+			// Check if there's a room to slide to the left
+			UWORD uwNextLeftTile = (sNewPos.uwX - 20) >> TILE_SHIFT;
+			if(
+				!isMovingX && !tileIsSolid(uwNextLeftTile, uwTopTileY) &&
+				!tileIsSolid(uwNextLeftTile, uwTopTileY - 1) &&
+				!tileIsSolid(uwNextLeftTile, uwTopTileY - 2)
+			) {
+				// Slide to the left
+				--sNewPos.uwX;
+			}
+		}
+		else { // !isCeilRight
+			// Stop on ceiling
+			UWORD uwTopPosY = (uwTopTileY + 1) << TILE_SHIFT;
+			sNewPos.uwY = uwTopPosY;
+			// Check if there's a room to slide to the right
+			UWORD uwNextRightTile = (sNewPos.uwX + 19) >> TILE_SHIFT;
+			if(
+				!isMovingX && !tileIsSolid(uwNextRightTile, uwTopTileY) &&
+				!tileIsSolid(uwNextRightTile, uwTopTileY - 1) &&
+				!tileIsSolid(uwNextRightTile, uwTopTileY - 2)
+			) {
+				// Slide to the right
+				++sNewPos.uwX;
+			}
+		}
 	}
 
 	pEntity->sPos.ulYX = sNewPos.ulYX;

@@ -58,6 +58,11 @@ void loadMap(void) {
 	tileSetType(10, 6, TILE_FLOOR_FLAT);
 	s_pBufferMain->pTileData[10][6] = TILE_FLOOR_FLAT;
 
+	for(UBYTE i = 6; i < 10; ++i) {
+		tileSetType(i, 2, TILE_FLOOR_FLAT);
+		s_pBufferMain->pTileData[i][2] = TILE_FLOOR_FLAT;
+	}
+
 	// Text X
 	// s_pBufferMain->pTileData[3][7] = TILE_FLOOR_FLAT;
 	// s_pBufferMain->pTileData[4][7] = TILE_FLOOR_FLAT;
