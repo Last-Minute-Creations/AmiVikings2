@@ -12,31 +12,36 @@
 #define ERIK_OFFS_RIGHT 9
 #define ERIK_OFFS_LEFT 10
 
-tEntityErik *entityErikCreate(void) {
+tEntityErik *entityErikCreate(UWORD uwPosX, UWORD uwPosY) {
 	tEntityErik *pErik = memAllocFast(sizeof(*pErik));
 	pErik->sBase.eType = ENTITY_TYPE_ERIK;
 
 	pErik->sPos.uwX = 32;
 	pErik->sPos.uwY = 32;
-	bobNewInit(&pErik->sBase.sBob, ERIK_SIZE, ERIK_SIZE, 1, g_pBobBmErik, g_pBobBmErikMask, 32, 32);
+	bobNewInit(
+		&pErik->sBase.sBob, ERIK_SIZE, ERIK_SIZE, 1, g_pBobBmErik, g_pBobBmErikMask,
+		uwPosX, uwPosY
+	);
+	pErik->eState = VIKING_STATE_ALIVE;
 	return pErik;
 }
 
 void entityErikProcess(tEntityErik *pEntity) {
 	tUwCoordYX sNewPos = {.ulYX = pEntity->sPos.ulYX};
 	BYTE bMovingX = 0;
-	if(keyCheck(KEY_UP)) {
+	if(pEntity->eSteer & STEER_UP) {
 		sNewPos.uwY -= 2;
 	}
-	if(keyCheck(KEY_DOWN)) {
+	if(pEntity->eSteer & STEER_DOWN) {
 		sNewPos.uwY += 1;
 	}
-	if(keyCheck(KEY_LEFT)) {
+	if(pEntity->eSteer & STEER_LEFT) {
 		bMovingX = -1;
 	}
-	if(keyCheck(KEY_RIGHT)) {
+	if(pEntity->eSteer & STEER_RIGHT) {
 		bMovingX = 1;
 	}
+	pEntity->eSteer = 0;
 
 	{
 		// Gravity - not proper

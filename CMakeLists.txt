@@ -75,9 +75,13 @@ if(AMIGA AND BUILD_GAME)
 	convertBitmaps(
 		TARGET ${LV2_EXECUTABLE} PALETTE ${DATA_DIR}/aminer.plt INTERLEAVED
 		SOURCES
-			tmp/baelog.png tmp/tiles.png
+			tmp/hud/erik.png tmp/hud/baelog.png tmp/hud/olaf.png
+			tmp/hud/scorch.png tmp/hud/fang.png tmp/hud/unk.png
+			tmp/tiles.png
 		DESTINATIONS
-			${DATA_DIR}/hud/baelog.bm ${DATA_DIR}/tiles.bm
+		${DATA_DIR}/hud/erik.bm ${DATA_DIR}/hud/baelog.bm ${DATA_DIR}/hud/olaf.bm
+		${DATA_DIR}/hud/scorch.bm ${DATA_DIR}/hud/fang.bm ${DATA_DIR}/hud/unk.bm
+		${DATA_DIR}/tiles.bm
 	)
 	convertBitmaps(
 		TARGET ${LV2_EXECUTABLE} PALETTE ${DATA_DIR}/aminer.plt INTERLEAVED

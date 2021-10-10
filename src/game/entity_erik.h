@@ -7,13 +7,21 @@
 
 #include "entity.h"
 
+typedef enum tVikingState {
+	VIKING_STATE_LOCKED,
+	VIKING_STATE_ALIVE,
+	VIKING_STATE_DEAD,
+} tVikingState;
+
 typedef struct tEntityErik {
 	tEntity sBase;
+	tSteerRequest eSteer;
 	UBYTE ubJoy;
+	tVikingState eState;
 	tUwCoordYX sPos;
 } tEntityErik;
 
-tEntityErik *entityErikCreate(void);
+tEntityErik *entityErikCreate(UWORD uwPosX, UWORD uwPosY);
 
 void entityErikProcess(tEntityErik *pEntity);
 

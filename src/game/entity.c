@@ -55,3 +55,18 @@ void entityAdd(tEntity *pEntity) {
 	}
 	logWrite("ERR: Can't add entity %p - no more space!", pEntity);
 }
+
+void entitySetSteer(tEntity *pEntity, tSteerRequest eSteer) {
+	switch(pEntity->eType) {
+		case ENTITY_TYPE_ERIK:
+		case ENTITY_TYPE_BAELOG:
+		case ENTITY_TYPE_OLAF:
+		case ENTITY_TYPE_FANG:
+		case ENTITY_TYPE_SCORCH:
+			((tEntityErik*)pEntity)->eSteer = eSteer;
+			break;
+		default:
+			// shouldn't happen!
+			break;
+	}
+}

@@ -6,6 +6,7 @@
 #define _ENTITY_H_
 
 #include "bob_new.h"
+#include "player.h"
 
 typedef enum tEntityType {
 	ENTITY_TYPE_INVALID = 0,
@@ -28,5 +29,7 @@ void entityManagerReset(void);
 void entityManagerProcess(void);
 
 void entityAdd(tEntity *pEntity);
+
+void entitySetSteer(tEntity *pEntity, tSteerRequest eSteer);
 
 #endif // _ENTITY_H_

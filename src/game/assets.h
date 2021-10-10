@@ -9,5 +9,4 @@ void assetsGlobalCreate(void);
 void assetsGlobalDestroy(void);
 
 // Global assets
-extern tBitMap *g_pHudBaelog;
 extern tBitMap *g_pBobBmErik, *g_pBobBmErikMask;
