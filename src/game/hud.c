@@ -17,6 +17,7 @@ static tBitMap *s_pPortaits[HUD_CHARACTER_SLOT_COUNT] = {0};
 static tEntity *s_pCharacters[HUD_CHARACTER_SLOT_COUNT];
 static UBYTE s_pCharSelectedByPlayer[PLAYER_COUNT];
 static tBitMap *s_pPortraitLocked;
+static UBYTE s_isActiveP2;
 
 static void hudDrawPortrait(UBYTE ubIdx) {
 	static const UBYTE pOffsets[HUD_CHARACTER_SLOT_COUNT] = {16, 88, 168};
@@ -27,7 +28,7 @@ static void hudDrawPortrait(UBYTE ubIdx) {
 		if(pEntity->eState == VIKING_STATE_ALIVE) {
 			if(
 				ubIdx != s_pCharSelectedByPlayer[0] &&
-				ubIdx != s_pCharSelectedByPlayer[1]
+				(!s_isActiveP2 || ubIdx != s_pCharSelectedByPlayer[1])
 			) {
 				// Inactive portrait
 				ubOffsY = 24;
@@ -70,6 +71,7 @@ void hudCreate(tView *pView) {
 	TAG_END);
 
 	s_pPortraitLocked = bitmapCreateFromFile("data/hud/unk.bm", 0);
+	s_isActiveP2 = 0;
 }
 
 void hudDestroy(void) {
@@ -114,11 +116,33 @@ void hudReset(tEntity **pEntities) {
 
 tEntity *hudProcessPlayerSteer(UBYTE ubPlayerIdx, tSteerRequest eReq) {
 	UBYTE ubOld = s_pCharSelectedByPlayer[ubPlayerIdx];
-	// TODO: process L/R
-	UBYTE ubNew = s_pCharSelectedByPlayer[ubPlayerIdx];
-	if(ubOld != ubNew) {
+	BYTE bNew = s_pCharSelectedByPlayer[ubPlayerIdx];
+	if(eReq & STEER_L) {
+		do {
+			if(--bNew < 0) {
+				bNew = HUD_CHARACTER_SLOT_COUNT - 1;
+			}
+		} while(
+			s_pCharacters[bNew] == 0 ||
+			((ubPlayerIdx == 1 || s_isActiveP2) && bNew == s_pCharSelectedByPlayer[!ubPlayerIdx]) ||
+			((tEntityErik *)s_pCharacters[bNew])->eState != VIKING_STATE_ALIVE
+		);
+	}
+	if(eReq & STEER_R) {
+		do {
+			if(++bNew >= HUD_CHARACTER_SLOT_COUNT) {
+				bNew = 0;
+			}
+		} while(
+			s_pCharacters[bNew] == 0 ||
+			((ubPlayerIdx == 1 || s_isActiveP2) && bNew == s_pCharSelectedByPlayer[!ubPlayerIdx]) ||
+			((tEntityErik *)s_pCharacters[bNew])->eState != VIKING_STATE_ALIVE
+		);
+	}
+	if(ubOld != bNew) {
+		s_pCharSelectedByPlayer[ubPlayerIdx] = bNew;
 		hudDrawPortrait(ubOld);
-		hudDrawPortrait(ubNew);
+		hudDrawPortrait(bNew);
 	}
 	return s_pCharacters[s_pCharSelectedByPlayer[ubPlayerIdx]];
 }

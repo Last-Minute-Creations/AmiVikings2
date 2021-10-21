@@ -18,7 +18,7 @@
 #include "hud.h"
 
 #define MAIN_BPP 6
-#define BOB_COUNT 5
+#define BOB_COUNT 4
 
 static tView *s_pView;
 static tVPort *s_pVpMain;
@@ -120,15 +120,17 @@ void stateGameCreate(void) {
 	for(UBYTE i = 0; i < BOB_COUNT; ++i) {
 		bobNewInit(&s_pBobs[i], 32, 32, 1, g_pBobBmErik, g_pBobBmErikMask, 32 + 48 * (i + 1), 32);
 	}
-	tEntity *pPlayerEntity = &entityErikCreate(32, 32)->sBase;
-	entityAdd(pPlayerEntity);
+	tEntity *pPlayerEntity1 = &entityErikCreate(32, 32)->sBase;
+	entityAdd(pPlayerEntity1);
+	tEntity *pPlayerEntity2 = &entityErikCreate(64, 32)->sBase;
+	entityAdd(pPlayerEntity2);
 
 	bobNewReallocateBgBuffers();
 
 	systemUnuse();
 
 	loadMap();
-	hudReset((tEntity*[3]){pPlayerEntity, 0, 0});
+	hudReset((tEntity*[3]){pPlayerEntity1, pPlayerEntity2, 0});
 
 	tileBufferRedrawAll(s_pBufferMain);
 	viewLoad(s_pView);
@@ -141,6 +143,10 @@ void stateGameLoop(void) {
 	}
 
 	for(UBYTE ubPlayerIdx = 0; ubPlayerIdx < 2; ++ubPlayerIdx) {
+		if(ubPlayerIdx == 1) {
+			// TODO: p2 turned off
+			continue;
+		}
 		tSteerRequest eReq = playerProcessSteer(ubPlayerIdx);
 		tEntity *pActiveEntity = hudProcessPlayerSteer(ubPlayerIdx, eReq);
 		if(pActiveEntity) {

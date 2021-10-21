@@ -16,8 +16,8 @@ tEntityErik *entityErikCreate(UWORD uwPosX, UWORD uwPosY) {
 	tEntityErik *pErik = memAllocFast(sizeof(*pErik));
 	pErik->sBase.eType = ENTITY_TYPE_ERIK;
 
-	pErik->sPos.uwX = 32;
-	pErik->sPos.uwY = 32;
+	pErik->sPos.uwX = uwPosX;
+	pErik->sPos.uwY = uwPosY;
 	bobNewInit(
 		&pErik->sBase.sBob, ERIK_SIZE, ERIK_SIZE, 1, g_pBobBmErik, g_pBobBmErikMask,
 		uwPosX, uwPosY
