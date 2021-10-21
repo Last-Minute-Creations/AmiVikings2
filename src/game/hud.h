@@ -9,6 +9,8 @@
 #include <ace/utils/extview.h>
 #include "entity.h"
 
+#define HUD_BPP 5
+
 typedef enum tPlayerIdx {
 	PLAYER_1,
 	PLAYER_2,

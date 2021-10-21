@@ -10,7 +10,6 @@
 #include "entity_erik.h"
 
 #define HUD_CHARACTER_SLOT_COUNT 3
-#define HUD_BPP 5
 
 static tVPort *s_pVpHud;
 static tSimpleBufferManager *s_pBufferHud;
@@ -66,6 +65,7 @@ void hudCreate(tView *pView) {
 		TAG_SIMPLEBUFFER_BITMAP_FLAGS, BMF_CLEAR | BMF_INTERLEAVED,
 		TAG_SIMPLEBUFFER_IS_DBLBUF, 0,
 		TAG_SIMPLEBUFFER_USE_X_SCROLLING, 0,
+		TAG_SIMPLEBUFFER_COPLIST_OFFSET, 0,
 		TAG_SIMPLEBUFFER_VPORT, s_pVpHud,
 	TAG_END);
 

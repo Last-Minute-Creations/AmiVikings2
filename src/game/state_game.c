@@ -4,6 +4,7 @@
 
 #include "state_game.h"
 #include <ace/managers/viewport/tilebuffer.h>
+#include <ace/managers/viewport/simplebuffer.h>
 #include <ace/managers/system.h>
 #include <ace/managers/game.h>
 #include <ace/managers/key.h>
@@ -75,9 +76,14 @@ void loadMap(void) {
 }
 
 void stateGameCreate(void) {
+	UWORD uwCopHudSize = simpleBufferGetRawCopperlistInstructionCount(HUD_BPP);
+	UWORD uwCopMainStartSize = tileBufferGetRawCopperlistInstructionCountStart(MAIN_BPP);
+	UWORD uwCopMainBreakSize = tileBufferGetRawCopperlistInstructionCountBreak(MAIN_BPP);
+	UWORD uwCopListSize = uwCopHudSize + uwCopMainStartSize + uwCopMainBreakSize;
 	s_pView = viewCreate(0,
 		TAG_VIEW_GLOBAL_CLUT, 1,
-		TAG_VIEW_COPLIST_MODE, COPPER_MODE_BLOCK,
+		TAG_VIEW_COPLIST_MODE, COPPER_MODE_RAW,
+		TAG_VIEW_COPLIST_RAW_COUNT, uwCopListSize,
 	TAG_END);
 
 	s_pTileset = bitmapCreateFromFile("data/tiles.bm", 0);
@@ -86,8 +92,6 @@ void stateGameCreate(void) {
 
 	s_pVpMain = vPortCreate(0,
 		TAG_VPORT_BPP, MAIN_BPP,
-		TAG_VPORT_HEIGHT, 224 - 48,
-		TAG_VPORT_PALETTE_SIZE, 32,
 		TAG_VPORT_VIEW, s_pView,
 	TAG_END);
 
@@ -100,6 +104,8 @@ void stateGameCreate(void) {
 		TAG_TILEBUFFER_TILE_SHIFT, 4,
 		TAG_TILEBUFFER_TILESET, s_pTileset,
 		TAG_TILEBUFFER_VPORT, s_pVpMain,
+		TAG_TILEBUFFER_COPLIST_OFFSET_START, uwCopHudSize,
+		TAG_TILEBUFFER_COPLIST_OFFSET_BREAK, uwCopHudSize + uwCopMainStartSize,
 	TAG_END);
 
 	assetsGlobalCreate();
@@ -139,10 +145,17 @@ void stateGameLoop(void) {
 		tEntity *pActiveEntity = hudProcessPlayerSteer(ubPlayerIdx, eReq);
 		if(pActiveEntity) {
 			entitySetSteer(pActiveEntity, eReq);
+			if(ubPlayerIdx == 0) {
+				cameraCenterAt(
+					s_pBufferMain->pCamera,
+					pActiveEntity->sBob.sPos.uwX, pActiveEntity->sBob.sPos.uwY
+				);
+			}
 		}
 	}
 
 	bobNewBegin(s_pBufferMain->pScroll->pBack);
+	tileBufferQueueProcess(s_pBufferMain);
 
 	for(UBYTE i = 0; i < BOB_COUNT; ++i) {
 		bobNewPush(&s_pBobs[i]);
