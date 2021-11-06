@@ -321,10 +321,53 @@ int main(int lArgCount, const char *pArgs[])
 	// extractGfx(FileRom, s_ulOffsScorchStart, s_ulOffsScorchEnd, 4, 4, s_PaletteScorch, fmt::format("{}/{}", szOutput, "scorch"));
 	// extractGfx(FileRom, s_ulOffsOlafStart, s_ulOffsOlafEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutput, "olaf"));
 	// extractGfx(FileRom, s_ulOffsEffectStart, s_ulOffsEffectEnd, 4, 4, s_PaletteEffect, fmt::format("{}/{}", szOutput, "effect"));
+	// extractGfx(FileRom, s_ulOffsErikOldStart, s_ulOffsErikOldEnd, 4, 4, s_PaletteErik, fmt::format("{}/{}", szOutput, "erik_old"));
+	// extractGfx(FileRom, s_ulOffsBaelogOldStart, s_ulOffsBaelogOldEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutput, "baelog_old"));
+	// extractGfx(FileRom, s_ulOffsOlafOldStart, s_ulOffsOlafOldEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutput, "olaf_old"));
 
-	extractGfx(FileRom, s_ulOffsErikOldStart, s_ulOffsErikOldEnd, 4, 4, s_PaletteErik, fmt::format("{}/{}", szOutput, "erik_old"));
-	extractGfx(FileRom, s_ulOffsBaelogOldStart, s_ulOffsBaelogOldEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutput, "baelog_old"));
-	extractGfx(FileRom, s_ulOffsOlafOldStart, s_ulOffsOlafOldEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutput, "olaf_old"));
+	uint16_t uwDecompressedSize, uwPos = 0;
+	uint8_t ubRepeatBits;
+	FileRom.seekg(0xE2583, std::ios::beg);
+	FileRom.read(reinterpret_cast<char*>(&uwDecompressedSize), sizeof(uwDecompressedSize));
+	uint8_t pDecoded[uwDecompressedSize];
+	std::fill(&pDecoded[0], &pDecoded[uwDecompressedSize], 0x00);
+	fmt::print(FMT_STRING("Decompressed size: {}\n"), uwDecompressedSize);
+	do {
+		FileRom.read(reinterpret_cast<char*>(&ubRepeatBits), sizeof(ubRepeatBits));
+		fmt::print(FMT_STRING("File pos: {:06X}, repeat bits: {:08b}\n"), FileRom.tellg() - 1, ubRepeatBits);
+		for(uint8_t ubBit = 0; ubBit < 8 && uwPos < uwDecompressedSize; ++ubBit) {
+			bool isCopy = ((ubRepeatBits & 1) == 1);
+			ubRepeatBits >>= 1;
+			if(isCopy) {
+				// Fill with next byte as-is
+				FileRom.read(reinterpret_cast<char*>(&pDecoded[uwPos]), sizeof(pDecoded[uwPos]));
+				fmt::print(FMT_STRING("read byte: {:02X}\n"), pDecoded[uwPos]);
+				++uwPos;
+			}
+			else {
+				// Decompress stuff
+				uint16_t uwDecompressRaw;
+				FileRom.read(reinterpret_cast<char*>(&uwDecompressRaw), sizeof(uwDecompressRaw));
+				uint16_t uwCopyLoopIndex = uwDecompressRaw & 0xFFF;
+				uint16_t uwCopyLoopSize = ((uwDecompressRaw >> 12) + 3 + uwCopyLoopIndex) & 0x0FFF;
+				fmt::print(
+					FMT_STRING("Decompress cmd: {:04X} ({:016b}), copying decompressed bytes from {} to {}\n"),
+					uwDecompressRaw, uwDecompressRaw, uwCopyLoopIndex, uwCopyLoopSize
+				);
+				while(uwCopyLoopIndex != 0x1000 && uwCopyLoopIndex != uwCopyLoopSize) {
+					pDecoded[uwPos++] = pDecoded[uwCopyLoopIndex++];
+				}
+				if(uwCopyLoopIndex == 0x1000) {
+					fmt::print(FMT_STRING("stopped at pos 0x1000\n"));
+				}
+			}
+		}
+	} while(uwPos < uwDecompressedSize);
+	std::ofstream FileOut;
+	FileOut.open("decompressed.dat", std::ios::binary);
+	FileOut.write(reinterpret_cast<char*>(pDecoded), uwDecompressedSize);
+	FileOut.close();
 
+	fmt::print("All done!\n");
 	return EXIT_SUCCESS;
 }
