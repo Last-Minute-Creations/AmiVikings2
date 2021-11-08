@@ -297,7 +297,7 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 	uint8_t ubRepeatBits;
 	FileRom.seekg(ulOffsStart, std::ios::beg);
 	FileRom.read(reinterpret_cast<char*>(&uwDecompressedSize), sizeof(uwDecompressedSize));
-	std::vector<uint8_t> vDecoded(ulOffsStart, 0x00);
+	std::vector<uint8_t> vDecoded(uwDecompressedSize, 0x00);
 	fmt::print(FMT_STRING("Decompressed size: {}\n"), uwDecompressedSize);
 	do {
 		FileRom.read(reinterpret_cast<char*>(&ubRepeatBits), sizeof(ubRepeatBits));
