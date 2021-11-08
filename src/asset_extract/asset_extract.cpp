@@ -334,7 +334,33 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 		}
 	} while(uwPos < uwDecompressedSize);
 
+	uint32_t ulEndPos = FileRom.tellg();
+	fmt::print(
+		FMT_STRING("Decompressed asset at {:08X}, compressed size: {}, decompressed: {}\n"),
+		ulOffsStart, ulEndPos - ulOffsStart, vDecoded.size()
+	);
 	return vDecoded;
+}
+
+static uint32_t snesAddressToRomOffset(uint32_t ulBaseAddress) {
+	ulBaseAddress &= 0x3FFFFF;
+	uint32_t ulBank = ulBaseAddress >> 16;
+	uint32_t ulAddress = ulBaseAddress & 0xFFFF;
+
+	uint32_t ulRomOffset;
+	if((ulBank & 1) == 0) {
+		// Even
+		ulBank /= 2;
+		ulAddress -= 0x8000;
+		ulRomOffset = (ulBank << 16) | ulAddress;
+	}
+	else {
+		// Odd
+		ulBank /= 2;
+		ulRomOffset = (ulBank << 16) | ulAddress;
+	}
+
+	return ulRomOffset;
 }
 
 // asset_extract "c:/gry/snes9x/Roms/Lost Vikings II, The - Norse by Norsewest (Europe) (En,Fr,De).sfc" ../assets
@@ -371,12 +397,30 @@ int main(int lArgCount, const char *pArgs[])
 	// extractGfx(FileRom, s_ulOffsBaelogOldStart, s_ulOffsBaelogOldEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutput, "baelog_old"));
 	// extractGfx(FileRom, s_ulOffsOlafOldStart, s_ulOffsOlafOldEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutput, "olaf_old"));
 
-	auto Decoded = extractCompressedAsset(FileRom, 0xE2583);
+	// Interplay logo tiles
+	// auto Decoded = extractCompressedAsset(FileRom, 0xE2583);
+	// std::ofstream FileOut;
+	// FileOut.open("decompressed.dat", std::ios::binary);
+	// FileOut.write(reinterpret_cast<char*>(Decoded.data()), Decoded.size());
+	// FileOut.close();
 
-	std::ofstream FileOut;
-	FileOut.open("decompressed.dat", std::ios::binary);
-	FileOut.write(reinterpret_cast<char*>(Decoded.data()), Decoded.size());
-	FileOut.close();
+	// Read asset TOC
+	FileRom.seekg(0x050000, std::ios::beg);
+	uint32_t ulOffs, ulPrevOffs = 0;
+	for(uint32_t i = 0; i < 0x155; ++i) {
+		FileRom.read(reinterpret_cast<char*>(&ulOffs), sizeof(ulOffs));
+
+		// Write size on previous line
+		uint32_t ulOffsCpu = ulOffs + 0x8A8000;
+		uint32_t ulRomOffs = snesAddressToRomOffset(ulOffsCpu);
+		if(ulPrevOffs != 0) {
+			fmt::print(FMT_STRING(", size: {}\n"), ulOffs - ulPrevOffs);
+		}
+
+		fmt::print(FMT_STRING("{:08X}, {:08X}, {:08X}"), ulOffs, ulOffsCpu, ulRomOffs);
+		ulPrevOffs = ulOffs;
+	}
+	fmt::print("\n");
 
 	fmt::print("All done!\n");
 	return EXIT_SUCCESS;
