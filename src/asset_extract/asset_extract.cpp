@@ -405,19 +405,33 @@ int main(int lArgCount, const char *pArgs[])
 	// FileOut.close();
 
 	// Read asset TOC
+	fmt::print("List of assets at 0x{:06X}:\n", 0x050000);
 	FileRom.seekg(0x050000, std::ios::beg);
-	uint32_t ulOffs, ulPrevOffs = 0;
+	uint32_t ulOffs, ulPrevOffs = 0, ulOffsCpu, ulOffsRom;
 	for(uint32_t i = 0; i < 0x155; ++i) {
 		FileRom.read(reinterpret_cast<char*>(&ulOffs), sizeof(ulOffs));
+		uint32_t ulOffsEntryNext = FileRom.tellg();
 
-		// Write size on previous line
-		uint32_t ulOffsCpu = ulOffs + 0x8A8000;
-		uint32_t ulRomOffs = snesAddressToRomOffset(ulOffsCpu);
+		// Write deduced size on previous line
 		if(ulPrevOffs != 0) {
-			fmt::print(FMT_STRING(", size: {}\n"), ulOffs - ulPrevOffs);
-		}
+			uint32_t ulSize = ulOffs - ulPrevOffs;
+			fmt::print(FMT_STRING(", size: {:5d}"), ulSize);
 
-		fmt::print(FMT_STRING("{:08X}, {:08X}, {:08X}"), ulOffs, ulOffsCpu, ulRomOffs);
+			// Check if decompression would make any sense
+			uint16_t uwSizeDecompressed;
+			FileRom.seekg(ulOffsRom, std::ios::beg);
+			FileRom.read(reinterpret_cast<char*>(&uwSizeDecompressed), sizeof(uwSizeDecompressed));
+			if(uwSizeDecompressed < ulSize) {
+				fmt::print(FMT_STRING(", uncompressed (decompressed is smaller)"), uwSizeDecompressed, ulSize);
+			}
+			fmt::print("\n");
+		}
+		ulOffsCpu = ulOffs + 0x8A8000;
+		ulOffsRom = snesAddressToRomOffset(ulOffsCpu);
+
+		FileRom.seekg(ulOffsEntryNext, std::ios::beg);
+
+		fmt::print(FMT_STRING("raw: 0x{:06X}, rom: 0x{:08X}"), ulOffs, ulOffsRom);
 		ulPrevOffs = ulOffs;
 	}
 	fmt::print("\n");
