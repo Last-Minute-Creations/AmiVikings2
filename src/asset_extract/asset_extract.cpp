@@ -297,12 +297,20 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 	uint8_t ubRepeatBits;
 	FileRom.seekg(ulOffsStart, std::ios::beg);
 	FileRom.read(reinterpret_cast<char*>(&uwDecompressedSize), sizeof(uwDecompressedSize));
-	std::vector<uint8_t> vDecoded(uwDecompressedSize, 0x00);
-	fmt::print(FMT_STRING("Decompressed size: {}\n"), uwDecompressedSize);
+
+	// Decompression algorithm depends on the first 4096 bytes being set to zero.
+	std::vector<uint8_t> vDecoded(std::max(uwDecompressedSize, uint16_t(0x1000)), 0x00);
+
+	fmt::print(FMT_STRING("Decompressing asset at {:08X}, size: {}\n"), ulOffsStart, uwDecompressedSize);
+	bool wasCopy = false;
 	do {
+		if(wasCopy) {
+			fmt::print("\n");
+		}
+		wasCopy = false;
 		FileRom.read(reinterpret_cast<char*>(&ubRepeatBits), sizeof(ubRepeatBits));
 		fmt::print(
-			FMT_STRING("File pos: {:06X}, repeat bits: {:08b}\n"),
+			FMT_STRING("ROM pos: {:06X}, repeat bits: {:08b}\n"),
 			size_t(FileRom.tellg()) - 1, ubRepeatBits
 		);
 		for(uint8_t ubBit = 0; ubBit < 8 && uwPos < uwDecompressedSize; ++ubBit) {
@@ -310,8 +318,15 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 			ubRepeatBits >>= 1;
 			if(isCopy) {
 				// Fill with next byte as-is
+				if(uwPos >= vDecoded.size()) {
+					throw std::runtime_error(fmt::format(FMT_STRING("Write out of buffer bounds")));
+				}
 				FileRom.read(reinterpret_cast<char*>(&vDecoded[uwPos]), sizeof(vDecoded[uwPos]));
-				fmt::print(FMT_STRING("read byte: {:02X}\n"), vDecoded[uwPos]);
+				if(!wasCopy) {
+					fmt::print("raw byte: ");
+					wasCopy = true;
+				}
+				fmt::print(FMT_STRING("{:02X} "), vDecoded[uwPos]);
 				++uwPos;
 			}
 			else {
@@ -320,11 +335,21 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 				FileRom.read(reinterpret_cast<char*>(&uwDecompressRaw), sizeof(uwDecompressRaw));
 				uint16_t uwCopyLoopIndex = uwDecompressRaw & 0xFFF;
 				uint16_t uwCopyLoopSize = ((uwDecompressRaw >> 12) + 3 + uwCopyLoopIndex) & 0x0FFF;
+				if(wasCopy) {
+					fmt::print("\n");
+					wasCopy = false;
+				}
 				fmt::print(
-					FMT_STRING("Decompress cmd: {:04X} ({:016b}), copying decompressed bytes from {} to {}\n"),
-					uwDecompressRaw, uwDecompressRaw, uwCopyLoopIndex, uwCopyLoopSize
+					FMT_STRING("Decompress cmd: {:04X}, copying in bytes from {}..{}\n"),
+					uwDecompressRaw, uwCopyLoopIndex, uwCopyLoopSize
 				);
 				while(uwCopyLoopIndex != 0x1000 && uwCopyLoopIndex != uwCopyLoopSize) {
+					if(uwPos >= vDecoded.size()) {
+						throw std::runtime_error(fmt::format(FMT_STRING("Write out of buffer bounds")));
+					}
+					if(uwCopyLoopIndex >= vDecoded.size()) {
+						throw std::runtime_error(fmt::format(FMT_STRING("Read out of buffer bounds")));
+					}
 					vDecoded[uwPos++] = vDecoded[uwCopyLoopIndex++];
 				}
 				if(uwCopyLoopIndex == 0x1000) {
@@ -335,9 +360,10 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 	} while(uwPos < uwDecompressedSize);
 
 	uint32_t ulEndPos = FileRom.tellg();
+	vDecoded.resize(uwDecompressedSize);
 	fmt::print(
-		FMT_STRING("Decompressed asset at {:08X}, compressed size: {}, decompressed: {}\n"),
-		ulOffsStart, ulEndPos - ulOffsStart, vDecoded.size()
+		FMT_STRING("Compressed size: {}, decompressed: {}\n"),
+		ulEndPos - ulOffsStart, vDecoded.size()
 	);
 	return vDecoded;
 }
@@ -408,6 +434,7 @@ int main(int lArgCount, const char *pArgs[])
 	fmt::print("List of assets at 0x{:06X}:\n", 0x050000);
 	FileRom.seekg(0x050000, std::ios::beg);
 	uint32_t ulOffs, ulPrevOffs = 0, ulOffsCpu, ulOffsRom;
+	std::vector<uint32_t> vOffsCompressed;
 	for(uint32_t i = 0; i < 0x155; ++i) {
 		FileRom.read(reinterpret_cast<char*>(&ulOffs), sizeof(ulOffs));
 		uint32_t ulOffsEntryNext = FileRom.tellg();
@@ -420,9 +447,18 @@ int main(int lArgCount, const char *pArgs[])
 			// Check if decompression would make any sense
 			uint16_t uwSizeDecompressed;
 			FileRom.seekg(ulOffsRom, std::ios::beg);
-			FileRom.read(reinterpret_cast<char*>(&uwSizeDecompressed), sizeof(uwSizeDecompressed));
+			FileRom.read(
+				reinterpret_cast<char*>(&uwSizeDecompressed),
+				sizeof(uwSizeDecompressed)
+			);
 			if(uwSizeDecompressed < ulSize) {
-				fmt::print(FMT_STRING(", uncompressed (decompressed is smaller)"), uwSizeDecompressed, ulSize);
+				fmt::print(
+					FMT_STRING(", uncompressed (decompressed is smaller)"),
+					uwSizeDecompressed, ulSize
+				);
+			}
+			else {
+				vOffsCompressed.push_back(ulOffsRom);
 			}
 			fmt::print("\n");
 		}
@@ -435,6 +471,30 @@ int main(int lArgCount, const char *pArgs[])
 		ulPrevOffs = ulOffs;
 	}
 	fmt::print("\n");
+
+	try {
+		for(const auto &Offs: vOffsCompressed) {
+			try {
+				auto Decoded = extractCompressedAsset(FileRom, Offs);
+				if(Decoded.size() != 0) {
+					std::ofstream FileOut;
+					FileOut.open(
+						fmt::format(FMT_STRING("{}/decompressed_{:08X}.dat"), szOutput, Offs),
+						std::ios::binary
+					);
+					FileOut.write(reinterpret_cast<char*>(Decoded.data()), Decoded.size());
+					FileOut.close();
+				}
+			}
+			catch(const std::exception &Exc) {
+				fmt::print("ERR: Exception while decoding asset at {:08X}: '{}'\n", Offs, Exc.what());
+			}
+		}
+	}
+	catch(const std::exception &Exc) {
+		fmt::print("Super failure: '{}'!\n", Exc.what());
+		return EXIT_FAILURE;
+	}
 
 	fmt::print("All done!\n");
 	return EXIT_SUCCESS;
