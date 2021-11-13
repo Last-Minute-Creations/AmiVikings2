@@ -9,6 +9,49 @@
 #include <fstream>
 #include <map>
 
+const std::map<uint32_t, std::string> mOffsToFileName = {
+	{0xE9F06, "enemy_tomator"},
+	{0xCEEA8, "enemy_wizard"},
+	{0xED14B, "lv2_logo_a"},
+	{0xEDB38, "lv2_logo_a"},
+	{0xCC4D1, "enemy_skeleton"},
+	{0xC5BF1, "bomb"},
+	{0xCAD87, "enemy_poof"},
+	{0xD3582, "enemy_vine"},
+	{0xCA8FC, "enemy_spikes"},
+	{0xF1420, "enemy_roboknight"},
+	{0xF1420, "enemy_roboknight"},
+	{0x506BF, "font"},
+	{0xC76D1, "door_bolted"},
+	{0xC87E6, "door_skull"},
+	{0xC7D97, "bounce_bone"},
+	{0xC92DC, "dunno1"},
+	{0xC8431, "dunno2"},
+	{0xC7B68, "gas"},
+	{0xC5711, "items_keys"},
+	{0xF212C, "cutscene_lolipop"},
+	{0xC8C13, "dunno3"},
+	{0xC8F07, "items_skull_voodoo"},
+	{0xC55DF, "fart"},
+	{0xC981D, "tile_block_crush"},
+	{0xCA410, "items_pcb_battery_disk_burger"},
+	{0xE6E1B, "npc_witch"},
+	{0xC65E6, "interact_switch"},
+	{0xC75DE, "platform_grass"},
+	{0xC90FB, "platform_wood"},
+	{0xC681D, "spike_up"},
+	{0xC6538, "interact_button"}, // corrupted
+	{0xC8143, "drill_up"},
+	{0xCA6CD, "zap"},
+	{0xCA6CD, "zap"},
+	{0xC7F04, "tile_elevator_updown1"},
+	{0xC64C1, "item_hammer"},
+	{0xC85CC, "tile_corner1"},
+	{0xC951F, "tile_corner2"},
+	{0xCA3A2, "tile_elevator_updown2"},
+	{0x50DAD, "hud_cursor"},
+};
+
 struct tMergeRule {
 	uint8_t m_ubTileWidth;
 	uint8_t m_ubTileHeight;
@@ -478,10 +521,15 @@ int main(int lArgCount, const char *pArgs[])
 				auto Decoded = extractCompressedAsset(FileRom, Offs);
 				if(Decoded.size() != 0) {
 					std::ofstream FileOut;
-					FileOut.open(
-						fmt::format(FMT_STRING("{}/decompressed_{:08X}.dat"), szOutput, Offs),
-						std::ios::binary
-					);
+					std::string szOutPath;
+					auto Asset = mOffsToFileName.find(Offs);
+					if(Asset != mOffsToFileName.end()) {
+						szOutPath = fmt::format(FMT_STRING("{}/{}.dat"), szOutput, Asset->second);
+					}
+					else {
+						szOutPath = fmt::format(FMT_STRING("{}/_unk_{:08X}.dat"), szOutput, Offs);
+					}
+					FileOut.open(szOutPath,	std::ios::binary);
 					FileOut.write(reinterpret_cast<char*>(Decoded.data()), Decoded.size());
 					FileOut.close();
 				}
