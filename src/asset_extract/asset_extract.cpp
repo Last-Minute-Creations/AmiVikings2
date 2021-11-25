@@ -214,14 +214,14 @@ static const tPalette s_PaletteFang({
 static const uint32_t s_ulOffsScorchStart = 0xAD418;
 static const uint32_t s_ulOffsScorchEnd = 0xB6818;
 static const tPalette s_PaletteScorch({ // TODO: proper palette
-	tRgb(0x202058), tRgb(0xf8a870),
-	tRgb(0xb06838), tRgb(0x784018),
-	tRgb(0x482000), tRgb(0xf8f8f8),
-	tRgb(0xc8c8c8), tRgb(0x787878),
-	tRgb(0x383838), tRgb(0xf8f800),
-	tRgb(0xb8b800), tRgb(0x888800),
-	tRgb(0x0080f8), tRgb(0x0050b8),
-	tRgb(0x001890), tRgb(0x000001)
+	tRgb(0x310031), tRgb(0xB5FF00),
+	tRgb(0x8CD600), tRgb(0x63B500),
+	tRgb(0x428C00), tRgb(0x296B00),
+	tRgb(0x004A00), tRgb(0x002900),
+	tRgb(0x000000), tRgb(0xD6D6D6),
+	tRgb(0x8C8C8C), tRgb(0x424242),
+	tRgb(0xDEDE00), tRgb(0xA59C00),
+	tRgb(0x635A00), tRgb(0x292100)
 });
 //---------------------------------------------------------------- EXTRACT: OLAF
 static const uint32_t s_ulOffsOlafStart = 0xB6818;
