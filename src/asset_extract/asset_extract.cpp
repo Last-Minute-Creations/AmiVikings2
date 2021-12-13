@@ -469,7 +469,7 @@ static uint32_t snesAddressToRomOffset(uint32_t ulBaseAddress) {
 	return ulRomOffset;
 }
 
-// asset_extract "c:/gry/snes9x/Roms/Lost Vikings II, The - Norse by Norsewest (Europe) (En,Fr,De).sfc" ../assets
+// asset_extract "c:/gry/snes9x/Roms/Lost Vikings II, The - Norse by Norsewest (Europe) (En,Fr,De).sfc" ../assets/dec
 int main(int lArgCount, const char *pArgs[])
 {
 	const uint8_t ubMandatoryArgCnt = 2;
@@ -559,12 +559,16 @@ int main(int lArgCount, const char *pArgs[])
 				if(Decoded.size() != 0) {
 					std::ofstream FileOut;
 					std::string szOutPath;
+					std::string szExtension = "dat";
+					if(Decoded[0] == 0x00 && Decoded[1] == 0x01 && Decoded[2] == 0xF8 && Decoded[3] == 0x00) {
+						szExtension = "1F8";
+					}
 					auto Asset = mOffsToFileName.find(Offs);
 					if(Asset != mOffsToFileName.end()) {
-						szOutPath = fmt::format(FMT_STRING("{}/{}.dat"), szOutput, Asset->second);
+						szOutPath = fmt::format(FMT_STRING("{}/{}.{}"), szOutput, Asset->second, szExtension);
 					}
 					else {
-						szOutPath = fmt::format(FMT_STRING("{}/_unk_{:08X}.dat"), szOutput, Offs);
+						szOutPath = fmt::format(FMT_STRING("{}/_unk_{:08X}.{}"), szOutput, Offs, szExtension);
 					}
 					FileOut.open(szOutPath,	std::ios::binary);
 					FileOut.write(reinterpret_cast<char*>(Decoded.data()), Decoded.size());
