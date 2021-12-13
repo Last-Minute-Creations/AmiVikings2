@@ -386,7 +386,10 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 					FMT_STRING("Decompress cmd: {:04X}, copying in bytes from {}..{}\n"),
 					uwDecompressRaw, uwCopyLoopIndex, uwCopyLoopSize
 				);
-				while(uwCopyLoopIndex != 0x1000 && uwCopyLoopIndex != uwCopyLoopSize) {
+				while(uwCopyLoopIndex != uwCopyLoopSize) {
+					if(uwCopyLoopIndex == 0x1000) {
+						uwCopyLoopIndex = 0;
+					}
 					if(uwPos >= vDecoded.size()) {
 						throw std::runtime_error(fmt::format(FMT_STRING("Write out of buffer bounds")));
 					}
