@@ -1,0 +1,144 @@
+Mechanics for Vikings:
+	✔ Collision with terrain @done(21-11-27 21:37)
+	☐ Walking across slopes
+	☐ Climbing
+	☐ Fall damage
+	☐ Elevators - collision with platform, collision with ceiling while moving up, collision with terrain while moving down
+	☐ Steerable elevators
+	☐ Jumpy swings
+	☐ Weighted elevators
+	☐ Grabbing items
+	☐ Using items (doors)
+	☐ Taking damage
+	☐ Healing
+	☐ Dying
+	☐ Moving on line
+	☐ Tiles with mask - future world tunnels, grass - on snes made with tile priority
+
+Mechanics for Erik:
+	☐ Jump
+	☐ Double jump
+	☐ Dash
+	☐ Swim
+
+Mechanics for Baelog:
+	☐ Sword slash
+	☐ Punch
+	☐ Swinging
+
+Mechanics for Olaf:
+	☐ Shield left-right
+	☐ Shield top
+	☐ Gliding
+	☐ Farting
+	☐ Minimizing
+
+Mechanics for Fang:
+	☐ Climb-jump
+	☐ Claw slash
+
+Mechanics for Scorch:
+	☐ Limited flying
+	☐ Gliding
+	☐ Fireball
+
+Misc mechanics:
+	☐ Using buttons - onInteract(this)
+	☐ Using switches - onInteract(this)
+	☐ Talking with NPCS - onInteract(this)
+	☐ Help blocks - onInteract(this)
+	☐ Events on entering location - first help panel, kid talk, first Fang/Scorch encounter
+	☐ Getting out of levels
+	☐ Displaying text
+	☐ Detonating blocks
+	☐ Bombs
+	☐ Darkness and torch
+	☐ Items dropped by enemies
+
+Enemies - world 1:
+	☐ Skeleton
+	☐ Bat
+	☐ Shooting face
+	☐ Flame turret - horizontal
+	☐ Flame turret - vertical
+
+Enemies - world 2:
+	☐ Wizard
+	☐ Dragon
+	☐ Knight
+
+Enemies - world 3:
+	☐ Pirate
+	☐ Parrot
+	☐ Cannon - destructible
+
+Enemies - world 4:
+	☐ Monkey
+	☐ Vines
+
+Enemies - world 5:
+	☐ Xenomorph
+	☐ Flying/driving robot
+	☐ Zap fields
+	☐ Tomator
+
+Game parts:
+	☐ Menu
+	☐ Intro
+	☐ Entering level - scripted cutscene with text
+	☐ Exiting level - scripted cutscene with text
+	☐ Going to next level
+	☐ Retry
+	☐ Display level password only once
+	☐ Working password system in menu
+	☐ Cutscenes between worlds
+	☐ Outro
+	☐ Cheats
+	☐ Additional cheats in HRDR
+	☐ Title screen fully implemented
+
+Playable levels - world 1
+	☐ STRT
+	☐ ST3W
+	☐ K3YS
+	☐ TRSH
+	☐ SW1M
+	☐ TW0!
+	☐ TIM3
+	☐ cutcene
+
+Playable levels - world 2
+	☐ K4RN
+	☐ B0MB
+	☐ WZRD
+	☐ BLKS
+	☐ TLPT
+	☐ GYSR
+	☐ cutscene
+
+Playable levels - world 3
+	☐ B3SV
+	☐ R3T0
+	☐ DRNK
+	☐ Y0VR
+	☐ 0V4L
+	☐ T1N3
+	☐ cutscene
+
+Playable levels - world 4
+	☐ D4RK
+	☐ H4RD
+	☐ HRDR
+	☐ L0ST
+	☐ 0B0Y
+	☐ H0M3
+	☐ cutscene
+
+Playable levels - world 5
+	☐ SHCK
+	☐ TNNL
+	☐ H3LL
+	☐ 4RGH
+	☐ B4DD
+	☐ D4DY
+	☐ cutscene
