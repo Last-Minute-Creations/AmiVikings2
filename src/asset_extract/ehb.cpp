@@ -3,6 +3,132 @@
 #include <cmath>
 #include <cstdint>
 #include <chrono>
+#include <random>
+#include <vector>
+#include <algorithm>
+#include <functional>
+#include <utility>
+
+class PSO {
+
+private:
+	int numberOfParticles;
+	int numberOfDimensions;
+	int maximumOfIteration; // Termination Condition By Iteration
+
+	double minRand; // Minimum Of Initial Variables
+	double maxRand; // Maximum Of Initial Variables
+	double errorCon; // Termination Condition By Error
+
+	double W; // Inertial Coefficient
+	double C1; // Acceleration Coefficient
+	double C2; // Acceleration Coefficient
+
+	std::pair<std::vector<double>, double> result;
+
+public:
+
+	PSO(
+		int    NOP = 500  , int    NOD = 1   , int    MOI = 1000,
+		double MIR = 0    , double MAR = 640 , double ERC = 0.01,
+		double w   = 0.9  , double c1  = 0.6 , double c2  = 1.4
+	):
+		numberOfParticles(NOP), numberOfDimensions(NOD), maximumOfIteration(MOI),
+		minRand(MIR), maxRand(MAR), errorCon(ERC), W(w), C1(c1), C2(c2)
+	{
+
+	}
+
+	auto set_numberOfParticles ( int    NOP) { this->numberOfParticles  = NOP; };
+	auto set_numberOfDimension ( int    NOD) { this->numberOfDimensions = NOD; };
+	auto set_maximumOfIteration( int    MOI) { this->maximumOfIteration = MOI; };
+	auto set_minRand           ( double MIR) { this->minRand            = MIR; };
+	auto set_maxRand           ( double MAR) { this->maxRand            = MAR; };
+	auto set_errorCon          ( double ERC) { this->errorCon           = ERC; };
+	auto set_w                 ( double w  ) { this->W                  = w; };
+	auto set_c1                ( double c1 ) { this->C1                 = c1; };
+	auto set_c2                ( double c2 ) { this->C2                 = c2; };
+
+	auto optimize( std::function<double (std::vector<double>)> fitFunc)
+	{
+		std::mt19937 mersenne( static_cast<unsigned int>( time( nullptr ) ) );
+		std::uniform_real_distribution<> rnd1( minRand, maxRand );
+		std::uniform_real_distribution<> rnd2( 0, 1 );
+
+		std::vector<double> localBest( numberOfDimensions );
+		generate( localBest.begin(), localBest.end(), [&]{ return rnd1( mersenne );} );
+		double localBestResult = fitFunc(localBest);
+
+		std::vector<double> globalBest = localBest;
+		double globalBestResult = localBestResult;
+
+		std::vector<std::vector<double>> particles;
+		particles.resize( numberOfParticles, std::vector<double>( numberOfDimensions, 0 ) );
+
+		std::vector<double> velocity;
+		velocity.resize( numberOfDimensions, 0 );
+
+		// Initialize particles with random values, update global best
+		for(auto &row : particles) {
+			std::vector<double> temp( numberOfDimensions );
+			temp.clear();
+
+			for(auto &col : row) {
+				col = rnd1( mersenne );
+				temp.push_back( col );
+			}
+
+			localBest = temp;
+			localBestResult = fitFunc(localBest);
+
+			if (localBestResult < globalBestResult) {
+				globalBest = localBest;
+				globalBestResult = localBestResult;
+			}
+		}
+
+		int iterator = 0;
+		while (globalBestResult > errorCon and iterator < maximumOfIteration) {
+			++iterator;
+			auto Start = std::chrono::system_clock::now();
+			for(int i = 0; i < numberOfParticles; ++i) {
+				for(int j = 0; j < numberOfDimensions; ++j) {
+					double r1 = rnd2(mersenne);
+					double r2 = rnd2(mersenne);
+
+					velocity[j] = (
+						W * velocity[j] +
+						(C1 * r1 * (localBest[j] - particles[i][j])) +
+						(C2 * r2 * (globalBest[j] - particles[i][j]))
+					);
+					particles[i][j] = std::clamp(particles[i][j] + velocity[j], 0.0, double(0xFFF));
+				}
+
+				auto particleResult = fitFunc(particles[i]);
+				if (particleResult < localBestResult) {
+					localBest = particles[i];
+				}
+			}
+
+			if (localBestResult < globalBestResult) {
+				globalBest = localBest;
+				globalBestResult = localBestResult;
+			}
+			auto Stop = std::chrono::system_clock::now();
+			auto Delta = std::chrono::duration_cast<std::chrono::seconds>(Stop - Start).count();
+			fmt::print("Iteration {}, time: {}s, global best: {}\n", iterator, Delta, globalBestResult);
+		}
+
+		this->result = std::make_pair(globalBest, globalBestResult);
+		return this->result;
+	}
+
+	auto printResult() -> void
+	{
+		fmt::print("PSO Predicted Point : {} , {}\n", result.first[0] , result.first[1]);
+		fmt::print("Error : {}\n", result.second);
+	}
+};
 
 static int64_t calcError(const tChunkyBitmap &Img, const std::vector<tRgb> &vColors)
 {
@@ -23,6 +149,20 @@ static int64_t calcError(const tChunkyBitmap &Img, const std::vector<tRgb> &vCol
 		}
 		Error += MinError;
 	}
+	return Error;
+}
+
+static tChunkyBitmap *s_pFitBitmap;
+static double fitFuntion(std::vector<double> Colors) {
+	// Downgrade the colors to proper palette
+	std::vector<tRgb> vPalette(64, tRgb(0));
+	for(int i = 0; i < 32; ++i) {
+		int Rgb = Colors[i];
+		vPalette[i] = tRgb(Rgb);
+		vPalette[i + 32] = tRgb(vPalette[i].ubR >> 1, vPalette[i].ubG >> 1, vPalette[i].ubB >> 1);
+	}
+	// Calculate the error
+	auto Error = calcError(*s_pFitBitmap, vPalette);
 	return Error;
 }
 
@@ -73,6 +213,14 @@ void tryAfterMod(
 int main(int lArgCount, char *pArgs[])
 {
 	auto ImgIn = tChunkyBitmap::fromPng("../assets/lv2_world1.png");
+	PSO swarm;
+	swarm.set_numberOfDimension(32);
+	swarm.set_minRand(0);
+	swarm.set_maxRand(0xFFF);
+	s_pFitBitmap = &ImgIn;
+	swarm.optimize(fitFuntion);
+
+	return EXIT_SUCCESS;
 
 	// Initial palette
 	std::vector<tRgb> vColors = {
