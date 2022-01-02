@@ -45,6 +45,8 @@ const std::map<uint32_t, std::string> mOffsToFileName = {
 	{0xC63EB, "dunno_magic"},
 	{0xC8D32, "dunno_ball2"},
 	{0xCA894, "dunno4"},
+	{0xE9D06, "dunno_water1"},
+	{0xECB65, "dunno_water2"},
 	{0xC7B68, "gas"},
 	{0xC5711, "items_keys"},
 	{0xF212C, "cutscene_lolipop"},
@@ -72,6 +74,8 @@ const std::map<uint32_t, std::string> mOffsToFileName = {
 	{0x50DAD, "hud_cursor_up"},
 	{0xC56BB, "hud_cursor_down"},
 	{0x5281B, "hud_items"},
+	{0x5245B, "hud_portrait_unk1"},
+	{0x525DB, "hud_portrait_unk2"},
 	{0xC5418, "baelog_hand"},
 	{0xC6038, "push_block"},
 	{0xC9D76, "projectile_banana"},
@@ -85,6 +89,7 @@ const std::map<uint32_t, std::string> mOffsToFileName = {
 	{0xE6D9E, "item_capacitor"},
 	{0xCA001, "interact_keyslots"},
 	{0xC5BA1, "tile_pipe"},
+	{0xB3818, "frames_scorch2"},
 };
 
 struct tMergeRule {
@@ -430,9 +435,6 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 					uwDecompressRaw, uwCopyLoopIndex, uwCopyLoopSize
 				);
 				while(uwCopyLoopIndex != uwCopyLoopSize) {
-					if(uwCopyLoopIndex == 0x1000) {
-						uwCopyLoopIndex = 0;
-					}
 					if(uwPos >= vDecoded.size()) {
 						throw std::runtime_error(fmt::format(FMT_STRING("Write out of buffer bounds")));
 					}
@@ -440,6 +442,10 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 						throw std::runtime_error(fmt::format(FMT_STRING("Read out of buffer bounds")));
 					}
 					vDecoded[uwPos++] = vDecoded[uwCopyLoopIndex++];
+
+					if(uwCopyLoopIndex == 0x1000 && uwCopyLoopIndex != uwCopyLoopSize) {
+						uwCopyLoopIndex = 0;
+					}
 				}
 				if(uwCopyLoopIndex == 0x1000) {
 					fmt::print(FMT_STRING("stopped at pos 0x1000\n"));
@@ -549,8 +555,6 @@ int main(int lArgCount, const char *pArgs[])
 					uwSizeDecompressed, ulSizeInRom
 				);
 				vAssetToc[i - 1].isUncompressed = true;
-			}
-			else {
 			}
 			fmt::print("\n");
 		}
