@@ -71,6 +71,7 @@ const std::map<uint32_t, std::string> mOffsToFileName = {
 	{0xCA3A2, "tile_elevator_updown2"},
 	{0x50DAD, "hud_cursor_up"},
 	{0xC56BB, "hud_cursor_down"},
+	{0x5281B, "hud_items"},
 	{0xC5418, "baelog_hand"},
 	{0xC6038, "push_block"},
 	{0xC9D76, "projectile_banana"},
@@ -327,7 +328,7 @@ void extractGfx(
 		}
 		auto pTileChunky = std::make_shared<tRawTile>(tChunkyBitmap(TilePlanar, Palette));
 		mTiles.emplace(i, pTileChunky);
-		// TileChunky.toPng(fmt::format("{}/{}.png", szOutput, i));
+		// TileChunky.toPng(fmt::format("{}/{}.png", szOutDir, i));
 	}
 
 	// Merge tiles accorging to rules
@@ -366,6 +367,14 @@ void extractGfx(
 		vRules.push_back(tMergeRule(ubTileWidth, ubTileHeight, fmt::format("{}", i), i * uwTilesPerFrame));
 	}
 	extractGfx(FileRom, ulOffsStart, ulOffsEnd, vRules, Palette, DirName);
+}
+
+[[nodiscard]]
+static std::vector<uint8_t> extractUncompressedAsset(std::ifstream &FileRom, uint32_t ulOffsStart, uint32_t ulSize) {
+	std::vector<uint8_t> vContents(ulSize, 0x00);
+	FileRom.seekg(ulOffsStart, std::ios::beg);
+	FileRom.read(reinterpret_cast<char*>(vContents.data()), ulSize);
+	return vContents;
 }
 
 [[nodiscard]]
@@ -469,6 +478,12 @@ static uint32_t snesAddressToRomOffset(uint32_t ulBaseAddress) {
 	return ulRomOffset;
 }
 
+struct tAssetTocEntry {
+	uint32_t ulOffs;
+	uint32_t ulSizeInRom;
+	bool isUncompressed;
+};
+
 // asset_extract "c:/gry/snes9x/Roms/Lost Vikings II, The - Norse by Norsewest (Europe) (En,Fr,De).sfc" ../assets/dec
 int main(int lArgCount, const char *pArgs[])
 {
@@ -479,7 +494,7 @@ int main(int lArgCount, const char *pArgs[])
 		return EXIT_FAILURE;
 	}
 
-	std::string szInput = pArgs[1], szOutput = pArgs[2];
+	std::string szInput = pArgs[1], szOutDir = pArgs[2];
 
 	// TODO: create dir
 
@@ -492,91 +507,101 @@ int main(int lArgCount, const char *pArgs[])
 
 	// TODO: verify ROM size/checksum/header
 
-	// extractGfx(FileRom, s_ulOffsHudStart, s_ulOffsHudEnd, s_vMergeRulesHud, s_PaletteHud, fmt::format("{}/{}", szOutput, "hud"));
-	// extractGfx(FileRom, s_ulOffsErikStart, s_ulOffsErikEnd, 4, 4, s_PaletteErik, fmt::format("{}/{}", szOutput, "erik"));
-	// extractGfx(FileRom, s_ulOffsBaelogStart, s_ulOffsBaelogEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutput, "baelog"));
-	// extractGfx(FileRom, s_ulOffsFangStart, s_ulOffsFangEnd, 4, 4, s_PaletteFang, fmt::format("{}/{}", szOutput, "fang"));
-	// extractGfx(FileRom, s_ulOffsScorchStart, s_ulOffsScorchEnd, 4, 4, s_PaletteScorch, fmt::format("{}/{}", szOutput, "scorch"));
-	// extractGfx(FileRom, s_ulOffsOlafStart, s_ulOffsOlafEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutput, "olaf"));
-	// extractGfx(FileRom, s_ulOffsEffectStart, s_ulOffsEffectEnd, 4, 4, s_PaletteEffect, fmt::format("{}/{}", szOutput, "effect"));
-	// extractGfx(FileRom, s_ulOffsErikOldStart, s_ulOffsErikOldEnd, 4, 4, s_PaletteErik, fmt::format("{}/{}", szOutput, "erik_old"));
-	// extractGfx(FileRom, s_ulOffsBaelogOldStart, s_ulOffsBaelogOldEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutput, "baelog_old"));
-	// extractGfx(FileRom, s_ulOffsOlafOldStart, s_ulOffsOlafOldEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutput, "olaf_old"));
-
-	// Interplay logo tiles
-	// auto Decoded = extractCompressedAsset(FileRom, 0xE2583);
-	// std::ofstream FileOut;
-	// FileOut.open("decompressed.dat", std::ios::binary);
-	// FileOut.write(reinterpret_cast<char*>(Decoded.data()), Decoded.size());
-	// FileOut.close();
+	// extractGfx(FileRom, s_ulOffsHudStart, s_ulOffsHudEnd, s_vMergeRulesHud, s_PaletteHud, fmt::format("{}/{}", szOutDir, "hud"));
+	// extractGfx(FileRom, s_ulOffsErikStart, s_ulOffsErikEnd, 4, 4, s_PaletteErik, fmt::format("{}/{}", szOutDir, "erik"));
+	// extractGfx(FileRom, s_ulOffsBaelogStart, s_ulOffsBaelogEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutDir, "baelog"));
+	// extractGfx(FileRom, s_ulOffsFangStart, s_ulOffsFangEnd, 4, 4, s_PaletteFang, fmt::format("{}/{}", szOutDir, "fang"));
+	// extractGfx(FileRom, s_ulOffsScorchStart, s_ulOffsScorchEnd, 4, 4, s_PaletteScorch, fmt::format("{}/{}", szOutDir, "scorch"));
+	// extractGfx(FileRom, s_ulOffsOlafStart, s_ulOffsOlafEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutDir, "olaf"));
+	// extractGfx(FileRom, s_ulOffsEffectStart, s_ulOffsEffectEnd, 4, 4, s_PaletteEffect, fmt::format("{}/{}", szOutDir, "effect"));
+	// extractGfx(FileRom, s_ulOffsErikOldStart, s_ulOffsErikOldEnd, 4, 4, s_PaletteErik, fmt::format("{}/{}", szOutDir, "erik_old"));
+	// extractGfx(FileRom, s_ulOffsBaelogOldStart, s_ulOffsBaelogOldEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutDir, "baelog_old"));
+	// extractGfx(FileRom, s_ulOffsOlafOldStart, s_ulOffsOlafOldEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutDir, "olaf_old"));
 
 	// Read asset TOC
 	fmt::print("List of assets at 0x{:06X}:\n", 0x050000);
 	FileRom.seekg(0x050000, std::ios::beg);
-	uint32_t ulOffs, ulPrevOffs = 0, ulOffsCpu, ulOffsRom;
-	std::vector<uint32_t> vOffsCompressed;
+	std::vector<tAssetTocEntry> vAssetToc;
 	for(uint32_t i = 0; i < 0x155; ++i) {
+		// Read offset
+		uint32_t ulOffs;
 		FileRom.read(reinterpret_cast<char*>(&ulOffs), sizeof(ulOffs));
 		uint32_t ulOffsEntryNext = FileRom.tellg();
+		auto OffsCpu = ulOffs + 0x8A8000;
+		auto OffsRom = snesAddressToRomOffset(OffsCpu);
 
-		// Write deduced size on previous line
-		if(ulPrevOffs != 0) {
-			uint32_t ulSize = ulOffs - ulPrevOffs;
-			fmt::print(FMT_STRING(", size: {:5d}"), ulSize);
+		// Update deduced size on previous entry
+		if(i > 0) {
+			uint32_t ulSizeInRom = OffsRom - vAssetToc[i - 1].ulOffs;
+			fmt::print(FMT_STRING(", size: {:5d}"), ulSizeInRom);
+			vAssetToc[i - 1].ulSizeInRom = ulSizeInRom;
 
 			// Check if decompression would make any sense
 			uint16_t uwSizeDecompressed;
-			FileRom.seekg(ulOffsRom, std::ios::beg);
+			FileRom.seekg(vAssetToc[i - 1].ulOffs, std::ios::beg);
 			FileRom.read(
 				reinterpret_cast<char*>(&uwSizeDecompressed),
 				sizeof(uwSizeDecompressed)
 			);
-			if(uwSizeDecompressed < ulSize) {
+			if(uwSizeDecompressed < ulSizeInRom) {
 				fmt::print(
-					FMT_STRING(", uncompressed (decompressed is smaller)"),
-					uwSizeDecompressed, ulSize
+					FMT_STRING(", uncompressed (decompressed would be smaller)"),
+					uwSizeDecompressed, ulSizeInRom
 				);
+				vAssetToc[i - 1].isUncompressed = true;
 			}
 			else {
-				vOffsCompressed.push_back(ulOffsRom);
 			}
 			fmt::print("\n");
 		}
-		ulOffsCpu = ulOffs + 0x8A8000;
-		ulOffsRom = snesAddressToRomOffset(ulOffsCpu);
+		vAssetToc.push_back({
+			.ulOffs = OffsRom, .ulSizeInRom = 0,
+			.isUncompressed = false
+		});
 
 		FileRom.seekg(ulOffsEntryNext, std::ios::beg);
 
-		fmt::print(FMT_STRING("raw: 0x{:06X}, rom: 0x{:08X}"), ulOffs, ulOffsRom);
-		ulPrevOffs = ulOffs;
+		fmt::print(FMT_STRING("raw: 0x{:06X}, rom: 0x{:08X}"), ulOffs, OffsRom);
 	}
 	fmt::print("\n");
 
 	try {
-		for(const auto &Offs: vOffsCompressed) {
-			try {
-				auto Decoded = extractCompressedAsset(FileRom, Offs);
-				if(Decoded.size() != 0) {
-					std::ofstream FileOut;
-					std::string szOutPath;
-					std::string szExtension = "dat";
-					if(Decoded[0] == 0x00 && Decoded[1] == 0x01 && Decoded[2] == 0xF8 && Decoded[3] == 0x00) {
-						szExtension = "1F8";
-					}
-					auto Asset = mOffsToFileName.find(Offs);
-					if(Asset != mOffsToFileName.end()) {
-						szOutPath = fmt::format(FMT_STRING("{}/{}.{}"), szOutput, Asset->second, szExtension);
-					}
-					else {
-						szOutPath = fmt::format(FMT_STRING("{}/_unk_{:08X}.{}"), szOutput, Offs, szExtension);
-					}
-					FileOut.open(szOutPath,	std::ios::binary);
-					FileOut.write(reinterpret_cast<char*>(Decoded.data()), Decoded.size());
-					FileOut.close();
+		for(auto &TocEntry: vAssetToc) {
+			std::string szAssetName = fmt::format(FMT_STRING("_compressed_{:08X}"), TocEntry.ulOffs);
+			std::vector<uint8_t> vAssetContents;
+			if(!TocEntry.isUncompressed) {
+				try {
+					vAssetContents = extractCompressedAsset(FileRom, TocEntry.ulOffs);
+				}
+				catch(const std::exception &Exc) {
+					fmt::print("ERR: Exception while decoding asset at {:08X}: '{}'\n", TocEntry.ulOffs, Exc.what());
+					TocEntry.isUncompressed = true;
+					szAssetName = fmt::format(FMT_STRING("_faildec_{:08X}"), TocEntry.ulOffs);
 				}
 			}
-			catch(const std::exception &Exc) {
-				fmt::print("ERR: Exception while decoding asset at {:08X}: '{}'\n", Offs, Exc.what());
+			else {
+				szAssetName = fmt::format(FMT_STRING("_uncompressed_{:08X}"), TocEntry.ulOffs);
+			}
+			if(TocEntry.isUncompressed) {
+					if(TocEntry.ulSizeInRom) {
+						vAssetContents = extractUncompressedAsset(FileRom, TocEntry.ulOffs, TocEntry.ulSizeInRom);
+					}
+			}
+			if(vAssetContents.size() != 0) {
+				std::ofstream FileOut;
+				std::string szOutPath;
+				std::string szExtension = "dat";
+				if(vAssetContents[0] == 0x00 && vAssetContents[1] == 0x01 && vAssetContents[2] == 0xF8 && vAssetContents[3] == 0x00) {
+					szExtension = "1F8";
+				}
+				auto Asset = mOffsToFileName.find(TocEntry.ulOffs);
+				if(Asset != mOffsToFileName.end()) {
+					szAssetName = Asset->second;
+				}
+				szOutPath = fmt::format(FMT_STRING("{}/{}.{}"), szOutDir, szAssetName, szExtension);
+				FileOut.open(szOutPath,	std::ios::binary);
+				FileOut.write(reinterpret_cast<char*>(vAssetContents.data()), vAssetContents.size());
+				FileOut.close();
 			}
 		}
 	}
