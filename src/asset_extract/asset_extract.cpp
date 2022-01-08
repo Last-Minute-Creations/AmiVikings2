@@ -7,136 +7,149 @@
 #include "rgb.h"
 #include "bitmap.h"
 #include <fstream>
+#include <filesystem>
 #include <map>
 
-const std::map<uint32_t, std::string> mOffsToFileName = {
-	{0xED14B, "logo_lv2_a"},
-	{0xEDB38, "logo_lv2_b"},
-	{0xE2583, "logo_interplay"},
-	{0xE4D50, "logo_gameover_a"},
-	{0xE3863, "logo_blizzard"},
-	{0xC5BF1, "bomb"},
-	{0xE9F06, "enemy_tomator"},
-	{0xCAD87, "enemy_poof"},
-	{0xCA8FC, "enemy_spikes"},
-	{0xCB35F, "enemy_jelly"},
-	{0xCBA0E, "enemy_fish"},
-	{0xCCE03, "enemy_vamp"},
-	{0xCC4D1, "enemy_skeleton"},
-	{0xCDBE8, "enemy_knight"},
-	{0xCEEA8, "enemy_wizard"},
-	{0xCFB5F, "enemy_pirate"},
-	{0xD0484, "enemy_corsair"},
-	{0xD3582, "enemy_vine"},
-	{0xF1420, "enemy_roboknight"},
-	{0xD2328, "enemy_monkey"},
-	{0xD1273, "enemy_montezuma"},
-	{0xD3CBD, "enemy_robot"},
-	{0xD4780, "enemy_xeno"},
-	{0xC9A18, "obstacle_spike_ball_underwater"},
-	{0xC9E5A, "obstacle_spike_ball_underwater_2"}, // other palette
-	{0xC6730, "obstacle_spike_ball_underwater_3"}, // other palette
-	{0xC95E7, "obstacle_spear_up"},
-	{0xC9580, "obstacle_spear_left"},
-	{0xC8143, "obstacle_drill_up"},
-	{0xCA6CD, "obstacle_zap"},
-	{0xCA5F5, "obstacle_zap2"},
-	{0xEE368, "obstacle_zap3"},
-	{0xC681D, "obstacle_spike_up"},
-	{0xECD65, "obstacle_burning_rope"},
-	{0x506BF, "font"},
-	{0xC76D1, "door_bolted"},
-	{0xC87E6, "door_skull"},
-	{0xC7D97, "bounce_bone"},
-	{0xC92DC, "dunno1"},
-	{0xC8431, "dunno2"},
-	{0xC8C13, "dunno3"},
-	{0xC9C87, "dunno_ball"},
-	{0xC63EB, "dunno_magic"},
-	{0xC8D32, "dunno_ball2"},
-	{0xCA894, "dunno4"},
-	{0xE9D06, "dunno_water1"},
-	{0xECB65, "dunno_water2"},
-	{0xE9906, "dunno_water3"},
-	{0xE9B06, "dunno_water4"},
-	{0xEC965, "dunno_water5"},
-	{0xC7B68, "gas"},
-	{0xC5711, "items_keys"},
-	{0xEFAEA, "cutscene_screens"},
-	{0xF02D0, "cutscene_fist"},
-	{0xF212C, "cutscene_lolipop"},
-	{0xC8F07, "items_skull_voodoo"},
-	{0xC55DF, "fart"},
-	{0xC981D, "tile_block_crush"},
-	{0xCA410, "items_pcb_battery_disk_burger"},
-	{0xE6E1B, "npc_witch"},
-	{0xE92F5, "npc_time_machine"},
-	{0xE6FFD, "npc_mage"},
-	{0xE7479, "npc_gypsy"},
-	{0xE783B, "npc_shaman"},
-	{0xE7C0E, "npc_connor"},
-	{0xE822F, "npc_kid"},
-	{0xC65E6, "interact_switch"},
-	{0xC75DE, "platform_grass"},
-	{0xC90FB, "platform_wood"},
-	{0xCA0F7, "platform_future"},
-	{0xC6538, "interact_button"},
-	{0xEE50E, "bubbles"},
-	{0xC7F04, "tile_elevator_updown1"},
-	{0xC64C1, "cursor_hammer"},
-	{0xE4D1C, "cursor_password"},
-	{0xC85CC, "tile_corner1"},
-	{0xC951F, "tile_corner2"},
-	{0xF2368, "tile_corner3"},
-	{0xCA3A2, "tile_elevator_updown2"},
-	{0x509B9, "hud_border"},
-	{0x50DAD, "hud_cursor_up"},
-	{0xC56BB, "hud_cursor_down"},
-	{0x5275B, "hud_hpbar"},
-	{0x50DDB, "hud_portrait_erik_active"},
-	{0x50F5B, "hud_portrait_baelog_active"},
-	{0x510DB, "hud_portrait_olaf_active"},
-	{0x5125B, "hud_portrait_fang_active"},
-	{0x513DB, "hud_portrait_scorch_active"},
-	{0x5155B, "hud_portrait_erik_inactive"},
-	{0x516DB, "hud_portrait_baelog_inactive"},
-	{0x5185B, "hud_portrait_olaf_inactive"},
-	{0x51B5B, "hud_portrait_scorch_inactive"},
-	{0x519DB, "hud_portrait_fang_inactive"},
-	{0x51CDB, "hud_portrait_erik_dead"},
-	{0x51E5B, "hud_portrait_baelog_dead"},
-	{0x51FDB, "hud_portrait_olaf_dead"},
-	{0x5215B, "hud_portrait_scorch_dead"},
-	{0x522DB, "hud_portrait_fang_dead"},
-	{0x5281B, "hud_items"},
-	{0x5245B, "hud_portrait_unk1"},
-	{0x525DB, "hud_portrait_unk2"},
-	{0xC5418, "baelog_hand"},
-	{0xC6038, "push_block"},
-	{0xC9D76, "projectile_banana"},
-	{0xC8E04, "projectile_rock"},
-	{0xCF971, "projectile_magic"},
-	{0xC5ABE, "projectile_fireball"},
-	{0xCA7B3, "projectile_dunno1"},
-	{0xC8D9B, "projectile_dunno2"},
-	{0xC9F3C, "item_keycards"},
-	{0xE6CC1, "item_machine_parts"},
-	{0xE6D9E, "item_capacitor"},
-	{0xCA001, "interact_keyslots"},
-	{0xC5BA1, "tile_pipe"},
-	{0x8CA18, "frames_erik1"},
-	{0x94A18, "frames_erik2"},
-	{0x98218, "frames_baelog1"},
-	{0xA0018, "frames_baelog2"},
-	{0xA3018, "frames_fang1"},
-	{0xAA218, "frames_fang2"},
-	{0xAD418, "frames_scorch1"},
-	{0xB3818, "frames_scorch2"},
-	{0xB6818, "frames_olaf1"},
-	{0xBE618, "frames_olaf2"},
-	{0xC1C18, "frames_special"},
-	{0xD78E4, "continue_chars"},
-	{0xE55FD, "continue_valkyrie"},
+struct tAssetDef {
+	std::string AssetName;
+	std::optional<bool> isCompressed;
+	std::function<void(
+		const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
+	)> onExtract;
+};
+
+void handleExtractFont(
+	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
+);
+
+static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
+	{0xED14B, (tAssetDef){.AssetName = "logo_lv2_a", .isCompressed = {}, .onExtract = nullptr}},
+	{0xEDB38, (tAssetDef){.AssetName = "logo_lv2_b", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE2583, (tAssetDef){.AssetName = "logo_interplay", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE4D50, (tAssetDef){.AssetName = "logo_gameover_a", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE3863, (tAssetDef){.AssetName = "logo_blizzard", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC5BF1, (tAssetDef){.AssetName = "bomb", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE9F06, (tAssetDef){.AssetName = "enemy_tomator", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCAD87, (tAssetDef){.AssetName = "enemy_poof", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCA8FC, (tAssetDef){.AssetName = "enemy_spikes", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCB35F, (tAssetDef){.AssetName = "enemy_jelly", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCBA0E, (tAssetDef){.AssetName = "enemy_fish", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCCE03, (tAssetDef){.AssetName = "enemy_vamp", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCC4D1, (tAssetDef){.AssetName = "enemy_skeleton", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCDBE8, (tAssetDef){.AssetName = "enemy_knight", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCEEA8, (tAssetDef){.AssetName = "enemy_wizard", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCFB5F, (tAssetDef){.AssetName = "enemy_pirate", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD0484, (tAssetDef){.AssetName = "enemy_corsair", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD3582, (tAssetDef){.AssetName = "enemy_vine", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF1420, (tAssetDef){.AssetName = "enemy_roboknight", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD2328, (tAssetDef){.AssetName = "enemy_monkey", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD1273, (tAssetDef){.AssetName = "enemy_montezuma", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD3CBD, (tAssetDef){.AssetName = "enemy_robot", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD4780, (tAssetDef){.AssetName = "enemy_xeno", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC9A18, (tAssetDef){.AssetName = "obstacle_spike_ball_underwater", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC9E5A, (tAssetDef){.AssetName = "obstacle_spike_ball_underwater_2", .isCompressed = {}, .onExtract = nullptr}}, // other palette
+	{0xC6730, (tAssetDef){.AssetName = "obstacle_spike_ball_underwater_3", .isCompressed = {}, .onExtract = nullptr}}, // other palette
+	{0xC95E7, (tAssetDef){.AssetName = "obstacle_spear_up", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC9580, (tAssetDef){.AssetName = "obstacle_spear_left", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC8143, (tAssetDef){.AssetName = "obstacle_drill_up", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCA6CD, (tAssetDef){.AssetName = "obstacle_zap", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCA5F5, (tAssetDef){.AssetName = "obstacle_zap2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xEE368, (tAssetDef){.AssetName = "obstacle_zap3", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC681D, (tAssetDef){.AssetName = "obstacle_spike_up", .isCompressed = {}, .onExtract = nullptr}},
+	{0xECD65, (tAssetDef){.AssetName = "obstacle_burning_rope", .isCompressed = {}, .onExtract = nullptr}},
+	{0x506BF, (tAssetDef){.AssetName = "font", .isCompressed = {}, .onExtract = handleExtractFont}},
+	{0xC76D1, (tAssetDef){.AssetName = "door_bolted", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC87E6, (tAssetDef){.AssetName = "door_skull", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC7D97, (tAssetDef){.AssetName = "bounce_bone", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC92DC, (tAssetDef){.AssetName = "dunno1", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC8431, (tAssetDef){.AssetName = "dunno2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC8C13, (tAssetDef){.AssetName = "dunno3", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC9C87, (tAssetDef){.AssetName = "dunno_ball", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC63EB, (tAssetDef){.AssetName = "dunno_magic", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC8D32, (tAssetDef){.AssetName = "dunno_ball2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCA894, (tAssetDef){.AssetName = "dunno4", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE9D06, (tAssetDef){.AssetName = "dunno_water1", .isCompressed = {}, .onExtract = nullptr}},
+	{0xECB65, (tAssetDef){.AssetName = "dunno_water2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE9906, (tAssetDef){.AssetName = "dunno_water3", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE9B06, (tAssetDef){.AssetName = "dunno_water4", .isCompressed = {}, .onExtract = nullptr}},
+	{0xEC965, (tAssetDef){.AssetName = "dunno_water5", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC7B68, (tAssetDef){.AssetName = "gas", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC5711, (tAssetDef){.AssetName = "items_keys", .isCompressed = {}, .onExtract = nullptr}},
+	{0xEFAEA, (tAssetDef){.AssetName = "cutscene_screens", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF02D0, (tAssetDef){.AssetName = "cutscene_fist", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF212C, (tAssetDef){.AssetName = "cutscene_lolipop", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC8F07, (tAssetDef){.AssetName = "items_skull_voodoo", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC55DF, (tAssetDef){.AssetName = "fart", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC981D, (tAssetDef){.AssetName = "tile_block_crush", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCA410, (tAssetDef){.AssetName = "items_pcb_battery_disk_burger", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE6E1B, (tAssetDef){.AssetName = "npc_witch", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE92F5, (tAssetDef){.AssetName = "npc_time_machine", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE6FFD, (tAssetDef){.AssetName = "npc_mage", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE7479, (tAssetDef){.AssetName = "npc_gypsy", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE783B, (tAssetDef){.AssetName = "npc_shaman", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE7C0E, (tAssetDef){.AssetName = "npc_connor", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE822F, (tAssetDef){.AssetName = "npc_kid", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC65E6, (tAssetDef){.AssetName = "interact_switch", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC75DE, (tAssetDef){.AssetName = "platform_grass", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC90FB, (tAssetDef){.AssetName = "platform_wood", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCA0F7, (tAssetDef){.AssetName = "platform_future", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC6538, (tAssetDef){.AssetName = "interact_button", .isCompressed = {}, .onExtract = nullptr}},
+	{0xEE50E, (tAssetDef){.AssetName = "bubbles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC7F04, (tAssetDef){.AssetName = "tile_elevator_updown1", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC64C1, (tAssetDef){.AssetName = "cursor_hammer", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE4D1C, (tAssetDef){.AssetName = "cursor_password", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC85CC, (tAssetDef){.AssetName = "tile_corner1", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC951F, (tAssetDef){.AssetName = "tile_corner2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF2368, (tAssetDef){.AssetName = "tile_corner3", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCA3A2, (tAssetDef){.AssetName = "tile_elevator_updown2", .isCompressed = {}, .onExtract = nullptr}},
+	{0x509B9, (tAssetDef){.AssetName = "hud_border", .isCompressed = {}, .onExtract = nullptr}},
+	{0x50DAD, (tAssetDef){.AssetName = "hud_cursor_up", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC56BB, (tAssetDef){.AssetName = "hud_cursor_down", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5275B, (tAssetDef){.AssetName = "hud_hpbar", .isCompressed = {}, .onExtract = nullptr}},
+	{0x50DDB, (tAssetDef){.AssetName = "hud_portrait_erik_active", .isCompressed = {}, .onExtract = nullptr}},
+	{0x50F5B, (tAssetDef){.AssetName = "hud_portrait_baelog_active", .isCompressed = {}, .onExtract = nullptr}},
+	{0x510DB, (tAssetDef){.AssetName = "hud_portrait_olaf_active", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5125B, (tAssetDef){.AssetName = "hud_portrait_fang_active", .isCompressed = {}, .onExtract = nullptr}},
+	{0x513DB, (tAssetDef){.AssetName = "hud_portrait_scorch_active", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5155B, (tAssetDef){.AssetName = "hud_portrait_erik_inactive", .isCompressed = {}, .onExtract = nullptr}},
+	{0x516DB, (tAssetDef){.AssetName = "hud_portrait_baelog_inactive", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5185B, (tAssetDef){.AssetName = "hud_portrait_olaf_inactive", .isCompressed = {}, .onExtract = nullptr}},
+	{0x51B5B, (tAssetDef){.AssetName = "hud_portrait_scorch_inactive", .isCompressed = {}, .onExtract = nullptr}},
+	{0x519DB, (tAssetDef){.AssetName = "hud_portrait_fang_inactive", .isCompressed = {}, .onExtract = nullptr}},
+	{0x51CDB, (tAssetDef){.AssetName = "hud_portrait_erik_dead", .isCompressed = {}, .onExtract = nullptr}},
+	{0x51E5B, (tAssetDef){.AssetName = "hud_portrait_baelog_dead", .isCompressed = {}, .onExtract = nullptr}},
+	{0x51FDB, (tAssetDef){.AssetName = "hud_portrait_olaf_dead", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5215B, (tAssetDef){.AssetName = "hud_portrait_scorch_dead", .isCompressed = {}, .onExtract = nullptr}},
+	{0x522DB, (tAssetDef){.AssetName = "hud_portrait_fang_dead", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5281B, (tAssetDef){.AssetName = "hud_items", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5245B, (tAssetDef){.AssetName = "hud_portrait_unk1", .isCompressed = {}, .onExtract = nullptr}},
+	{0x525DB, (tAssetDef){.AssetName = "hud_portrait_unk2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC5418, (tAssetDef){.AssetName = "baelog_hand", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC6038, (tAssetDef){.AssetName = "push_block", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC9D76, (tAssetDef){.AssetName = "projectile_banana", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC8E04, (tAssetDef){.AssetName = "projectile_rock", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCF971, (tAssetDef){.AssetName = "projectile_magic", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC5ABE, (tAssetDef){.AssetName = "projectile_fireball", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCA7B3, (tAssetDef){.AssetName = "projectile_dunno1", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC8D9B, (tAssetDef){.AssetName = "projectile_dunno2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC9F3C, (tAssetDef){.AssetName = "item_keycards", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE6CC1, (tAssetDef){.AssetName = "item_machine_parts", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE6D9E, (tAssetDef){.AssetName = "item_capacitor", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCA001, (tAssetDef){.AssetName = "interact_keyslots", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC5BA1, (tAssetDef){.AssetName = "tile_pipe", .isCompressed = {}, .onExtract = nullptr}},
+	{0x8CA18, (tAssetDef){.AssetName = "frames_erik1", .isCompressed = {}, .onExtract = nullptr}},
+	{0x94A18, (tAssetDef){.AssetName = "frames_erik2", .isCompressed = {}, .onExtract = nullptr}},
+	{0x98218, (tAssetDef){.AssetName = "frames_baelog1", .isCompressed = {}, .onExtract = nullptr}},
+	{0xA0018, (tAssetDef){.AssetName = "frames_baelog2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xA3018, (tAssetDef){.AssetName = "frames_fang1", .isCompressed = {}, .onExtract = nullptr}},
+	{0xAA218, (tAssetDef){.AssetName = "frames_fang2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xAD418, (tAssetDef){.AssetName = "frames_scorch1", .isCompressed = {}, .onExtract = nullptr}},
+	{0xB3818, (tAssetDef){.AssetName = "frames_scorch2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xB6818, (tAssetDef){.AssetName = "frames_olaf1", .isCompressed = {}, .onExtract = nullptr}},
+	{0xBE618, (tAssetDef){.AssetName = "frames_olaf2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC1C18, (tAssetDef){.AssetName = "frames_special", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD78E4, (tAssetDef){.AssetName = "continue_chars", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE55FD, (tAssetDef){.AssetName = "continue_valkyrie", .isCompressed = {}, .onExtract = nullptr}},
 };
 
 struct tMergeRule {
@@ -178,6 +191,108 @@ struct tRawTile {
 
 	}
 };
+
+//-------------------------------------------------------------- TILE EXTRACTING
+
+void extractGfxTiles(
+	std::vector<uint8_t> vDataRaw, uint8_t ubBpp,
+	const std::vector<tMergeRule> &vMergeRules, const tPalette &Palette,
+	const std::string &Path
+)
+{
+	// Read every tile
+	uint32_t ulTileCnt = vDataRaw.size() / (8 * ubBpp); // number of SNES 8x8 tiles
+	std::map<uint32_t, std::shared_ptr<tRawTile>> mTiles;
+	uint32_t ulRawPos = 0;
+	for(uint32_t i = 0; i < ulTileCnt; ++i) {
+		// tPlanarBitmap supports only width being multiple of 16 - fill only 8x8
+		tPlanarBitmap TilePlanar(16, 8, ubBpp);
+		for(uint8_t ubRow = 0; ubRow < 8; ++ubRow) {
+			for(uint8_t ubPlane = 0; ubPlane < std::min(ubBpp, uint8_t(2)); ++ubPlane) {
+				uint8_t ubRaw = vDataRaw[ulRawPos++];
+				TilePlanar.m_pPlanes[ubPlane][ubRow] = ubRaw << 8;
+			}
+		}
+		for(uint8_t ubRow = 0; ubRow < 8; ++ubRow) {
+			for(uint8_t ubPlane = 2; ubPlane < std::min(ubBpp, uint8_t(4)); ++ubPlane) {
+				uint8_t ubRaw = vDataRaw[ulRawPos++];
+				TilePlanar.m_pPlanes[ubPlane][ubRow] = ubRaw << 8;
+			}
+		}
+		auto pTileChunky = std::make_shared<tRawTile>(tChunkyBitmap(TilePlanar, Palette));
+		mTiles.emplace(i, pTileChunky);
+		// TileChunky.toPng(fmt::format("{}/{}.png", szOutDir, i));
+	}
+
+	// Merge tiles accorging to rules
+	for(const auto &Rule: vMergeRules) {
+		tChunkyBitmap Merged(Rule.m_ubTileWidth * 8, Rule.m_ubTileHeight * 8);
+		uint8_t ubMergeListPos = 0;
+		for(uint8_t ubY = 0; ubY < Rule.m_ubTileHeight; ++ubY) {
+			for(uint8_t ubX = 0; ubX < Rule.m_ubTileWidth; ++ubX) {
+				auto TileIdx = Rule.m_vTileIndices[ubMergeListPos];
+				mTiles.at(TileIdx)->m_Tile.copyRect(0, 0, Merged, ubX * 8, ubY * 8, 8, 8);
+				mTiles.at(TileIdx)->m_isUsed = true;
+				++ubMergeListPos;
+			}
+		}
+		Merged.toPng(fmt::format("{}/{}.png", Path, Rule.m_Name));
+	}
+
+	// Dump all unmerged
+	for(const auto &[TileIdx, RawTile]: mTiles) {
+		if(!RawTile->m_isUsed) {
+			RawTile->m_Tile.toPng(fmt::format("{}/unused-{}.png", Path, TileIdx));
+		}
+	}
+}
+
+void extractGfxTiles(
+	std::ifstream &FileRom, uint32_t ulOffsStart, uint32_t ulOffsEnd, uint8_t ubBpp,
+	const std::vector<tMergeRule> &vMergeRules, const tPalette &Palette,
+	const std::string &Path
+)
+{
+	// Read the asset contents
+	FileRom.seekg(ulOffsStart, std::ios::beg);
+	auto Size = ulOffsEnd - ulOffsStart;
+	std::vector<uint8_t> vDataRaw(Size, 0);
+	FileRom.read(reinterpret_cast<char*>(vDataRaw.data()), Size);
+
+	// Pass them for processing
+	extractGfxTiles(vDataRaw, ubBpp, vMergeRules, Palette, Path);
+}
+
+void extractGfxTiles(
+	std::ifstream &FileRom, uint32_t ulOffsStart, uint32_t ulOffsEnd, uint8_t ubBpp,
+	uint8_t ubTileWidth, uint8_t ubTileHeight, const tPalette &Palette,
+	const std::string &DirName
+)
+{
+	uint16_t uwTilesPerFrame = ubTileHeight * ubTileWidth;
+	uint32_t ulTileCnt = ((ulOffsEnd - ulOffsStart) / (8 * ubBpp)) / uwTilesPerFrame;
+	std::vector<tMergeRule> vRules;
+	for(uint32_t i = 0; i < ulTileCnt; ++i) {
+		vRules.push_back(tMergeRule(ubTileWidth, ubTileHeight, fmt::format("{}", i), i * uwTilesPerFrame));
+	}
+	extractGfxTiles(FileRom, ulOffsStart, ulOffsEnd, ubBpp, vRules, Palette, DirName);
+}
+
+//------------------------------------------------------ ASSET PROCESS CALLBACKS
+
+void handleExtractFont(
+	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
+) {
+	std::filesystem::create_directories(PathOut);
+
+	tPalette Palette(std::vector<tRgb> {tRgb(0x000000), tRgb(0x555555), tRgb(0xAAAAAA), tRgb(0xFFFFFF)});
+	std::vector<tMergeRule> vMergeRules;
+	for(uint8_t i = 0; i < 80; ++i) {
+		vMergeRules.push_back(tMergeRule(1, 1, fmt::format(FMT_STRING("{}"), i), i));
+	}
+	extractGfxTiles(vDataUnprocessed, 2, vMergeRules, Palette, PathOut);
+}
+
 
 //----------------------------------------------------------------- EXTRACT: HUD
 static const uint32_t s_ulOffsHudStart = 0x50DDB;
@@ -351,76 +466,6 @@ void printUsage(const std::string &szAppName)
 	fmt::print("Usage:\n\t{} romPath outPath\n", szAppName);
 }
 
-void extractGfx(
-	std::ifstream &FileRom, uint32_t ulOffsStart, uint32_t ulOffsEnd,
-	const std::vector<tMergeRule> &vMergeRules, const tPalette &Palette,
-	const std::string &DirName
-)
-{
-	// Read every tile
-	FileRom.seekg(ulOffsStart, std::ios::beg);
-	uint32_t ulTileCnt = (ulOffsEnd - ulOffsStart) / (8 * 4);
-	std::map<uint32_t, std::shared_ptr<tRawTile>> mTiles;
-	for(uint32_t i = 0; i < ulTileCnt; ++i) {
-		// tPlanarBitmap supports only width being multiple of 16 - fill only 8x8
-		tPlanarBitmap TilePlanar(16, 8, 4);
-		for(uint8_t ubRow = 0; ubRow < 8; ++ubRow) {
-			for(uint8_t ubPlane = 0; ubPlane < 2; ++ubPlane) {
-				uint8_t ubRaw;
-				FileRom.read(reinterpret_cast<char*>(&ubRaw), 1);
-				TilePlanar.m_pPlanes[ubPlane][ubRow] = ubRaw << 8;
-			}
-		}
-		for(uint8_t ubRow = 0; ubRow < 8; ++ubRow) {
-			for(uint8_t ubPlane = 2; ubPlane < 4; ++ubPlane) {
-				uint8_t ubRaw;
-				FileRom.read(reinterpret_cast<char*>(&ubRaw), 1);
-				TilePlanar.m_pPlanes[ubPlane][ubRow] = ubRaw << 8;
-			}
-		}
-		auto pTileChunky = std::make_shared<tRawTile>(tChunkyBitmap(TilePlanar, Palette));
-		mTiles.emplace(i, pTileChunky);
-		// TileChunky.toPng(fmt::format("{}/{}.png", szOutDir, i));
-	}
-
-	// Merge tiles accorging to rules
-	for(const auto &Rule: vMergeRules) {
-		tChunkyBitmap Merged(Rule.m_ubTileWidth * 8, Rule.m_ubTileHeight * 8);
-		uint8_t ubMergeListPos = 0;
-		for(uint8_t ubY = 0; ubY < Rule.m_ubTileHeight; ++ubY) {
-			for(uint8_t ubX = 0; ubX < Rule.m_ubTileWidth; ++ubX) {
-				auto TileIdx = Rule.m_vTileIndices[ubMergeListPos];
-				mTiles.at(TileIdx)->m_Tile.copyRect(0, 0, Merged, ubX * 8, ubY * 8, 8, 8);
-				mTiles.at(TileIdx)->m_isUsed = true;
-				++ubMergeListPos;
-			}
-		}
-		Merged.toPng(fmt::format("{}/{}.png", DirName, Rule.m_Name));
-	}
-
-	// Dump all unmerged
-	for(const auto &[TileIdx, RawTile]: mTiles) {
-		if(!RawTile->m_isUsed) {
-			RawTile->m_Tile.toPng(fmt::format("{}/unused-{}.png", DirName, TileIdx));
-		}
-	}
-}
-
-void extractGfx(
-	std::ifstream &FileRom, uint32_t ulOffsStart, uint32_t ulOffsEnd,
-	uint8_t ubTileWidth, uint8_t ubTileHeight, const tPalette &Palette,
-	const std::string &DirName
-)
-{
-	uint16_t uwTilesPerFrame = ubTileHeight * ubTileWidth;
-	uint32_t ulTileCnt = ((ulOffsEnd - ulOffsStart) / (8 * 4)) / uwTilesPerFrame;
-	std::vector<tMergeRule> vRules;
-	for(uint32_t i = 0; i < ulTileCnt; ++i) {
-		vRules.push_back(tMergeRule(ubTileWidth, ubTileHeight, fmt::format("{}", i), i * uwTilesPerFrame));
-	}
-	extractGfx(FileRom, ulOffsStart, ulOffsEnd, vRules, Palette, DirName);
-}
-
 [[nodiscard]]
 static std::vector<uint8_t> extractUncompressedAsset(std::ifstream &FileRom, uint32_t ulOffsStart, uint32_t ulSize) {
 	std::vector<uint8_t> vContents(ulSize, 0x00);
@@ -560,16 +605,16 @@ int main(int lArgCount, const char *pArgs[])
 
 	// TODO: verify ROM size/checksum/header
 
-	// extractGfx(FileRom, s_ulOffsHudStart, s_ulOffsHudEnd, s_vMergeRulesHud, s_PaletteHud, fmt::format("{}/{}", szOutDir, "hud"));
-	// extractGfx(FileRom, s_ulOffsErikStart, s_ulOffsErikEnd, 4, 4, s_PaletteErik, fmt::format("{}/{}", szOutDir, "erik"));
-	// extractGfx(FileRom, s_ulOffsBaelogStart, s_ulOffsBaelogEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutDir, "baelog"));
-	// extractGfx(FileRom, s_ulOffsFangStart, s_ulOffsFangEnd, 4, 4, s_PaletteFang, fmt::format("{}/{}", szOutDir, "fang"));
-	// extractGfx(FileRom, s_ulOffsScorchStart, s_ulOffsScorchEnd, 4, 4, s_PaletteScorch, fmt::format("{}/{}", szOutDir, "scorch"));
-	// extractGfx(FileRom, s_ulOffsOlafStart, s_ulOffsOlafEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutDir, "olaf"));
-	// extractGfx(FileRom, s_ulOffsEffectStart, s_ulOffsEffectEnd, 4, 4, s_PaletteEffect, fmt::format("{}/{}", szOutDir, "effect"));
-	// extractGfx(FileRom, s_ulOffsErikOldStart, s_ulOffsErikOldEnd, 4, 4, s_PaletteErik, fmt::format("{}/{}", szOutDir, "erik_old"));
-	// extractGfx(FileRom, s_ulOffsBaelogOldStart, s_ulOffsBaelogOldEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutDir, "baelog_old"));
-	// extractGfx(FileRom, s_ulOffsOlafOldStart, s_ulOffsOlafOldEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutDir, "olaf_old"));
+	// extractGfxTiles(FileRom, s_ulOffsHudStart, s_ulOffsHudEnd, s_vMergeRulesHud, s_PaletteHud, fmt::format("{}/{}", szOutDir, "hud"));
+	// extractGfxTiles(FileRom, s_ulOffsErikStart, s_ulOffsErikEnd, 4, 4, s_PaletteErik, fmt::format("{}/{}", szOutDir, "erik"));
+	// extractGfxTiles(FileRom, s_ulOffsBaelogStart, s_ulOffsBaelogEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutDir, "baelog"));
+	// extractGfxTiles(FileRom, s_ulOffsFangStart, s_ulOffsFangEnd, 4, 4, s_PaletteFang, fmt::format("{}/{}", szOutDir, "fang"));
+	// extractGfxTiles(FileRom, s_ulOffsScorchStart, s_ulOffsScorchEnd, 4, 4, s_PaletteScorch, fmt::format("{}/{}", szOutDir, "scorch"));
+	// extractGfxTiles(FileRom, s_ulOffsOlafStart, s_ulOffsOlafEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutDir, "olaf"));
+	// extractGfxTiles(FileRom, s_ulOffsEffectStart, s_ulOffsEffectEnd, 4, 4, s_PaletteEffect, fmt::format("{}/{}", szOutDir, "effect"));
+	// extractGfxTiles(FileRom, s_ulOffsErikOldStart, s_ulOffsErikOldEnd, 4, 4, s_PaletteErik, fmt::format("{}/{}", szOutDir, "erik_old"));
+	// extractGfxTiles(FileRom, s_ulOffsBaelogOldStart, s_ulOffsBaelogOldEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutDir, "baelog_old"));
+	// extractGfxTiles(FileRom, s_ulOffsOlafOldStart, s_ulOffsOlafOldEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutDir, "olaf_old"));
 
 	// Read asset TOC
 	fmt::print("List of assets at 0x{:06X}:\n", 0x050000);
@@ -618,6 +663,7 @@ int main(int lArgCount, const char *pArgs[])
 
 	try {
 		for(auto &TocEntry: vAssetToc) {
+			decltype(tAssetDef::onExtract) onExtract = nullptr;
 			std::string szAssetName = fmt::format(FMT_STRING("_compressed_{:08X}"), TocEntry.ulOffs);
 			std::vector<uint8_t> vAssetContents;
 			if(!TocEntry.isUncompressed) {
@@ -642,17 +688,27 @@ int main(int lArgCount, const char *pArgs[])
 				std::ofstream FileOut;
 				std::string szOutPath;
 				std::string szExtension = "dat";
-				if(vAssetContents[0] == 0x00 && vAssetContents[1] == 0x01 && vAssetContents[2] == 0xF8 && vAssetContents[3] == 0x00) {
+				bool isWrittenByCallback = false;
+				if(
+					vAssetContents[0] == 0x00 && vAssetContents[1] == 0x01 &&
+					vAssetContents[2] == 0xF8 && vAssetContents[3] == 0x00
+				) {
 					szExtension = "1F8";
 				}
-				auto Asset = mOffsToFileName.find(TocEntry.ulOffs);
-				if(Asset != mOffsToFileName.end()) {
-					szAssetName = Asset->second;
+				auto AssetPair = s_mOffsToFileName.find(TocEntry.ulOffs);
+				if(AssetPair != s_mOffsToFileName.end()) {
+					szAssetName = AssetPair->second.AssetName;
+					if(AssetPair->second.onExtract != nullptr) {
+						AssetPair->second.onExtract(vAssetContents, fmt::format(FMT_STRING("{}/{}"), szOutDir, szAssetName));
+						isWrittenByCallback = true;
+					}
 				}
-				szOutPath = fmt::format(FMT_STRING("{}/{}.{}"), szOutDir, szAssetName, szExtension);
-				FileOut.open(szOutPath,	std::ios::binary);
-				FileOut.write(reinterpret_cast<char*>(vAssetContents.data()), vAssetContents.size());
-				FileOut.close();
+				if(!isWrittenByCallback) {
+					szOutPath = fmt::format(FMT_STRING("{}/{}.{}"), szOutDir, szAssetName, szExtension);
+					FileOut.open(szOutPath,	std::ios::binary);
+					FileOut.write(reinterpret_cast<char*>(vAssetContents.data()), vAssetContents.size());
+					FileOut.close();
+				}
 			}
 		}
 	}
