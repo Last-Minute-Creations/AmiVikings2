@@ -7,15 +7,17 @@
 
 #include <ace/types.h>
 
+#define TILE_SHIFT 4
+
 typedef enum tTile {
 	TILE_EMPTY,
 	TILE_FLOOR_FLAT,
-	TILE_FLOOR_RAMP16_LEFT,
-	TILE_FLOOR_RAMP16_RIGHT,
-	TILE_FLOOR_RAMP8_LEFT_START,
-	TILE_FLOOR_RAMP8_LEFT_END,
-	TILE_FLOOR_RAMP8_RIGHT_START,
-	TILE_FLOOR_RAMP8_TIGHT_END,
+	TILE_FLOOR_RAMP22_DOWN_A,
+	TILE_FLOOR_RAMP22_DOWN_B,
+	TILE_FLOOR_RAMP45_DOWN,
+	TILE_FLOOR_RAMP45_UP,
+	TILE_FLOOR_RAMP22_UP_A,
+	TILE_FLOOR_RAMP22_UP_B,
 } tTile;
 
 
@@ -23,6 +25,10 @@ void tileReset(void);
 
 void tileSetType(UWORD uwTileX, UWORD uwTileY, tTile eTile);
 
-UBYTE tileIsSolid(UWORD uwTileX, UWORD uwTileY);
+UWORD tileGetHeightAtPosX(UWORD uwX, UWORD uwY);
+
+UBYTE tileIsEmpty(UWORD uwTileX, UWORD uwTileY);
+
+const UBYTE *tileGetHeightmap(UWORD uwTileX, UWORD uwTileY);
 
 #endif // _TILE_H_

@@ -13,11 +13,18 @@ typedef enum tVikingState {
 	VIKING_STATE_DEAD,
 } tVikingState;
 
+typedef enum tMoveState {
+	MOVE_STATE_WALKING,
+	MOVE_STATE_FALLING,
+	MOVE_STATE_CLIMBING,
+} tMoveState;
+
 typedef struct tEntityErik {
 	tEntity sBase;
 	tSteerRequest eSteer;
 	UBYTE ubJoy;
 	tVikingState eState;
+	tMoveState eMoveState;
 	tUwCoordYX sPos;
 } tEntityErik;
 

@@ -162,7 +162,7 @@ UBYTE bobNewProcessNext(void) {
 		if(!s_ubBobsSaved) {
 			// Prepare for saving.
 			// Bltcon0/1, bltaxwm could be reset between Begin and ProcessNext.
-			// I tried to change A->D to C->D bug afwm/alwm need to be set
+			// I tried to change A->D to C->D but afwm/alwm need to be set
 			// for mask-copying bobs, so there's no perf to be gained.
 			UWORD uwBltCon0 = USEA|USED | MINTERM_A;
 			g_pCustom->bltcon0 = uwBltCon0;
@@ -358,11 +358,9 @@ void bobNewEnd(void) {
 	bobNewPushingDone();
 
 	// Finish blits asap
-	g_pCustom->dmacon = DMAF_SETCLR | DMAF_BLITHOG;
 	do {
 		blitWait();
 	} while(bobNewProcessNext());
-	g_pCustom-> dmacon = DMAF_BLITHOG;
 
 	s_pQueues[s_ubBufferCurr].ubUndrawCount = s_ubBobsPushed;
 	s_ubBufferCurr = !s_ubBufferCurr;

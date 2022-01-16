@@ -18,7 +18,7 @@ for Line in Lines:
             continue
 
         # Get Y
-        Y = int(Parts[2]) + 1
+        Y = int(Parts[2]) + 0
         if Y > MaxY:
             MaxY = Y
 
@@ -47,6 +47,9 @@ Img = Image.new('RGB', (len(HeightsOut), ImgHeight), color = 'black')
 for Pair in HeightsOut:
     [x, y] = Pair
     Draw = ImageDraw.Draw(Img)
-    Draw.rectangle([(x, y), (x, ImgHeight)], fill = 'red')
+    FillX = 'blue'
+    if x % 16 == 0:
+        FillX = 'yellow'
+    Draw.rectangle([(x, y), (x, ImgHeight)], fill = FillX)
 
 Img.save('heightmap.png')
