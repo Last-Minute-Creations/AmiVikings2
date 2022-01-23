@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.5)
+cmake_minimum_required(VERSION 3.0.0)
 project(AmiVikigs2)
 
 # Adhere to GNU filesystem layout conventions
@@ -28,9 +28,10 @@ if(BUILD_ASSET_EXTRACT)
 
 	if(NOT MSVC)
 		target_compile_options(asset_extract PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wno-register>)
+		target_link_libraries(asset_extract -static)
 	endif()
 
-	target_link_libraries(asset_extract -static fmt::fmt)
+	target_link_libraries(asset_extract fmt::fmt)
 endif()
 
 # game
