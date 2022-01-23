@@ -86,6 +86,7 @@ void loadMap(void) {
 			}
 		}
 	}
+	cameraReset(s_pBufferMain->pCamera, 0, 0, 32*16, 13 * 16, 1);
 }
 
 void onTileDraw(
