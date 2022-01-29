@@ -17,6 +17,7 @@ tEntityErik *entityErikCreate(UWORD uwPosX, UWORD uwPosY) {
 
 	pErik->sPos.uwX = uwPosX;
 	pErik->sPos.uwY = uwPosY;
+	pErik->ubAnimFrameIdx = 0;
 	bobNewInit(
 		&pErik->sBase.sBob, ERIK_SIZE, ERIK_SIZE, 1, g_pBobBmErik, g_pBobBmErikMask,
 		uwPosX, uwPosY
@@ -42,13 +43,14 @@ void entityErikProcess(tEntityErik *pEntity) {
 		sNewPos.uwY += 1;
 		UWORD uwBottomY = (sNewPos.uwY + ERIK_SIZE);
 		UWORD uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY);
-		if(uwMidTerrainPos > uwBottomY) {
+		if(uwBottomY < uwMidTerrainPos) {
 			// still falling
 		}
 		else {
 			// Fell to the ground
 			sNewPos.uwY = uwMidTerrainPos - ERIK_SIZE;
 			pEntity->eMoveState = MOVE_STATE_WALKING;
+			pEntity->ubAnimFrameIdx = 0;
 		}
 	}
 	else if(pEntity->eMoveState == MOVE_STATE_CLIMBING) {
@@ -73,16 +75,17 @@ void entityErikProcess(tEntityErik *pEntity) {
 		UWORD uwMidTileX = sNewPos.uwX >> TILE_SHIFT;
 		UWORD uwMidTerrainPos;
 		if(
-			(uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + 0)) < uwBottomY ||
-			(uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + 1)) < uwBottomY ||
-			(uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + 2)) < uwBottomY
+			uwBottomY >= (uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + 0)) -2 ||
+			uwBottomY >= (uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + 1)) -2 ||
+			uwBottomY >= (uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + 2)) -2
 		) {
 			// There's terrain at last character bob's row or directly below it
 			sNewPos.uwY = uwMidTerrainPos - ERIK_SIZE;
 			uwBottomY = uwMidTerrainPos - 1;
-
-			// Check if char is sliding to the side
 			if(bMovingX == 0) {
+				pEntity->ubAnimFrameIdx = 0;
+				bobNewSetBitMapOffset(&pEntity->sBase.sBob, 17 * ERIK_SIZE);
+				// Check if char is sliding to the side
 				// UBYTE isFallingLeft = tileGetHeightAtPosX(uwLeftX, uwBottomY) > sNewPos.uwY;
 				// UBYTE isFallingRight = tileGetHeightAtPosX(uwRightX, uwBottomY) > sNewPos.uwY;
 				// if(isFallingLeft && isFallingRight) {
@@ -118,6 +121,10 @@ void entityErikProcess(tEntityErik *pEntity) {
 				// 		}
 				// 	}
 				// }
+			}
+			else {
+				bobNewSetBitMapOffset(&pEntity->sBase.sBob, pEntity->ubAnimFrameIdx * ERIK_SIZE);
+				pEntity->ubAnimFrameIdx = (pEntity->ubAnimFrameIdx + 1) & 7;
 			}
 		}
 		else {
@@ -207,7 +214,6 @@ void entityErikProcess(tEntityErik *pEntity) {
 	BYTE bFrameOffsX = -6;
 	pEntity->sBase.sBob.sPos.uwX = pEntity->sPos.uwX -10 + bFrameOffsX;
 	pEntity->sBase.sBob.sPos.uwY = pEntity->sPos.uwY;
-
 	bobNewPush(&pEntity->sBase.sBob);
 }
 

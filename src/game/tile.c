@@ -8,7 +8,7 @@
 
 // Tile height per x pos, measured from top (full is 0, empty is 16)
 static UBYTE s_pTileHeights[][16] = {
-	[TILE_EMPTY] = {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16},
+	[TILE_EMPTY] = {32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32},
 	[TILE_FLOOR_FLAT] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	[TILE_FLOOR_RAMP22_DOWN_A] = {1, 1, 2, 2, 3, 3, 4, 5, 5, 5, 6, 6, 7, 7, 8, 8},
 	[TILE_FLOOR_RAMP22_DOWN_B] = {9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 16, 16},

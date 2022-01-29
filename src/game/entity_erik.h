@@ -23,6 +23,7 @@ typedef struct tEntityErik {
 	tEntity sBase;
 	tSteerRequest eSteer;
 	UBYTE ubJoy;
+	UBYTE ubAnimFrameIdx;
 	tVikingState eState;
 	tMoveState eMoveState;
 	tUwCoordYX sPos;

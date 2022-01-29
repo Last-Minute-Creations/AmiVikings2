@@ -30,13 +30,13 @@ void handleExtractFrames(
 auto handleExtractFramePart(
 	const tPalette &Palette, uint32_t ulFristFrame
 ) {
-	return [Palette, ulFristFrame](const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut) {
+	return [&Palette, ulFristFrame](const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut) {
 		handleExtractFrames(vDataUnprocessed, PathOut, Palette, ulFristFrame);
 	};
 };
 
 static const tPalette s_PaletteErik({
-	tRgb(0x004000), tRgb(0xf8a870),
+	tRgb(0xff00ff), tRgb(0xf8a870),
 	tRgb(0xb86830), tRgb(0x703808),
 	tRgb(0x301000), tRgb(0xd8d8e8),
 	tRgb(0x8890a8), tRgb(0x505070),
@@ -47,7 +47,7 @@ static const tPalette s_PaletteErik({
 });
 
 static const tPalette s_PaletteBaelog({
-	tRgb(0x202058), tRgb(0xf8a870),
+	tRgb(0xff00ff), tRgb(0xf8a870),
 	tRgb(0xb06838), tRgb(0x784018),
 	tRgb(0x482000), tRgb(0xf8f8f8),
 	tRgb(0xc8c8c8), tRgb(0x787878),
@@ -58,7 +58,7 @@ static const tPalette s_PaletteBaelog({
 });
 
 static const tPalette s_PaletteFang({
-	tRgb(0x9800a0), tRgb(0xe0e0e0),
+	tRgb(0xff00ff), tRgb(0xe0e0e0),
 	tRgb(0x989898), tRgb(0x505050),
 	tRgb(0xc8c800), tRgb(0xb08000),
 	tRgb(0xe0a880), tRgb(0xb88050),
@@ -69,7 +69,7 @@ static const tPalette s_PaletteFang({
 });
 
 static const tPalette s_PaletteScorch({ // TODO: proper palette
-	tRgb(0x310031), tRgb(0xB5FF00),
+	tRgb(0xff00ff), tRgb(0xB5FF00),
 	tRgb(0x8CD600), tRgb(0x63B500),
 	tRgb(0x428C00), tRgb(0x296B00),
 	tRgb(0x004A00), tRgb(0x002900),
@@ -80,7 +80,7 @@ static const tPalette s_PaletteScorch({ // TODO: proper palette
 });
 
 static const tPalette s_PaletteOlaf({
-	tRgb(0x9800a0), tRgb(0xf8a870),
+	tRgb(0xff00ff), tRgb(0xf8a870),
 	tRgb(0xb86830), tRgb(0x703808),
 	tRgb(0xe8e8e8), tRgb(0xb8b8b8),
 	tRgb(0x888888), tRgb(0x585860),
