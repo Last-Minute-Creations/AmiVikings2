@@ -6,9 +6,11 @@
 #include "fs.h"
 #include "rgb.h"
 #include "bitmap.h"
+#include "rle_table.hpp"
 #include <fstream>
 #include <filesystem>
 #include <map>
+#include <optional>
 
 struct tAssetDef {
 	std::string AssetName;
@@ -493,13 +495,15 @@ static std::vector<uint8_t> extractUncompressedAsset(std::ifstream &FileRom, uin
 
 [[nodiscard]]
 static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint32_t ulOffsStart) {
-	uint16_t uwDecompressedSize, uwPos = 0;
+	uint16_t uwDecompressedSize;
 	uint8_t ubRepeatBits;
 	FileRom.seekg(ulOffsStart, std::ios::beg);
 	FileRom.read(reinterpret_cast<char*>(&uwDecompressedSize), sizeof(uwDecompressedSize));
 
 	// Decompression algorithm depends on the first 4096 bytes being set to zero.
-	std::vector<uint8_t> vDecoded(std::max(uwDecompressedSize, uint16_t(0x1000)), 0x00);
+	tRleTable RleTable;
+	std::vector<uint8_t> vDecoded;
+	vDecoded.reserve(uwDecompressedSize);
 
 	fmt::print(FMT_STRING("Decompressing asset at {:08X}, size: {}\n"), ulOffsStart, uwDecompressedSize);
 	bool wasCopy = false;
@@ -513,55 +517,55 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 			FMT_STRING("ROM pos: {:06X}, repeat bits: {:08b}\n"),
 			size_t(FileRom.tellg()) - 1, ubRepeatBits
 		);
-		for(uint8_t ubBit = 0; ubBit < 8 && uwPos < uwDecompressedSize; ++ubBit) {
+		for(uint8_t ubBit = 0; ubBit < 8 && vDecoded.size() < uwDecompressedSize; ++ubBit) {
 			bool isCopy = ((ubRepeatBits & 1) == 1);
 			ubRepeatBits >>= 1;
 			if(isCopy) {
 				// Fill with next byte as-is
-				if(uwPos >= vDecoded.size()) {
+				if(vDecoded.size() >= uwDecompressedSize) {
 					throw std::runtime_error(fmt::format(FMT_STRING("Write out of buffer bounds")));
 				}
-				FileRom.read(reinterpret_cast<char*>(&vDecoded[uwPos]), sizeof(vDecoded[uwPos]));
+
+				std::uint8_t ubReadValue;
+				FileRom.read(reinterpret_cast<char*>(&ubReadValue), sizeof(ubReadValue));
+				vDecoded.push_back(ubReadValue);
+				RleTable.writeValue(ubReadValue);
+
 				if(!wasCopy) {
 					fmt::print("raw byte: ");
 					wasCopy = true;
 				}
-				fmt::print(FMT_STRING("{:02X} "), vDecoded[uwPos]);
-				++uwPos;
+
+				fmt::print(FMT_STRING("{:02X} "), ubReadValue);
 			}
 			else {
 				// Decompress stuff
-				uint16_t uwDecompressRaw;
-				FileRom.read(reinterpret_cast<char*>(&uwDecompressRaw), sizeof(uwDecompressRaw));
-				uint16_t uwCopyLoopIndex = uwDecompressRaw & 0xFFF;
-				uint16_t uwCopyLoopSize = ((uwDecompressRaw >> 12) + 3 + uwCopyLoopIndex) & 0x0FFF;
+				uint16_t uwDecompressControl;
+				FileRom.read(reinterpret_cast<char*>(&uwDecompressControl), sizeof(uwDecompressControl));
+				uint16_t uwRlePos = uwDecompressControl & 0xFFF;
+				uint16_t uwRlePosEnd = ((uwDecompressControl >> 12) + 3 + uwRlePos) & 0x0FFF;
+
 				if(wasCopy) {
 					fmt::print("\n");
 					wasCopy = false;
 				}
 				fmt::print(
-					FMT_STRING("Decompress cmd: {:04X}, copying in bytes from {}..{}\n"),
-					uwDecompressRaw, uwCopyLoopIndex, uwCopyLoopSize
+					FMT_STRING("Decompress cmd: {:04X}, copying in bytes at range {}..{}\n"),
+					uwDecompressControl, uwRlePos, uwRlePosEnd
 				);
-				while(uwCopyLoopIndex != uwCopyLoopSize) {
-					if(uwPos >= vDecoded.size()) {
+
+				while(uwRlePos != uwRlePosEnd) {
+					if(vDecoded.size() >= uwDecompressedSize) {
 						throw std::runtime_error(fmt::format(FMT_STRING("Write out of buffer bounds")));
 					}
-					if(uwCopyLoopIndex >= vDecoded.size()) {
-						throw std::runtime_error(fmt::format(FMT_STRING("Read out of buffer bounds")));
-					}
-					vDecoded[uwPos++] = vDecoded[uwCopyLoopIndex++];
 
-					if(uwCopyLoopIndex == 0x1000 && uwCopyLoopIndex != uwCopyLoopSize) {
-						uwCopyLoopIndex = 0;
-					}
-				}
-				if(uwCopyLoopIndex == 0x1000) {
-					fmt::print(FMT_STRING("stopped at pos 0x1000\n"));
+					std::uint8_t ubReadValue = RleTable.readValue(&uwRlePos);
+					vDecoded.push_back(ubReadValue);
+					RleTable.writeValue(ubReadValue);
 				}
 			}
 		}
-	} while(uwPos < uwDecompressedSize);
+	} while(vDecoded.size() < uwDecompressedSize);
 
 	uint32_t ulEndPos = uint32_t(FileRom.tellg());
 	vDecoded.resize(uwDecompressedSize);
@@ -640,8 +644,8 @@ int main(int lArgCount, const char *pArgs[])
 		auto OffsCpu = ulOffs + 0x8A8000;
 		auto OffsRom = snesAddressToRomOffset(OffsCpu);
 
-		// Update deduced size on previous entry
 		if(i > 0) {
+			// Update deduced size on previous entry
 			uint32_t ulSizeInRom = OffsRom - vAssetToc[i - 1].ulOffs;
 			fmt::print(FMT_STRING(", size: {:5d}"), ulSizeInRom);
 			vAssetToc[i - 1].ulSizeInRom = ulSizeInRom;
@@ -673,6 +677,7 @@ int main(int lArgCount, const char *pArgs[])
 	}
 	fmt::print("\n");
 
+	// Extract assets
 	try {
 		for(auto &TocEntry: vAssetToc) {
 			decltype(tAssetDef::onExtract) onExtract = nullptr;
@@ -683,7 +688,7 @@ int main(int lArgCount, const char *pArgs[])
 					vAssetContents = extractCompressedAsset(FileRom, TocEntry.ulOffs);
 				}
 				catch(const std::exception &Exc) {
-					fmt::print("ERR: Exception while decoding asset at {:08X}: '{}'\n", TocEntry.ulOffs, Exc.what());
+					fmt::print("ERR: Exception while decoding asset at {:08X}: '{}'. Assuming no compression.\n", TocEntry.ulOffs, Exc.what());
 					TocEntry.isUncompressed = true;
 					szAssetName = fmt::format(FMT_STRING("_faildec_{:08X}"), TocEntry.ulOffs);
 				}

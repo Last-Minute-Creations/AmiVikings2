@@ -1,6 +1,10 @@
+Reverse engineering:
+	☐ Tilemaps
+	☐ Map collisions
+
 Mechanics for Vikings:
 	✔ Collision with terrain @done(21-11-27 21:37)
-	☐ Walking across slopes
+	✔ Walking across slopes @done(24-06-12 16:46)
 	☐ Climbing
 	☐ Fall damage
 	☐ Elevators - collision with platform, collision with ceiling while moving up, collision with terrain while moving down
