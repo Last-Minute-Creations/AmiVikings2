@@ -59,11 +59,12 @@ void entityErikProcess(tEntityErik *pEntity) {
 	}
 	else if(pEntity->eMoveState == MOVE_STATE_WALKING) {
 		// Check if it's possible to move left/right
+		UBYTE ubSpeedX = 4;
 		if(pEntity->eSteer & STEER_LEFT) {
-			bMovingX = -1;
+			bMovingX = -ubSpeedX;
 		}
 		if(pEntity->eSteer & STEER_RIGHT) {
-			bMovingX = 1;
+			bMovingX = ubSpeedX;
 		}
 		sNewPos.uwX += bMovingX;
 
@@ -76,9 +77,9 @@ void entityErikProcess(tEntityErik *pEntity) {
 		UWORD uwMidTileX = sNewPos.uwX >> TILE_SHIFT;
 		UWORD uwMidTerrainPos;
 		if(
-			uwBottomY >= (uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + 0)) -2 ||
-			uwBottomY >= (uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + 1)) -2 ||
-			uwBottomY >= (uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + 2)) -2
+			uwBottomY >= (uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + 0)) -2 * ubSpeedX ||
+			uwBottomY >= (uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY - ubSpeedX)) -2 * ubSpeedX ||
+			uwBottomY >= (uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + ubSpeedX)) -2 * ubSpeedX
 		) {
 			// There's terrain at last character bob's row or directly below it
 			sNewPos.uwY = uwMidTerrainPos - ERIK_SIZE;
