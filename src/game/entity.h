@@ -5,7 +5,7 @@
 #ifndef _ENTITY_H_
 #define _ENTITY_H_
 
-#include "bob_new.h"
+#include <ace/managers/bob.h>
 #include "player.h"
 
 typedef enum tEntityType {
@@ -20,7 +20,7 @@ typedef enum tEntityType {
 } tEntityType;
 
 typedef struct tEntity {
-	tBobNew sBob;
+	tBob sBob;
 	tEntityType eType;
 } tEntity;
 

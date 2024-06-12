@@ -9,11 +9,11 @@
 #include <ace/managers/game.h>
 #include <ace/managers/key.h>
 #include <ace/managers/blit.h>
+#include <ace/managers/bob.h>
 #include <ace/utils/palette.h>
 #include <ace/utils/chunky.h>
 #include <ace/utils/font.h>
 #include <ace/utils/string.h>
-#include "bob_new.h"
 #include "entity_erik.h"
 #include "assets.h"
 #include "tile.h"
@@ -28,7 +28,7 @@ static tVPort *s_pVpMain;
 static tTileBufferManager *s_pBufferMain;
 
 static tBitMap *s_pTileset;
-static tBobNew s_pBobs[BOB_COUNT];
+static tBob s_pBobs[BOB_COUNT];
 static tFont *s_pFont;
 static tTextBitMap *s_pTextTile;
 
@@ -114,7 +114,7 @@ void stateGameCreate(void) {
 	UWORD uwCopMainBreakSize = tileBufferGetRawCopperlistInstructionCountBreak(MAIN_BPP);
 	UWORD uwCopListSize = uwCopHudSize + uwCopMainStartSize + uwCopMainBreakSize;
 	s_pView = viewCreate(0,
-		TAG_VIEW_GLOBAL_CLUT, 1,
+		TAG_VIEW_GLOBAL_PALETTE, 1,
 		TAG_VIEW_COPLIST_MODE, COPPER_MODE_RAW,
 		TAG_VIEW_COPLIST_RAW_COUNT, uwCopListSize,
 	TAG_END);
@@ -146,7 +146,7 @@ void stateGameCreate(void) {
 	s_pFont = fontCreate("data/uni54.fnt");
 	s_pTextTile = fontCreateTextBitMap(320, 8);
 
-	bobNewManagerCreate(
+	bobManagerCreate(
 		s_pBufferMain->pScroll->pFront, s_pBufferMain->pScroll->pBack,
 		s_pBufferMain->pScroll->uwBmAvailHeight
 	);
@@ -154,14 +154,14 @@ void stateGameCreate(void) {
 	// Init entities
 	entityManagerReset();
 	for(UBYTE i = 0; i < BOB_COUNT; ++i) {
-		bobNewInit(&s_pBobs[i], 32, 32, 1, g_pBobBmErik, g_pBobBmErikMask, 32 + 48 * (i + 1), 32);
+		bobInit(&s_pBobs[i], 32, 32, 1, bobCalcFrameAddress(g_pBobBmErik, 0), bobCalcFrameAddress(g_pBobBmErikMask, 0), 32 + 48 * (i + 1), 32);
 	}
 	tEntity *pPlayerEntity1 = &entityErikCreate(32, 32)->sBase;
 	entityAdd(pPlayerEntity1);
 	tEntity *pPlayerEntity2 = &entityErikCreate(64, 32)->sBase;
 	entityAdd(pPlayerEntity2);
 
-	bobNewReallocateBgBuffers();
+	bobReallocateBgBuffers();
 
 	systemUnuse();
 
@@ -196,17 +196,17 @@ void stateGameLoop(void) {
 		}
 	}
 
-	bobNewBegin(s_pBufferMain->pScroll->pBack);
+	bobBegin(s_pBufferMain->pScroll->pBack);
 	tileBufferQueueProcess(s_pBufferMain);
 
 	for(UBYTE i = 0; i < BOB_COUNT; ++i) {
-		bobNewPush(&s_pBobs[i]);
+		bobPush(&s_pBobs[i]);
 	}
 	entityManagerProcess();
 
-	bobNewPushingDone();
+	bobPushingDone();
 
-	bobNewEnd();
+	bobEnd();
 
 	viewProcessManagers(s_pView);
 	copProcessBlocks();
@@ -219,7 +219,7 @@ void stateGameLoop(void) {
 void stateGameDestroy(void) {
 	viewLoad(0);
 	systemUse();
-	bobNewManagerDestroy();
+	bobManagerDestroy();
 	assetsGlobalDestroy();
 	fontDestroy(s_pFont);
 	fontDestroyTextBitMap(s_pTextTile);

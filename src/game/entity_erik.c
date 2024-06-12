@@ -18,8 +18,9 @@ tEntityErik *entityErikCreate(UWORD uwPosX, UWORD uwPosY) {
 	pErik->sPos.uwX = uwPosX;
 	pErik->sPos.uwY = uwPosY;
 	pErik->ubAnimFrameIdx = 0;
-	bobNewInit(
-		&pErik->sBase.sBob, ERIK_SIZE, ERIK_SIZE, 1, g_pBobBmErik, g_pBobBmErikMask,
+	bobInit(
+		&pErik->sBase.sBob, ERIK_SIZE, ERIK_SIZE, 1,
+		bobCalcFrameAddress(g_pBobBmErik, 0), bobCalcFrameAddress(g_pBobBmErikMask, 0),
 		uwPosX, uwPosY
 	);
 	pErik->eState = VIKING_STATE_ALIVE;
@@ -84,7 +85,7 @@ void entityErikProcess(tEntityErik *pEntity) {
 			uwBottomY = uwMidTerrainPos - 1;
 			if(bMovingX == 0) {
 				pEntity->ubAnimFrameIdx = 0;
-				bobNewSetBitMapOffset(&pEntity->sBase.sBob, 17 * ERIK_SIZE);
+				bobSetFrame(&pEntity->sBase.sBob, bobCalcFrameAddress(g_pBobBmErik, 17 * ERIK_SIZE), bobCalcFrameAddress(g_pBobBmErikMask, 17 * ERIK_SIZE));
 				// Check if char is sliding to the side
 				// UBYTE isFallingLeft = tileGetHeightAtPosX(uwLeftX, uwBottomY) > sNewPos.uwY;
 				// UBYTE isFallingRight = tileGetHeightAtPosX(uwRightX, uwBottomY) > sNewPos.uwY;
@@ -123,7 +124,11 @@ void entityErikProcess(tEntityErik *pEntity) {
 				// }
 			}
 			else {
-				bobNewSetBitMapOffset(&pEntity->sBase.sBob, pEntity->ubAnimFrameIdx * ERIK_SIZE);
+				bobSetFrame(
+					&pEntity->sBase.sBob,
+					bobCalcFrameAddress(g_pBobBmErik, pEntity->ubAnimFrameIdx * ERIK_SIZE),
+					bobCalcFrameAddress(g_pBobBmErikMask, pEntity->ubAnimFrameIdx * ERIK_SIZE)
+				);
 				pEntity->ubAnimFrameIdx = (pEntity->ubAnimFrameIdx + 1) & 7;
 			}
 		}
@@ -131,8 +136,6 @@ void entityErikProcess(tEntityErik *pEntity) {
 			// Fall only if there's at least 1px gap between ground and char
 			pEntity->eMoveState = MOVE_STATE_FALLING;
 		}
-
-
 	}
 
 	// {
@@ -214,7 +217,7 @@ void entityErikProcess(tEntityErik *pEntity) {
 	BYTE bFrameOffsX = -6;
 	pEntity->sBase.sBob.sPos.uwX = pEntity->sPos.uwX -10 + bFrameOffsX;
 	pEntity->sBase.sBob.sPos.uwY = pEntity->sPos.uwY;
-	bobNewPush(&pEntity->sBase.sBob);
+	bobPush(&pEntity->sBase.sBob);
 }
 
 void entityErikDestroy(tEntityErik *pEntity) {

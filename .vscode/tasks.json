@@ -11,6 +11,7 @@
 			"args": [
 				"..",
 				"-DACE_DEBUG=ON",
+				"-DACE_DEBUG_UAE=ON",
 				"-DGAME_DEBUG=ON",
 			],
 			"options": {
@@ -26,6 +27,7 @@
 			"args": [
 				"..",
 				"-DACE_DEBUG=OFF",
+				"-DACE_DEBUG_UAE=OFF",
 				"-DGAME_DEBUG=OFF"
 			],
 			"options": {
