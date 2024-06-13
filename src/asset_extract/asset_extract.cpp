@@ -713,6 +713,13 @@ int main(int lArgCount, const char *pArgs[])
 	// Extract assets
 	try {
 		for(auto &TocEntry: vAssetToc) {
+			auto AssetPair = s_mOffsToFileName.find(TocEntry.ulOffs);
+			if(AssetPair != s_mOffsToFileName.end()) {
+				if(AssetPair->second.isCompressed.has_value()) {
+					TocEntry.isUncompressed = !AssetPair->second.isCompressed.value();
+				}
+			}
+
 			decltype(tAssetDef::onExtract) onExtract = nullptr;
 			std::string szAssetName = fmt::format(FMT_STRING("_compressed_{:08X}"), TocEntry.ulOffs);
 			std::vector<uint8_t> vAssetContents;
@@ -734,6 +741,7 @@ int main(int lArgCount, const char *pArgs[])
 						vAssetContents = extractUncompressedAsset(FileRom, TocEntry.ulOffs, TocEntry.ulSizeInRom);
 					}
 			}
+
 			if(vAssetContents.size() != 0) {
 				std::ofstream FileOut;
 				std::string szOutPath;
