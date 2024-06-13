@@ -745,6 +745,12 @@ int main(int lArgCount, const char *pArgs[])
 				) {
 					szExtension = "1F8";
 				}
+				else if(
+					vAssetContents[0] == 0x20 && vAssetContents[1] == 0x00 &&
+					vAssetContents[2] == 0xFF
+				) {
+					szExtension = "2000FF";
+				}
 				auto AssetPair = s_mOffsToFileName.find(TocEntry.ulOffs);
 				if(AssetPair != s_mOffsToFileName.end()) {
 					szAssetName = AssetPair->second.AssetName;
