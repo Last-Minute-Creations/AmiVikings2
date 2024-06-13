@@ -20,6 +20,10 @@ struct tAssetDef {
 	)> onExtract;
 };
 
+void handleExtractTileset(
+	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
+);
+
 void handleExtractFont(
 	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
 );
@@ -220,6 +224,10 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xC1C18, tAssetDef {.AssetName = "frames_special", .isCompressed = {}, .onExtract = nullptr}},
 	{0xD78E4, tAssetDef {.AssetName = "continue_chars", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE55FD, tAssetDef {.AssetName = "continue_valkyrie", .isCompressed = {}, .onExtract = nullptr}},
+	{0x53AFF, tAssetDef {.AssetName = "tileset_unk1", .isCompressed = {}, .onExtract = handleExtractTileset}},
+	{0x5CDA7, tAssetDef {.AssetName = "tileset_unk2", .isCompressed = {}, .onExtract = handleExtractTileset}},
+	{0x6881E, tAssetDef {.AssetName = "tileset_unk3", .isCompressed = {}, .onExtract = handleExtractTileset}},
+	{0x7480D, tAssetDef {.AssetName = "tileset_unk4", .isCompressed = {}, .onExtract = handleExtractTileset}},
 };
 
 struct tMergeRule {
@@ -349,6 +357,31 @@ void extractGfxTiles(
 }
 
 //------------------------------------------------------ ASSET PROCESS CALLBACKS
+
+void handleExtractTileset(
+	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
+)
+{
+	const std::uint8_t ubBpp = 4;
+	std::vector<tRgb> vColors;
+	for(std::uint16_t i = 0; i < (1 << ubBpp); ++i) {
+		std::uint8_t ubComponent = 0xFF * i / ((1 << ubBpp) - 1);
+		vColors.push_back(tRgb(ubComponent, ubComponent, ubComponent));
+	}
+	tPalette Palette(vColors);
+
+	std::filesystem::create_directories(PathOut);
+	uint32_t ulFrameByteSize = (8 * 8 * ubBpp) / 8; // w * h * bpp / bitsInByte
+	uint32_t ulFrameCount = uint32_t(vDataUnprocessed.size()) / ulFrameByteSize;
+
+	std::vector<tMergeRule> vMergeRules;
+	for(uint32_t i = 0; i < ulFrameCount; ++i) {
+		vMergeRules.push_back(tMergeRule(
+			1, 1, fmt::format(FMT_STRING("{}"), i), i
+		));
+	}
+	extractGfxTiles(vDataUnprocessed, ubBpp, vMergeRules, Palette, PathOut);
+}
 
 void handleExtractFont(
 	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
