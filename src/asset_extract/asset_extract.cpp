@@ -747,6 +747,10 @@ int main(int lArgCount, const char *pArgs[])
 				);
 				vAssetToc[i - 1].isUncompressed = true;
 			}
+
+			if(s_mOffsToFileName.contains(vAssetToc[i - 1].ulOffs)) {
+				fmt::print(FMT_STRING(" -- {}"), s_mOffsToFileName.at(vAssetToc[i - 1].ulOffs).AssetName);
+			}
 			fmt::print("\n");
 		}
 		vAssetToc.push_back({
@@ -756,7 +760,7 @@ int main(int lArgCount, const char *pArgs[])
 
 		FileRom.seekg(ulOffsEntryNext, std::ios::beg);
 
-		fmt::print(FMT_STRING("raw: 0x{:06X}, rom: 0x{:08X}"), ulOffs, OffsRom);
+		fmt::print(FMT_STRING("idx: {:3d} ({:04X}), raw: 0x{:06X}, rom: 0x{:08X}"), i, i, ulOffs, OffsRom);
 	}
 	fmt::print("\n");
 
