@@ -240,11 +240,16 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xD78E4, tAssetDef {.AssetName = "continue_chars", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE55FD, tAssetDef {.AssetName = "continue_valkyrie", .isCompressed = {}, .onExtract = nullptr}},
 
-	{0x53AFF, tAssetDef {.AssetName = "tileset_unk1", .isCompressed = {}, .onExtract = handleExtractTileset}},
-	{0x5CDA7, tAssetDef {.AssetName = "tileset_unk2", .isCompressed = {}, .onExtract = handleExtractTileset}},
-	{0x6881E, tAssetDef {.AssetName = "tileset_unk3", .isCompressed = {}, .onExtract = handleExtractTileset}},
-	{0x7480D, tAssetDef {.AssetName = "tileset_unk4", .isCompressed = {}, .onExtract = handleExtractTileset}},
-	{0x7FD84, tAssetDef {.AssetName = "tileset_unk5", .isCompressed = {}, .onExtract = handleExtractTileset}},
+	{0x53AFF, tAssetDef {.AssetName = "tileset_world1", .isCompressed = {}, .onExtract = handleExtractTileset}},
+	{0x58864, tAssetDef {.AssetName = "tiledef_world1", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5CDA7, tAssetDef {.AssetName = "tileset_world2", .isCompressed = {}, .onExtract = handleExtractTileset}},
+	{0x62FB3, tAssetDef {.AssetName = "tiledef_world2", .isCompressed = {}, .onExtract = nullptr}},
+	{0x6881E, tAssetDef {.AssetName = "tileset_world3", .isCompressed = {}, .onExtract = handleExtractTileset}},
+	{0x6DDB2, tAssetDef {.AssetName = "tiledef_world3", .isCompressed = {}, .onExtract = nullptr}},
+	{0x7480D, tAssetDef {.AssetName = "tileset_world4", .isCompressed = {}, .onExtract = handleExtractTileset}},
+	{0x7A235, tAssetDef {.AssetName = "tiledef_world4", .isCompressed = {}, .onExtract = nullptr}},
+	{0x7FD84, tAssetDef {.AssetName = "tileset_world5", .isCompressed = {}, .onExtract = handleExtractTileset}},
+	{0x85DA0, tAssetDef {.AssetName = "tiledef_world5", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0x59D39, tAssetDef {.AssetName = "level_w1_a0_strt_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w64
 	{0x5A08A, tAssetDef {.AssetName = "level_w1_a1_st3w_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
