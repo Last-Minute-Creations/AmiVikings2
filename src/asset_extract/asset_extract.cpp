@@ -228,6 +228,39 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0x5CDA7, tAssetDef {.AssetName = "tileset_unk2", .isCompressed = {}, .onExtract = handleExtractTileset}},
 	{0x6881E, tAssetDef {.AssetName = "tileset_unk3", .isCompressed = {}, .onExtract = handleExtractTileset}},
 	{0x7480D, tAssetDef {.AssetName = "tileset_unk4", .isCompressed = {}, .onExtract = handleExtractTileset}},
+
+	{0x59D39, tAssetDef {.AssetName = "level_w1_a0_strt_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w64
+	{0x5A08A, tAssetDef {.AssetName = "level_w1_a1_st3w_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
+	{0x5A5D0, tAssetDef {.AssetName = "level_w1_a2_k3ys_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
+	{0x5ADA4, tAssetDef {.AssetName = "level_w1_a3_trsh_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
+	{0x5B58D, tAssetDef {.AssetName = "level_w1_a4_sw1m_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
+	{0x5BE1A, tAssetDef {.AssetName = "level_w1_a5_tw0!_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
+	{0x5C664, tAssetDef {.AssetName = "level_w1_a6_t1m3_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
+	{0x644FB, tAssetDef {.AssetName = "level_w2_a1_k4rn_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w100
+	{0x64EBF, tAssetDef {.AssetName = "level_w2_a2_b0mb_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x65B17, tAssetDef {.AssetName = "level_w2_a3_wzrd_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x66714, tAssetDef {.AssetName = "level_w2_a4_blks_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x67340, tAssetDef {.AssetName = "level_w2_a5_tlpt_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x67EA0, tAssetDef {.AssetName = "level_w2_a6_gysr_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x6F8E8, tAssetDef {.AssetName = "level_w3_a3_drnk_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w132
+	{0x706C4, tAssetDef {.AssetName = "level_w3_a5_0v4l_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x71453, tAssetDef {.AssetName = "level_w3_a6_t1n3_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x72310, tAssetDef {.AssetName = "level_w3_a4_y0vr_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x72FCB, tAssetDef {.AssetName = "level_w3_a2_r3t0_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x73D93, tAssetDef {.AssetName = "level_w3_a1_b3sv_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w132
+	{0x7B7CB, tAssetDef {.AssetName = "level_w4_a1_d4rk_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x7C45C, tAssetDef {.AssetName = "level_w4_a2_h4rd_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x7D13A, tAssetDef {.AssetName = "level_w4_a3_hrdr_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x7DCF9, tAssetDef {.AssetName = "level_w4_a4_l0st_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x7E8F3, tAssetDef {.AssetName = "level_w4_a5_0b0y_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x7F433, tAssetDef {.AssetName = "level_w4_a6_h0m3_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x87B31, tAssetDef {.AssetName = "level_w5_a1_shck_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x8893F, tAssetDef {.AssetName = "level_w5_a3_h3ll_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x8980A, tAssetDef {.AssetName = "level_w5_a4_4rgh_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x8A60C, tAssetDef {.AssetName = "level_w5_a2_tnnl_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x8B391, tAssetDef {.AssetName = "level_w5_a5_b4dd_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x8C00D, tAssetDef {.AssetName = "level_w5_a6_d4dy_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0xDA515, tAssetDef {.AssetName = "level_intro_tiles", .isCompressed = {}, .onExtract = nullptr}}, //
 };
 
 struct tMergeRule {
