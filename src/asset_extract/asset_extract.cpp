@@ -236,7 +236,7 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xBE618, tAssetDef {.AssetName = "frames_olaf", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteOlaf, 63)}},
 	{0xC1C18, tAssetDef {.AssetName = "frames_special", .isCompressed = {}, .onExtract = nullptr}},
 
-	{0xD16CE, tAssetDef {.AssetName = "continue_bg_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD61CE, tAssetDef {.AssetName = "continue_bg_tiles", .isCompressed = {}, .onExtract = nullptr}},
 	{0xD78E4, tAssetDef {.AssetName = "continue_chars", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE55FD, tAssetDef {.AssetName = "continue_valkyrie", .isCompressed = {}, .onExtract = nullptr}},
 
