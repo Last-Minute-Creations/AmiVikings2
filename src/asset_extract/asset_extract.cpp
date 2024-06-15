@@ -290,7 +290,7 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xF19D1, tAssetDef {.AssetName = "level_cutscene_credits_w2_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF1B63, tAssetDef {.AssetName = "level_cutscene_credits_w4_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF1DCC, tAssetDef {.AssetName = "level_cutscene_credits_w5_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF1DCC, tAssetDef {.AssetName = "level_cutscene_end_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF20A1, tAssetDef {.AssetName = "level_cutscene_end_defs", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0xE22A9, tAssetDef {.AssetName = "level_menu_splash_defs", .isCompressed = {}, .onExtract = nullptr}},
 
@@ -814,7 +814,8 @@ int main(int lArgCount, const char *pArgs[])
 
 	// Extract assets
 	try {
-		for(auto &TocEntry: vAssetToc) {
+		for(std::uint16_t i = 0; i < vAssetToc.size(); ++i) {
+			auto &TocEntry = vAssetToc[i];
 			auto AssetPair = s_mOffsToFileName.find(TocEntry.ulOffs);
 			if(AssetPair != s_mOffsToFileName.end()) {
 				if(AssetPair->second.isCompressed.has_value()) {
@@ -823,7 +824,7 @@ int main(int lArgCount, const char *pArgs[])
 			}
 
 			decltype(tAssetDef::onExtract) onExtract = nullptr;
-			std::string szAssetName = fmt::format(FMT_STRING("_compressed_{:08X}"), TocEntry.ulOffs);
+			std::string szAssetName = fmt::format(FMT_STRING("compressed_{:08X}"), TocEntry.ulOffs);
 			std::vector<uint8_t> vAssetContents;
 			if(!TocEntry.isUncompressed) {
 				try {
@@ -832,11 +833,11 @@ int main(int lArgCount, const char *pArgs[])
 				catch(const std::exception &Exc) {
 					fmt::print("ERR: Exception while decoding asset at {:08X}: '{}'. Assuming no compression.\n", TocEntry.ulOffs, Exc.what());
 					TocEntry.isUncompressed = true;
-					szAssetName = fmt::format(FMT_STRING("_faildec_{:08X}"), TocEntry.ulOffs);
+					szAssetName = fmt::format(FMT_STRING("faildec_{:08X}"), TocEntry.ulOffs);
 				}
 			}
 			else {
-				szAssetName = fmt::format(FMT_STRING("_uncompressed_{:08X}"), TocEntry.ulOffs);
+				szAssetName = fmt::format(FMT_STRING("uncompressed_{:08X}"), TocEntry.ulOffs);
 			}
 			if(TocEntry.isUncompressed) {
 					if(TocEntry.ulSizeInRom) {
@@ -870,7 +871,7 @@ int main(int lArgCount, const char *pArgs[])
 					}
 				}
 				if(!isWrittenByCallback) {
-					szOutPath = fmt::format(FMT_STRING("{}/{}.{}"), szOutDir, szAssetName, szExtension);
+					szOutPath = fmt::format(FMT_STRING("{}/{:03d}_{}.{}"), szOutDir, i, szAssetName, szExtension);
 					FileOut.open(szOutPath,	std::ios::binary);
 					FileOut.write(reinterpret_cast<char*>(vAssetContents.data()), vAssetContents.size());
 					FileOut.close();
