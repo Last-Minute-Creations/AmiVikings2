@@ -250,6 +250,7 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0x7A235, tAssetDef {.AssetName = "tiledef_world4", .isCompressed = {}, .onExtract = nullptr}},
 	{0x7FD84, tAssetDef {.AssetName = "tileset_world5", .isCompressed = {}, .onExtract = handleExtractTileset}},
 	{0x85DA0, tAssetDef {.AssetName = "tiledef_world5", .isCompressed = {}, .onExtract = nullptr}},
+	{0xDAAAA, tAssetDef {.AssetName = "tileset_menu", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0x59BF3, tAssetDef {.AssetName = "level_w1_a0_strt_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0x59ED9, tAssetDef {.AssetName = "level_w1_a1_st3w_defs", .isCompressed = {}, .onExtract = nullptr}},
@@ -283,16 +284,17 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0x8B031, tAssetDef {.AssetName = "level_w5_a5_b4dd_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0x8BC79, tAssetDef {.AssetName = "level_w5_a6_d4dy_defs", .isCompressed = {}, .onExtract = nullptr}},
 
-	{0xEFA30, tAssetDef {.AssetName = "level_cutscene_post_world_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF12DC, tAssetDef {.AssetName = "level_cutscene_outro_ship_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF0F39, tAssetDef {.AssetName = "level_cutscene_viking_outro_ship_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF12DC, tAssetDef {.AssetName = "level_cutscene_outro_viking_ship_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF1845, tAssetDef {.AssetName = "level_cutscene_credits_w1_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF1927, tAssetDef {.AssetName = "level_cutscene_credits_w3_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF19D1, tAssetDef {.AssetName = "level_cutscene_credits_w2_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF1B63, tAssetDef {.AssetName = "level_cutscene_credits_w4_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF1DCC, tAssetDef {.AssetName = "level_cutscene_credits_w5_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF20A1, tAssetDef {.AssetName = "level_cutscene_end_defs", .isCompressed = {}, .onExtract = nullptr}},
 
-	{0xE22A9, tAssetDef {.AssetName = "level_menu_splash_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xEE7C0, tAssetDef {.AssetName = "level_cutscene_tomator_ship_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xEFA30, tAssetDef {.AssetName = "level_cutscene_tomator_ship_post_world_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF20A1, tAssetDef {.AssetName = "level_cutscene_tomator_ship_end_defs", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0x59D39, tAssetDef {.AssetName = "level_w1_a0_strt_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w64
 	{0x5A08A, tAssetDef {.AssetName = "level_w1_a1_st3w_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
@@ -325,7 +327,9 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0x8A60C, tAssetDef {.AssetName = "level_w5_a2_tnnl_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
 	{0x8B391, tAssetDef {.AssetName = "level_w5_a5_b4dd_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
 	{0x8C00D, tAssetDef {.AssetName = "level_w5_a6_d4dy_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0xDA515, tAssetDef {.AssetName = "level_intro_tiles", .isCompressed = {}, .onExtract = nullptr}},
+
+	{0xDA515, tAssetDef {.AssetName = "level_menu_splash_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE22A9, tAssetDef {.AssetName = "level_menu_splash_defs", .isCompressed = {}, .onExtract = nullptr}},
 };
 
 struct tMergeRule {
