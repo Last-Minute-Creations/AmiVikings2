@@ -5,11 +5,20 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "Python Debugger: Current File",
+			"type": "debugpy",
+			"request": "launch",
+			"program": "${file}",
+			"console": "integratedTerminal",
+			"cwd": "${workspaceFolder}/src/py_tools"
+		},
+		{
 			"type": "amiga",
 			"request": "launch",
-			"name": "Amiga 500 2m chip",
+			"name": "Amiga 500 2m chip 8m fast",
 			"config": "A500",
 			"chipmem": "2m",
+			"fastmem": "8M",
 			"program": "${workspaceFolder}/build/AmiVikings2",
 			"kickstart": "D:/usr/Documents/Amiga files/WinUAE/kick13.rom",
 			"internalConsoleOptions": "openOnSessionStart"
