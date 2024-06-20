@@ -97,8 +97,6 @@ static const tPalette s_PaletteOlaf({
 });
 
 static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
-	{0xE2583, tAssetDef {.AssetName = "logo_interplay", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE3863, tAssetDef {.AssetName = "logo_blizzard", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE4D50, tAssetDef {.AssetName = "logo_gameover_a", .isCompressed = {}, .onExtract = nullptr}},
 	{0xED14B, tAssetDef {.AssetName = "logo_lv2_a", .isCompressed = {}, .onExtract = nullptr}},
 	{0xEDB38, tAssetDef {.AssetName = "logo_lv2_b", .isCompressed = {}, .onExtract = nullptr}},
@@ -236,7 +234,6 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xBE618, tAssetDef {.AssetName = "frames_olaf", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteOlaf, 63)}},
 	{0xC1C18, tAssetDef {.AssetName = "frames_special", .isCompressed = {}, .onExtract = nullptr}},
 
-	{0xD61CE, tAssetDef {.AssetName = "continue_bg_tiles", .isCompressed = {}, .onExtract = nullptr}},
 	{0xD78E4, tAssetDef {.AssetName = "continue_chars", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE55FD, tAssetDef {.AssetName = "continue_valkyrie", .isCompressed = {}, .onExtract = nullptr}},
 
@@ -251,6 +248,18 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0x7FD84, tAssetDef {.AssetName = "tileset_world5", .isCompressed = {}, .onExtract = handleExtractTileset}},
 	{0x85DA0, tAssetDef {.AssetName = "tiledef_world5", .isCompressed = {}, .onExtract = nullptr}},
 	{0xDAAAA, tAssetDef {.AssetName = "tileset_menu", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD5940, tAssetDef {.AssetName = "tiledef_continue_bg", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD61CE, tAssetDef {.AssetName = "tileset_continue_bg", .isCompressed = {}, .onExtract = handleExtractTileset}},
+
+	{0xE237A, tAssetDef {.AssetName = "level_logo_interplay_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE241E, tAssetDef {.AssetName = "tiledef_logo_interplay", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE2583, tAssetDef {.AssetName = "tileset_logo_interplay", .isCompressed = {}, .onExtract = handleExtractTileset}},
+	{0xEE468, tAssetDef {.AssetName = "level_logo_interplay_defs", .isCompressed = {}, .onExtract = nullptr}},
+
+	{0xE34B3, tAssetDef {.AssetName = "level_logo_blizzard_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE35AD, tAssetDef {.AssetName = "tiledef_logo_blizzard", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE3863, tAssetDef {.AssetName = "tileset_logo_blizzard", .isCompressed = {}, .onExtract = handleExtractTileset}},
+	{0xE4C93, tAssetDef {.AssetName = "level_logo_blizzard_defs", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0x59BF3, tAssetDef {.AssetName = "level_w1_a0_strt_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0x59ED9, tAssetDef {.AssetName = "level_w1_a1_st3w_defs", .isCompressed = {}, .onExtract = nullptr}},
@@ -284,8 +293,14 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0x8B031, tAssetDef {.AssetName = "level_w5_a5_b4dd_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0x8BC79, tAssetDef {.AssetName = "level_w5_a6_d4dy_defs", .isCompressed = {}, .onExtract = nullptr}},
 
-	{0xF0F39, tAssetDef {.AssetName = "level_cutscene_viking_outro_ship_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF12DC, tAssetDef {.AssetName = "level_cutscene_outro_viking_ship_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD577C, tAssetDef {.AssetName = "level_continue_bg_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD77D8, tAssetDef {.AssetName = "level_continue_bg_defs", .isCompressed = {}, .onExtract = nullptr}},
+
+	{0xF0E7D, tAssetDef {.AssetName = "level_cutscene_intro_viking_ship_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF0F39, tAssetDef {.AssetName = "level_cutscene_viking_ship_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF105A, tAssetDef {.AssetName = "level_cutscene_intro_prison_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF1164, tAssetDef {.AssetName = "level_cutscene_intro_prison_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF12DC, tAssetDef {.AssetName = "level_cutscene_viking_outro_ship_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF1845, tAssetDef {.AssetName = "level_cutscene_credits_w1_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF1927, tAssetDef {.AssetName = "level_cutscene_credits_w3_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF19D1, tAssetDef {.AssetName = "level_cutscene_credits_w2_defs", .isCompressed = {}, .onExtract = nullptr}},
@@ -870,7 +885,7 @@ int main(int lArgCount, const char *pArgs[])
 				if(AssetPair != s_mOffsToFileName.end()) {
 					szAssetName = AssetPair->second.AssetName;
 					if(AssetPair->second.onExtract != nullptr) {
-						AssetPair->second.onExtract(vAssetContents, fmt::format(FMT_STRING("{}/{}"), szOutDir, szAssetName));
+						AssetPair->second.onExtract(vAssetContents, fmt::format(FMT_STRING("{}/{:03d}_{}"), szOutDir, i, szAssetName));
 						isWrittenByCallback = true;
 					}
 				}
