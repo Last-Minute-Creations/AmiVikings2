@@ -19,7 +19,7 @@ def compose_minitile(tile_image: Image, tileset_path: str, tiledef, pos):
     minitile.close()
 
 
-level_def_path = find_path(305)
+level_def_path = find_path(323)
 print(f"loading_level {level_def_path}...")
 
 with open(level_def_path, "rb") as file_level_def:
@@ -30,6 +30,34 @@ with open(level_def_path, "rb") as file_level_def:
     [level_tilemap_index] = struct.unpack("<H", file_level_def.read(2))
     [mini_tiles_index] = struct.unpack("<H", file_level_def.read(2))
     [tile_defs_index] = struct.unpack("<H", file_level_def.read(2))
+    file_level_def.seek(49, 0)
+
+    [end1] = struct.unpack("<H", file_level_def.read(2))
+    if end1 != 0xFFFF:
+        print(f"1st section is not empty! Pos: {file_level_def.tell()}")
+        exit(1)
+
+    # Section 2 - DRNK 0V4L T1N3 Y0VR B3SV R3T0 intro_ship
+    is_section2_empty = True
+    while True:
+        [end2] = struct.unpack("<H", file_level_def.read(2))
+        if end2 != 0xFFFF and is_section2_empty:
+            is_section2_empty = False
+            print(f"2nd section is not empty! Pos: {file_level_def.tell()}")
+        else:
+            break
+
+    section3_length = 0
+    while struct.unpack("<H", file_level_def.read(2))[0] != 0xFFFF:
+        section3_length += 2
+    # Load palette
+    while True:
+        [subpalette_file_index] = struct.unpack("<H", file_level_def.read(2))
+        if subpalette_file_index == 0xFFFF:
+            break
+        [palette_start_pos] = struct.unpack("<B", file_level_def.read(1))
+        subpalette_file_path = find_path(subpalette_file_index)
+        print(f"Loading palette from {subpalette_file_path} at pos {palette_start_pos}...")
 
 print(f"dimensions: {level_width}x{level_height}, level tilemap: {level_tilemap_index}, minitiles: {mini_tiles_index}, tiledefs: {tile_defs_index}")
 mini_tiles_path = find_path(mini_tiles_index)

@@ -311,40 +311,99 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xEFA30, tAssetDef {.AssetName = "level_cutscene_tomator_ship_post_world_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF20A1, tAssetDef {.AssetName = "level_cutscene_tomator_ship_end_defs", .isCompressed = {}, .onExtract = nullptr}},
 
-	{0x59D39, tAssetDef {.AssetName = "level_w1_a0_strt_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w64
-	{0x5A08A, tAssetDef {.AssetName = "level_w1_a1_st3w_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
-	{0x5A5D0, tAssetDef {.AssetName = "level_w1_a2_k3ys_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
-	{0x5ADA4, tAssetDef {.AssetName = "level_w1_a3_trsh_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
-	{0x5B58D, tAssetDef {.AssetName = "level_w1_a4_sw1m_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
-	{0x5BE1A, tAssetDef {.AssetName = "level_w1_a5_tw0!_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
-	{0x5C664, tAssetDef {.AssetName = "level_w1_a6_t1m3_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w96
-	{0x644FB, tAssetDef {.AssetName = "level_w2_a1_k4rn_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w100
-	{0x64EBF, tAssetDef {.AssetName = "level_w2_a2_b0mb_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x65B17, tAssetDef {.AssetName = "level_w2_a3_wzrd_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x66714, tAssetDef {.AssetName = "level_w2_a4_blks_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x67340, tAssetDef {.AssetName = "level_w2_a5_tlpt_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x67EA0, tAssetDef {.AssetName = "level_w2_a6_gysr_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x6F8E8, tAssetDef {.AssetName = "level_w3_a3_drnk_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w132
-	{0x706C4, tAssetDef {.AssetName = "level_w3_a5_0v4l_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x71453, tAssetDef {.AssetName = "level_w3_a6_t1n3_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x72310, tAssetDef {.AssetName = "level_w3_a4_y0vr_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x72FCB, tAssetDef {.AssetName = "level_w3_a2_r3t0_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x73D93, tAssetDef {.AssetName = "level_w3_a1_b3sv_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w132
-	{0x7B7CB, tAssetDef {.AssetName = "level_w4_a1_d4rk_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x7C45C, tAssetDef {.AssetName = "level_w4_a2_h4rd_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x7D13A, tAssetDef {.AssetName = "level_w4_a3_hrdr_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x7DCF9, tAssetDef {.AssetName = "level_w4_a4_l0st_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x7E8F3, tAssetDef {.AssetName = "level_w4_a5_0b0y_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x7F433, tAssetDef {.AssetName = "level_w4_a6_h0m3_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x87B31, tAssetDef {.AssetName = "level_w5_a1_shck_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x8893F, tAssetDef {.AssetName = "level_w5_a3_h3ll_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x8980A, tAssetDef {.AssetName = "level_w5_a4_4rgh_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x8A60C, tAssetDef {.AssetName = "level_w5_a2_tnnl_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x8B391, tAssetDef {.AssetName = "level_w5_a5_b4dd_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
-	{0x8C00D, tAssetDef {.AssetName = "level_w5_a6_d4dy_tiles", .isCompressed = {}, .onExtract = nullptr}}, // w128
+	{0x59D39, tAssetDef {.AssetName = "level_w1_a0_strt_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5A08A, tAssetDef {.AssetName = "level_w1_a1_st3w_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5A5D0, tAssetDef {.AssetName = "level_w1_a2_k3ys_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5ADA4, tAssetDef {.AssetName = "level_w1_a3_trsh_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5B58D, tAssetDef {.AssetName = "level_w1_a4_sw1m_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5BE1A, tAssetDef {.AssetName = "level_w1_a5_tw0!_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x5C664, tAssetDef {.AssetName = "level_w1_a6_t1m3_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x644FB, tAssetDef {.AssetName = "level_w2_a1_k4rn_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x64EBF, tAssetDef {.AssetName = "level_w2_a2_b0mb_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x65B17, tAssetDef {.AssetName = "level_w2_a3_wzrd_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x66714, tAssetDef {.AssetName = "level_w2_a4_blks_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x67340, tAssetDef {.AssetName = "level_w2_a5_tlpt_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x67EA0, tAssetDef {.AssetName = "level_w2_a6_gysr_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x6F8E8, tAssetDef {.AssetName = "level_w3_a3_drnk_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x706C4, tAssetDef {.AssetName = "level_w3_a5_0v4l_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x71453, tAssetDef {.AssetName = "level_w3_a6_t1n3_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x72310, tAssetDef {.AssetName = "level_w3_a4_y0vr_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x72FCB, tAssetDef {.AssetName = "level_w3_a2_r3t0_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x73D93, tAssetDef {.AssetName = "level_w3_a1_b3sv_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x7B7CB, tAssetDef {.AssetName = "level_w4_a1_d4rk_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x7C45C, tAssetDef {.AssetName = "level_w4_a2_h4rd_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x7D13A, tAssetDef {.AssetName = "level_w4_a3_hrdr_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x7DCF9, tAssetDef {.AssetName = "level_w4_a4_l0st_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x7E8F3, tAssetDef {.AssetName = "level_w4_a5_0b0y_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x7F433, tAssetDef {.AssetName = "level_w4_a6_h0m3_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x87B31, tAssetDef {.AssetName = "level_w5_a1_shck_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x8893F, tAssetDef {.AssetName = "level_w5_a3_h3ll_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x8980A, tAssetDef {.AssetName = "level_w5_a4_4rgh_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x8A60C, tAssetDef {.AssetName = "level_w5_a2_tnnl_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x8B391, tAssetDef {.AssetName = "level_w5_a5_b4dd_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0x8C00D, tAssetDef {.AssetName = "level_w5_a6_d4dy_tiles", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0xDA515, tAssetDef {.AssetName = "level_menu_splash_tiles", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE22A9, tAssetDef {.AssetName = "level_menu_splash_defs", .isCompressed = {}, .onExtract = nullptr}},
+
+	{0xC56EB, tAssetDef {.AssetName = "palette_dunno_02_w1_w2_w3_w4_w5_outroship", .isCompressed = true, .onExtract = nullptr}},
+	{0xC6CDB, tAssetDef {.AssetName = "palette_dunno_01_strt_st3w", .isCompressed = true, .onExtract = nullptr}},
+	{0xC75B8, tAssetDef {.AssetName = "palette_dunno_05_w2", .isCompressed = true, .onExtract = nullptr}},
+	{0xCCDDD, tAssetDef {.AssetName = "palette_dunno_03_st3w_k3ys_trsh", .isCompressed = true, .onExtract = nullptr}},
+	{0xCEE82, tAssetDef {.AssetName = "palette_dunno_06_w2", .isCompressed = true, .onExtract = nullptr}},
+	{0xCFAA3, tAssetDef {.AssetName = "palette_dunno_04_k4rn_gysr", .isCompressed = true, .onExtract = nullptr}},
+	{0xCFAC8, tAssetDef {.AssetName = "palette_dunno_08_wzrd", .isCompressed = true, .onExtract = nullptr}},
+	{0xCFAED, tAssetDef {.AssetName = "palette_dunno_07_b0mb", .isCompressed = true, .onExtract = nullptr}},
+	{0xCFB13, tAssetDef {.AssetName = "palette_dunno_09_blks", .isCompressed = true, .onExtract = nullptr}},
+	{0xCFB39, tAssetDef {.AssetName = "palette_dunno_10_tlpt", .isCompressed = true, .onExtract = nullptr}},
+	{0xD045E, tAssetDef {.AssetName = "palette_dunno_11_drnk_0v4l_y0vr_r3t0_b3sv", .isCompressed = true, .onExtract = nullptr}},
+	{0xD0E1F, tAssetDef {.AssetName = "palette_dunno_12_drnk_0v4l_y0vr_r3t0_b3sv", .isCompressed = true, .onExtract = nullptr}},
+	{0xC8BED, tAssetDef {.AssetName = "palette_dunno_13_0v4l_t1n3_y0vr_r3t0_b3sv", .isCompressed = true, .onExtract = nullptr}},
+	{0xD355C, tAssetDef {.AssetName = "palette_dunno_14_w4", .isCompressed = true, .onExtract = nullptr}},
+	{0xC8DDF, tAssetDef {.AssetName = "palette_dunno_15_w4", .isCompressed = true, .onExtract = nullptr}},
+	{0xD2302, tAssetDef {.AssetName = "palette_dunno_16_w4", .isCompressed = true, .onExtract = nullptr}},
+	{0xCA0D1, tAssetDef {.AssetName = "palette_dunno_17_w5", .isCompressed = true, .onExtract = nullptr}},
+	{0xD475A, tAssetDef {.AssetName = "palette_dunno_18_shck_h3ll_4rgh_tnnl_d4dy", .isCompressed = true, .onExtract = nullptr}},
+	{0xD56E6, tAssetDef {.AssetName = "palette_dunno_19_continue", .isCompressed = true, .onExtract = nullptr}},
+	{0xE65B7, tAssetDef {.AssetName = "palette_dunno_20_continue", .isCompressed = true, .onExtract = nullptr}},
+	{0xED125, tAssetDef {.AssetName = "palette_dunno_21_continue", .isCompressed = true, .onExtract = nullptr}},
+	{0xE55D7, tAssetDef {.AssetName = "palette_dunno_22_continue", .isCompressed = true, .onExtract = nullptr}},
+	{0xD78BE, tAssetDef {.AssetName = "palette_dunno_23_continue", .isCompressed = true, .onExtract = nullptr}},
+	{0xF23D3, tAssetDef {.AssetName = "palette_dunno_24_continue", .isCompressed = true, .onExtract = nullptr}},
+	{0xF23F9, tAssetDef {.AssetName = "palette_dunno_25_continue", .isCompressed = true, .onExtract = nullptr}},
+	{0xF241F, tAssetDef {.AssetName = "palette_dunno_26_continue", .isCompressed = true, .onExtract = nullptr}},
+	{0xF2445, tAssetDef {.AssetName = "palette_dunno_27_continue", .isCompressed = true, .onExtract = nullptr}},
+	{0xF246B, tAssetDef {.AssetName = "palette_dunno_28_continue", .isCompressed = true, .onExtract = nullptr}},
+	{0xF13D4, tAssetDef {.AssetName = "palette_dunno_29_introship_prison", .isCompressed = true, .onExtract = nullptr}},
+	{0xF13FA, tAssetDef {.AssetName = "palette_dunno_30_introship_prison", .isCompressed = true, .onExtract = nullptr}},
+
+	{0xE234B, tAssetDef {.AssetName = "palette_logo_interplay", .isCompressed = true, .onExtract = nullptr}},
+	{0xE347D, tAssetDef {.AssetName = "palette_logo_blizzard", .isCompressed = true, .onExtract = nullptr}},
+
+	{0x50995, tAssetDef {.AssetName = "palette_hud", .isCompressed = true, .onExtract = nullptr}},
+	{0x8C95C, tAssetDef {.AssetName = "palette_sprite_erik", .isCompressed = true, .onExtract = nullptr}},
+	{0x8C982, tAssetDef {.AssetName = "palette_sprite_fang", .isCompressed = true, .onExtract = nullptr}},
+	{0x8C9A7, tAssetDef {.AssetName = "palette_sprite_scorch", .isCompressed = true, .onExtract = nullptr}},
+	{0x8C9CC, tAssetDef {.AssetName = "palette_sprite_baelog", .isCompressed = true, .onExtract = nullptr}},
+	{0x8C9F2, tAssetDef {.AssetName = "palette_sprite_olaf", .isCompressed = true, .onExtract = nullptr}},
+	{0xCDBC2, tAssetDef {.AssetName = "palette_sprite_w1_enemy", .isCompressed = true, .onExtract = nullptr}},
+	{0xD56C1, tAssetDef {.AssetName = "palette_sprite_w5_xeno", .isCompressed = true, .onExtract = nullptr}},
+	{0xEC93F, tAssetDef {.AssetName = "palette_sprite_tomator", .isCompressed = true, .onExtract = nullptr}},
+	{0xE8B68, tAssetDef {.AssetName = "palette_level_w1_strt_t1m3", .isCompressed = true, .onExtract = nullptr}},
+	{0xE8C63, tAssetDef {.AssetName = "palette_level_w1_st3w_tw0!", .isCompressed = true, .onExtract = nullptr}},
+	{0xE8D55, tAssetDef {.AssetName = "palette_level_w1_k3ys_sw1m", .isCompressed = true, .onExtract = nullptr}},
+	{0xE8E3F, tAssetDef {.AssetName = "palette_level_w1_trsh", .isCompressed = true, .onExtract = nullptr}},
+	{0x5CCA3, tAssetDef {.AssetName = "palette_level_w2_k4rn_gysr", .isCompressed = true, .onExtract = nullptr}},
+	{0xE6991, tAssetDef {.AssetName = "palette_level_w2_b0mb", .isCompressed = true, .onExtract = nullptr}},
+	{0x63FBD, tAssetDef {.AssetName = "palette_level_w2_wzrd", .isCompressed = true, .onExtract = nullptr}},
+	{0xE6AA4, tAssetDef {.AssetName = "palette_level_w2_blks_tlpt", .isCompressed = true, .onExtract = nullptr}},
+	{0x6872B, tAssetDef {.AssetName = "palette_level_w3_introship_outroship", .isCompressed = true, .onExtract = nullptr}},
+	{0x74739, tAssetDef {.AssetName = "palette_level_w4", .isCompressed = true, .onExtract = nullptr}},
+	{0xE91FF, tAssetDef {.AssetName = "palette_level_shck", .isCompressed = true, .onExtract = nullptr}},
+	{0xE8F29, tAssetDef {.AssetName = "palette_level_h3ll", .isCompressed = true, .onExtract = nullptr}},
+	{0xE901B, tAssetDef {.AssetName = "palette_level_4rgh", .isCompressed = true, .onExtract = nullptr}},
+	{0xE910D, tAssetDef {.AssetName = "palette_level_tnnl", .isCompressed = true, .onExtract = nullptr}},
+	{0x7FC94, tAssetDef {.AssetName = "palette_level_b4dd_d4dy_prison", .isCompressed = true, .onExtract = nullptr}},
 };
 
 struct tMergeRule {
