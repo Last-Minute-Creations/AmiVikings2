@@ -1,25 +1,51 @@
 from PIL import Image, ImageFont, ImageDraw
 from glob import glob
 import struct
+import os
 
 minitile_index_mask_size = 10
 minitile_attribute_bit_flip_y = 5
 minitile_index_mask = (1 << minitile_index_mask_size) - 1
 
+def read_mini_tiles(mini_tiles_path: str):
+    tile_count = os.path.getsize(mini_tiles_path) // (4 * 8)
+    mini_tiles = [[[0 for x in range(8)] for y in range(8)] for i in range(tile_count)]
+    with open(mini_tiles_path, "rb") as file_mini_tiles:
+        for i in range(tile_count):
+            rows = []
+            for y in range(8):
+                rows.append(struct.unpack("<BB", file_mini_tiles.read(2)))
+            for y in range(8):
+                rows[y] += struct.unpack("<BB", file_mini_tiles.read(2))
+            for y in range(8):
+                chunky_row = [0 for x in range(8)]
+                for b in range(4):
+                    for x in range(8):
+                        chunky_row[x] |= ((rows[y][b] >> (7 - x)) & 1) << b
+                for x in range(8):
+                    mini_tiles[i][x][y] = chunky_row[x]
+    return mini_tiles
+
 def find_path(index: int) -> str:
     return glob("../../assets/dec/{:03d}*".format(index))[0]
 
-def compose_minitile(tile_image: Image, tileset_path: str, tiledef, pos):
+def compose_minitile(tile_image: Image, mini_tiles, palette, tiledef, pos):
     index = tiledef & minitile_index_mask
     attribute = tiledef >> minitile_index_mask_size
-    minitile = Image.open(f"{tileset_path}/{index}.png")
+    palette_index = attribute & 0b111 # using here 0b1111 is wrong
+    minitile_data = mini_tiles[index]
+    minitile = Image.new("RGB", [8, 8])
+
+    for y in range(8):
+        for x in range(8):
+            minitile.putpixel([x, y], palette[palette_index * 16 + minitile_data[x][y]])
     if attribute & (1 << (minitile_attribute_bit_flip_y - 1)) != 0:
         minitile = minitile.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     tile_image.paste(minitile, pos)
     minitile.close()
 
 
-level_def_path = find_path(323)
+level_def_path = find_path(28)
 print(f"loading_level {level_def_path}...")
 
 with open(level_def_path, "rb") as file_level_def:
@@ -51,6 +77,7 @@ with open(level_def_path, "rb") as file_level_def:
     while struct.unpack("<H", file_level_def.read(2))[0] != 0xFFFF:
         section3_length += 2
     # Load palette
+    level_palette = [(255, 0, 255, 255) for i in range(256)]
     while True:
         [subpalette_file_index] = struct.unpack("<H", file_level_def.read(2))
         if subpalette_file_index == 0xFFFF:
@@ -58,8 +85,17 @@ with open(level_def_path, "rb") as file_level_def:
         [palette_start_pos] = struct.unpack("<B", file_level_def.read(1))
         subpalette_file_path = find_path(subpalette_file_index)
         print(f"Loading palette from {subpalette_file_path} at pos {palette_start_pos}...")
+        subpalette_color_count = os.path.getsize(subpalette_file_path) // (2)
+        with open(subpalette_file_path, "rb") as file_subpalette:
+            for i in range(subpalette_color_count):
+                [color_value] = struct.unpack("<H", file_subpalette.read(2))
+                r = (((color_value >> 0) & 0b11111) * 255 // 0b11111)
+                g = (((color_value >> 5) & 0b11111) * 255 // 0b11111)
+                b = (((color_value >> 10) & 0b11111) * 255 // 0b11111)
+                # print(f"color {palette_start_pos + i:02X}: {color_value:04X} -> {r:02X}{g:02X}{b:02X}")
+                level_palette[palette_start_pos + i] = (r, g, b, 255)
 
-print(f"dimensions: {level_width}x{level_height}, level tilemap: {level_tilemap_index}, minitiles: {mini_tiles_index}, tiledefs: {tile_defs_index}")
+print(f"dimensions: {level_width}x{level_height}, level tilemap: {level_tilemap_index}, mini_tiles: {mini_tiles_index}, tiledefs: {tile_defs_index}")
 mini_tiles_path = find_path(mini_tiles_index)
 tile_defs_path = find_path(tile_defs_index)
 level_tilemap_path = find_path(level_tilemap_index)
@@ -73,6 +109,8 @@ with open(tile_defs_path, "rb") as file_mini_tiles:
             break
         defs.append(struct.unpack("<HHHH", chunk))
 
+mini_tiles = read_mini_tiles(mini_tiles_path)
+
 tiles = []
 tile_count = len(defs)
 print(f"tile count: {tile_count}")
@@ -85,10 +123,10 @@ for i in range(tile_count):
     # attribute_d = defs[i][3] >> minitile_index_mask_size
     # print("tile {:02X} attribute {:06b} {:06b} {:06b} {:06b}".format(i, attribute_a, attribute_b, attribute_c, attribute_d))
 
-    compose_minitile(tile_image, mini_tiles_path, defs[i][0], [0, 0])
-    compose_minitile(tile_image, mini_tiles_path, defs[i][1], [8, 0])
-    compose_minitile(tile_image, mini_tiles_path, defs[i][2], [0, 8])
-    compose_minitile(tile_image, mini_tiles_path, defs[i][3], [8, 8])
+    compose_minitile(tile_image, mini_tiles, level_palette, defs[i][0], [0, 0])
+    compose_minitile(tile_image, mini_tiles, level_palette, defs[i][1], [8, 0])
+    compose_minitile(tile_image, mini_tiles, level_palette, defs[i][2], [0, 8])
+    compose_minitile(tile_image, mini_tiles, level_palette, defs[i][3], [8, 8])
     tiles.append(tile_image)
 
 tile_index_mask = 0b11_1111_1111
@@ -101,6 +139,7 @@ with Image.new("RGBA", [level_width * 17, level_height * 17], (0, 0, 64, 255)) a
                 for x in range(level_width):
                     chunk = file_tilemap.read(2)
                     [value] = struct.unpack("<H", chunk)
+                    # value = (y * level_width + x) % len(tiles)
                     tile_index = value & tile_index_mask
                     tile_attribute = value >> 10
                     level_preview.paste(tiles[tile_index], [x * 17, y * 17])
