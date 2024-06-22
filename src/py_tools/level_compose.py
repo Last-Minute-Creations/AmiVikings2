@@ -4,8 +4,11 @@ import struct
 import os
 
 minitile_index_mask_size = 10
-minitile_attribute_bit_flip_y = 5
+minitile_attribute_bit_flip_y = 4
+minitile_attribute_bit_front = 3
 minitile_index_mask = (1 << minitile_index_mask_size) - 1
+
+front_tiles = []
 
 def read_mini_tiles(mini_tiles_path: str):
     tile_count = os.path.getsize(mini_tiles_path) // (4 * 8)
@@ -29,7 +32,7 @@ def read_mini_tiles(mini_tiles_path: str):
 def find_path(index: int) -> str:
     return glob("../../assets/dec/{:03d}*".format(index))[0]
 
-def compose_minitile(tile_image: Image, mini_tiles, palette, tiledef, pos):
+def compose_minitile(tile_image: Image, mini_tiles, palette, tiledef, pos) -> bool:
     index = tiledef & minitile_index_mask
     attribute = tiledef >> minitile_index_mask_size
     palette_index = attribute & 0b111 # using here 0b1111 is wrong
@@ -39,10 +42,12 @@ def compose_minitile(tile_image: Image, mini_tiles, palette, tiledef, pos):
     for y in range(8):
         for x in range(8):
             minitile.putpixel([x, y], palette[palette_index * 16 + minitile_data[x][y]])
-    if attribute & (1 << (minitile_attribute_bit_flip_y - 1)) != 0:
+    if attribute & (1 << (minitile_attribute_bit_flip_y)) != 0:
         minitile = minitile.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    is_front = (attribute & (1 << (minitile_attribute_bit_front)) != 0)
     tile_image.paste(minitile, pos)
     minitile.close()
+    return is_front
 
 
 level_def_path = find_path(28)
@@ -121,12 +126,19 @@ for i in range(tile_count):
     # attribute_b = defs[i][1] >> minitile_index_mask_size
     # attribute_c = defs[i][2] >> minitile_index_mask_size
     # attribute_d = defs[i][3] >> minitile_index_mask_size
-    # print("tile {:02X} attribute {:06b} {:06b} {:06b} {:06b}".format(i, attribute_a, attribute_b, attribute_c, attribute_d))
+    # print("tile {:03X} attribute {:06b} {:06b} {:06b} {:06b}".format(i, attribute_a, attribute_b, attribute_c, attribute_d))
 
-    compose_minitile(tile_image, mini_tiles, level_palette, defs[i][0], [0, 0])
-    compose_minitile(tile_image, mini_tiles, level_palette, defs[i][1], [8, 0])
-    compose_minitile(tile_image, mini_tiles, level_palette, defs[i][2], [0, 8])
-    compose_minitile(tile_image, mini_tiles, level_palette, defs[i][3], [8, 8])
+    front_tiles.append(0)
+    if compose_minitile(tile_image, mini_tiles, level_palette, defs[i][0], [0, 0]):
+        front_tiles[i] += 1
+    if compose_minitile(tile_image, mini_tiles, level_palette, defs[i][1], [8, 0]):
+        front_tiles[i] += 1
+    if compose_minitile(tile_image, mini_tiles, level_palette, defs[i][2], [0, 8]):
+        front_tiles[i] += 1
+    if compose_minitile(tile_image, mini_tiles, level_palette, defs[i][3], [8, 8]):
+        front_tiles[i] += 1
+    if front_tiles[i] != 0 and front_tiles[i] < 4:
+        print(f"WARN: Tile {i:03X} has mixed front attributes: {front_tiles[i]}/4")
     tiles.append(tile_image)
 
 tile_index_mask = 0b11_1111_1111
@@ -143,7 +155,8 @@ with Image.new("RGBA", [level_width * 17, level_height * 17], (0, 0, 64, 255)) a
                     tile_index = value & tile_index_mask
                     tile_attribute = value >> 10
                     level_preview.paste(tiles[tile_index], [x * 17, y * 17])
-                    d.text([x * 17, y * 17 - 2], "{:02X}".format(tile_index), font=fnt, fill=(0, 0, 255, 192))
+                    tile_index_color = (0, 0, 255, 192) if front_tiles[tile_index] > 0 else (128, 128, 0, 192)
+                    d.text([x * 17, y * 17 - 2], f"{tile_index:02X}", font = fnt, fill = tile_index_color)
                     if tile_attribute != 0:
                         d.text([x * 17, y * 17 - 2 + 8], "{:02X}".format(tile_attribute), font=fnt, fill=(255, 128, 0, 192))
         out = Image.alpha_composite(level_preview, txt)
