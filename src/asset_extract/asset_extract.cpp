@@ -96,6 +96,7 @@ static const tPalette s_PaletteOlaf({
 	tRgb(0x001088), tRgb(0x101010)
 });
 
+// This is mapped by address because it allows extracting stuff not included in packfile
 static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xE4D50, tAssetDef {.AssetName = "logo_gameover_a", .isCompressed = {}, .onExtract = nullptr}},
 	{0xED14B, tAssetDef {.AssetName = "logo_lv2_a", .isCompressed = {}, .onExtract = nullptr}},
@@ -190,24 +191,24 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 
 	{0x509B9, tAssetDef {.AssetName = "hud_border", .isCompressed = {}, .onExtract = nullptr}},
 	{0x50DAD, tAssetDef {.AssetName = "hud_cursor_up", .isCompressed = {}, .onExtract = nullptr}},
-	{0x50DDB, tAssetDef {.AssetName = "hud_portrait_erik_active", .isCompressed = {}, .onExtract = nullptr}},
-	{0x50F5B, tAssetDef {.AssetName = "hud_portrait_baelog_active", .isCompressed = {}, .onExtract = nullptr}},
-	{0x510DB, tAssetDef {.AssetName = "hud_portrait_olaf_active", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5125B, tAssetDef {.AssetName = "hud_portrait_fang_active", .isCompressed = {}, .onExtract = nullptr}},
-	{0x513DB, tAssetDef {.AssetName = "hud_portrait_scorch_active", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5155B, tAssetDef {.AssetName = "hud_portrait_erik_inactive", .isCompressed = {}, .onExtract = nullptr}},
-	{0x516DB, tAssetDef {.AssetName = "hud_portrait_baelog_inactive", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5185B, tAssetDef {.AssetName = "hud_portrait_olaf_inactive", .isCompressed = {}, .onExtract = nullptr}},
-	{0x519DB, tAssetDef {.AssetName = "hud_portrait_fang_inactive", .isCompressed = {}, .onExtract = nullptr}},
-	{0x51B5B, tAssetDef {.AssetName = "hud_portrait_scorch_inactive", .isCompressed = {}, .onExtract = nullptr}},
-	{0x51CDB, tAssetDef {.AssetName = "hud_portrait_erik_dead", .isCompressed = {}, .onExtract = nullptr}},
-	{0x51E5B, tAssetDef {.AssetName = "hud_portrait_baelog_dead", .isCompressed = {}, .onExtract = nullptr}},
-	{0x51FDB, tAssetDef {.AssetName = "hud_portrait_olaf_dead", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5215B, tAssetDef {.AssetName = "hud_portrait_scorch_dead", .isCompressed = {}, .onExtract = nullptr}},
-	{0x522DB, tAssetDef {.AssetName = "hud_portrait_fang_dead", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5245B, tAssetDef {.AssetName = "hud_portrait_unk1", .isCompressed = {}, .onExtract = nullptr}},
-	{0x525DB, tAssetDef {.AssetName = "hud_portrait_unk2", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5275B, tAssetDef {.AssetName = "hud_hpbar", .isCompressed = {}, .onExtract = nullptr}},
+	{0x50DDB, tAssetDef {.AssetName = "hud_portrait_erik_active", .isCompressed = false, .onExtract = nullptr}},
+	{0x50F5B, tAssetDef {.AssetName = "hud_portrait_baelog_active", .isCompressed = false, .onExtract = nullptr}},
+	{0x510DB, tAssetDef {.AssetName = "hud_portrait_olaf_active", .isCompressed = false, .onExtract = nullptr}},
+	{0x5125B, tAssetDef {.AssetName = "hud_portrait_fang_active", .isCompressed = false, .onExtract = nullptr}},
+	{0x513DB, tAssetDef {.AssetName = "hud_portrait_scorch_active", .isCompressed = false, .onExtract = nullptr}},
+	{0x5155B, tAssetDef {.AssetName = "hud_portrait_erik_inactive", .isCompressed = false, .onExtract = nullptr}},
+	{0x516DB, tAssetDef {.AssetName = "hud_portrait_baelog_inactive", .isCompressed = false, .onExtract = nullptr}},
+	{0x5185B, tAssetDef {.AssetName = "hud_portrait_olaf_inactive", .isCompressed = false, .onExtract = nullptr}},
+	{0x519DB, tAssetDef {.AssetName = "hud_portrait_fang_inactive", .isCompressed = false, .onExtract = nullptr}},
+	{0x51B5B, tAssetDef {.AssetName = "hud_portrait_scorch_inactive", .isCompressed = false, .onExtract = nullptr}},
+	{0x51CDB, tAssetDef {.AssetName = "hud_portrait_erik_dead", .isCompressed = false, .onExtract = nullptr}},
+	{0x51E5B, tAssetDef {.AssetName = "hud_portrait_baelog_dead", .isCompressed = false, .onExtract = nullptr}},
+	{0x51FDB, tAssetDef {.AssetName = "hud_portrait_olaf_dead", .isCompressed = false, .onExtract = nullptr}},
+	{0x5215B, tAssetDef {.AssetName = "hud_portrait_scorch_dead", .isCompressed = false, .onExtract = nullptr}},
+	{0x522DB, tAssetDef {.AssetName = "hud_portrait_fang_dead", .isCompressed = false, .onExtract = nullptr}},
+	{0x5245B, tAssetDef {.AssetName = "hud_portrait_unk1", .isCompressed = false, .onExtract = nullptr}},
+	{0x525DB, tAssetDef {.AssetName = "hud_portrait_unk2", .isCompressed = false, .onExtract = nullptr}},
+	{0x5275B, tAssetDef {.AssetName = "hud_hpbar", .isCompressed = false, .onExtract = nullptr}},
 	{0x5281B, tAssetDef {.AssetName = "hud_items", .isCompressed = {}, .onExtract = nullptr}},
 	{0xC56BB, tAssetDef {.AssetName = "hud_cursor_down", .isCompressed = {}, .onExtract = nullptr}},
 
@@ -222,17 +223,17 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xCA001, tAssetDef {.AssetName = "interact_keyslots", .isCompressed = {}, .onExtract = nullptr}},
 	{0xC5BA1, tAssetDef {.AssetName = "tile_pipe", .isCompressed = {}, .onExtract = nullptr}},
 
-	{0x8CA18, tAssetDef {.AssetName = "frames_erik", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteErik, 0)}},
-	{0x94A18, tAssetDef {.AssetName = "frames_erik", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteErik, 64)}},
-	{0x98218, tAssetDef {.AssetName = "frames_baelog", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteBaelog, 0)}},
-	{0xA0018, tAssetDef {.AssetName = "frames_baelog", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteBaelog, 63)}},
-	{0xA3018, tAssetDef {.AssetName = "frames_fang", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteFang, 0)}},
-	{0xAA218, tAssetDef {.AssetName = "frames_fang", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteFang, 57)}},
-	{0xAD418, tAssetDef {.AssetName = "frames_scorch", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteScorch, 0)}},
-	{0xB3818, tAssetDef {.AssetName = "frames_scorch", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteScorch, 50)}},
-	{0xB6818, tAssetDef {.AssetName = "frames_olaf", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteOlaf, 0)}},
-	{0xBE618, tAssetDef {.AssetName = "frames_olaf", .isCompressed = {}, .onExtract = handleExtractFramePart(s_PaletteOlaf, 63)}},
-	{0xC1C18, tAssetDef {.AssetName = "frames_special", .isCompressed = {}, .onExtract = nullptr}},
+	{0x8CA18, tAssetDef {.AssetName = "frames_erik", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteErik, 0)}},
+	{0x94A18, tAssetDef {.AssetName = "frames_erik", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteErik, 64)}},
+	{0x98218, tAssetDef {.AssetName = "frames_baelog", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteBaelog, 0)}},
+	{0xA0018, tAssetDef {.AssetName = "frames_baelog", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteBaelog, 63)}},
+	{0xA3018, tAssetDef {.AssetName = "frames_fang", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteFang, 0)}},
+	{0xAA218, tAssetDef {.AssetName = "frames_fang", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteFang, 57)}},
+	{0xAD418, tAssetDef {.AssetName = "frames_scorch", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteScorch, 0)}},
+	{0xB3818, tAssetDef {.AssetName = "frames_scorch", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteScorch, 50)}},
+	{0xB6818, tAssetDef {.AssetName = "frames_olaf", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteOlaf, 0)}},
+	{0xBE618, tAssetDef {.AssetName = "frames_olaf", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteOlaf, 63)}},
+	{0xC1C18, tAssetDef {.AssetName = "frames_special", .isCompressed = false, .onExtract = nullptr}},
 
 	{0xD78E4, tAssetDef {.AssetName = "continue_chars", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE55FD, tAssetDef {.AssetName = "continue_valkyrie", .isCompressed = {}, .onExtract = nullptr}},
@@ -376,6 +377,11 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xF246B, tAssetDef {.AssetName = "palette_dunno_28_continue", .isCompressed = true, .onExtract = nullptr}},
 	{0xF13D4, tAssetDef {.AssetName = "palette_dunno_29_introship_prison", .isCompressed = true, .onExtract = nullptr}},
 	{0xF13FA, tAssetDef {.AssetName = "palette_dunno_30_introship_prison", .isCompressed = true, .onExtract = nullptr}},
+	{0xCF94B, tAssetDef {.AssetName = "palette_dunno_31", .isCompressed = true, .onExtract = nullptr}},
+	{0xE2325, tAssetDef {.AssetName = "palette_dunno_32", .isCompressed = true, .onExtract = nullptr}},
+	{0xEE4E8, tAssetDef {.AssetName = "palette_dunno_33", .isCompressed = true, .onExtract = nullptr}},
+	{0xF0DEC, tAssetDef {.AssetName = "palette_dunno_34", .isCompressed = true, .onExtract = nullptr}},
+	{0xF2342, tAssetDef {.AssetName = "palette_dunno_35", .isCompressed = true, .onExtract = nullptr}},
 
 	{0xE234B, tAssetDef {.AssetName = "palette_logo_interplay", .isCompressed = true, .onExtract = nullptr}},
 	{0xE347D, tAssetDef {.AssetName = "palette_logo_blizzard", .isCompressed = true, .onExtract = nullptr}},
@@ -859,19 +865,35 @@ int main(int lArgCount, const char *pArgs[])
 			fmt::print(FMT_STRING(", size: {:5d}"), ulSizeInRom);
 			vAssetToc[i - 1].ulSizeInRom = ulSizeInRom;
 
-			// Check if decompression would make any sense
-			uint16_t uwSizeDecompressed;
-			FileRom.seekg(vAssetToc[i - 1].ulOffs, std::ios::beg);
-			FileRom.read(
-				reinterpret_cast<char*>(&uwSizeDecompressed),
-				sizeof(uwSizeDecompressed)
-			);
-			if(uwSizeDecompressed < ulSizeInRom) {
-				fmt::print(
-					FMT_STRING(", uncompressed (decompressed would be smaller)"),
-					uwSizeDecompressed, ulSizeInRom
+			bool isCompressionKnown = false;
+			auto AssetPair = s_mOffsToFileName.find(vAssetToc[i - 1].ulOffs);
+			if(AssetPair != s_mOffsToFileName.end()) {
+				if(AssetPair->second.isCompressed.has_value()) {
+					isCompressionKnown = true;
+					if(AssetPair->second.isCompressed.value()) {
+						fmt::print(FMT_STRING(", C "));
+					}
+					else {
+						fmt::print(FMT_STRING(", U "));
+					}
+				}
+			}
+
+			if(!isCompressionKnown) {
+				// Check if decompression would make any sense
+				uint16_t uwSizeDecompressed;
+				FileRom.seekg(vAssetToc[i - 1].ulOffs, std::ios::beg);
+				FileRom.read(
+					reinterpret_cast<char*>(&uwSizeDecompressed),
+					sizeof(uwSizeDecompressed)
 				);
-				vAssetToc[i - 1].isUncompressed = true;
+				if(uwSizeDecompressed < ulSizeInRom) {
+					fmt::print(FMT_STRING(", U?"));
+					vAssetToc[i - 1].isUncompressed = true;
+				}
+				else {
+					fmt::print(FMT_STRING(", C?"));
+				}
 			}
 
 			if(s_mOffsToFileName.contains(vAssetToc[i - 1].ulOffs)) {
