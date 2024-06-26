@@ -38,11 +38,11 @@ def compose_minitile(tile_image: Image, mini_tiles, palette, tiledef, pos) -> bo
     attribute = tiledef >> minitile_index_mask_size
     palette_index = attribute & 0b111 # using here 0b1111 is wrong
     minitile_data = mini_tiles[index]
-    minitile = Image.new("RGB", [8, 8])
-
+    minitile = Image.new("RGBA", [8, 8], (0, 0, 0, 0))
     for y in range(8):
         for x in range(8):
-            minitile.putpixel([x, y], palette[palette_index * 16 + minitile_data[x][y]])
+            color = (255, 255, 255, 0) if minitile_data[x][y] == 0 else palette[palette_index * 16 + minitile_data[x][y]]
+            minitile.putpixel([x, y], color)
     if attribute & (1 << (minitile_attribute_bit_flip_y)) != 0:
         minitile = minitile.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     if attribute & (1 << (minitile_attribute_bit_flip_x)) != 0:
@@ -64,6 +64,10 @@ with open(level_def_path, "rb") as file_level_def:
     [level_tilemap_index] = struct.unpack("<H", file_level_def.read(2))
     [mini_tiles_index] = struct.unpack("<H", file_level_def.read(2))
     [tile_defs_index] = struct.unpack("<H", file_level_def.read(2))
+    [background_width] = struct.unpack("<H", file_level_def.read(2))
+    [background_height] = struct.unpack("<H", file_level_def.read(2))
+    file_level_def.seek(47, 0)
+    [background_tilemap_index] = struct.unpack("<H", file_level_def.read(2))
     file_level_def.seek(49, 0)
 
     [end1] = struct.unpack("<H", file_level_def.read(2))
@@ -123,7 +127,7 @@ tiles = []
 tile_count = len(defs)
 print(f"tile count: {tile_count}")
 for i in range(tile_count):
-    tile_image = Image.new("RGB", [16, 16])
+    tile_image = Image.new("RGBA", [16, 16], (0, 0, 0, 0))
 
     # attribute_a = defs[i][0] >> minitile_index_mask_size
     # attribute_b = defs[i][1] >> minitile_index_mask_size
@@ -144,23 +148,33 @@ for i in range(tile_count):
         print(f"WARN: Tile {i:03X} has mixed front attributes: {front_tiles[i]}/4")
     tiles.append(tile_image)
 
+background_tilemap = [[0 for y in range(background_height)] for x in range(background_width)]
+if background_tilemap_index != 0xFFFF:
+    background_tilemap_path = find_path(background_tilemap_index)
+    with open(background_tilemap_path, "rb") as background_tilemap_file:
+        for y in range(background_height):
+            for x in range(background_width):
+                background_tilemap[x][y] = struct.unpack("<H", background_tilemap_file.read(2))[0]
+
 tile_index_mask = 0b11_1111_1111
-with Image.new("RGBA", [level_width * 17, level_height * 17], (0, 0, 64, 255)) as level_preview:
-    with Image.new("RGBA", level_preview.size, (255, 255, 255, 0)) as txt:
-        fnt = ImageFont.truetype("uni05.ttf", 8)
-        d = ImageDraw.Draw(txt)
-        with open(level_tilemap_path, "rb") as file_tilemap:
-            for y in range(level_height):
-                for x in range(level_width):
-                    chunk = file_tilemap.read(2)
-                    [value] = struct.unpack("<H", chunk)
-                    # value = (y * level_width + x) % len(tiles)
-                    tile_index = value & tile_index_mask
-                    tile_attribute = value >> 10
-                    level_preview.paste(tiles[tile_index], [x * 17, y * 17])
-                    tile_index_color = (0, 0, 255, 192) if front_tiles[tile_index] > 0 else (128, 128, 0, 192)
-                    d.text([x * 17, y * 17 - 2], f"{tile_index:02X}", font = fnt, fill = tile_index_color)
-                    if tile_attribute != 0:
-                        d.text([x * 17, y * 17 - 2 + 8], "{:02X}".format(tile_attribute), font=fnt, fill=(255, 128, 0, 192))
-        out = Image.alpha_composite(level_preview, txt)
-        out.show()
+with Image.new("RGBA", [level_width * 17, level_height * 17], (255, 255, 255, 0)) as level_preview:
+    with Image.new("RGBA", level_preview.size, (0, 0, 64, 255)) as level_background:
+        with Image.new("RGBA", level_preview.size, (255, 255, 255, 0)) as txt:
+            fnt = ImageFont.truetype("uni05.ttf", 8)
+            d = ImageDraw.Draw(txt)
+            with open(level_tilemap_path, "rb") as file_tilemap:
+                for y in range(level_height):
+                    for x in range(level_width):
+                        chunk = file_tilemap.read(2)
+                        [value] = struct.unpack("<H", chunk)
+                        # value = (y * level_width + x) % len(tiles)
+                        tile_index = value & tile_index_mask
+                        tile_attribute = value >> 10
+                        level_background.paste(tiles[background_tilemap[x % background_width][y % background_height]], [x * 17, y * 17])
+                        level_preview.paste(tiles[tile_index], [x * 17, y * 17])
+                        tile_index_color = (0, 0, 255, 192) if front_tiles[tile_index] > 0 else (128, 128, 0, 192)
+                        d.text([x * 17, y * 17 - 2], f"{tile_index:02X}", font = fnt, fill = tile_index_color)
+                        if tile_attribute != 0:
+                            d.text([x * 17, y * 17 - 2 + 8], "{:02X}".format(tile_attribute), font=fnt, fill=(255, 128, 0, 192))
+            out = Image.alpha_composite(level_background, Image.alpha_composite(level_preview, txt))
+            out.show()
