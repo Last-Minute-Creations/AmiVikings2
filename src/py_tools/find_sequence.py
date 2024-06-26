@@ -1,4 +1,22 @@
 from glob import glob
+from binascii import hexlify
+
+def find_text(text: str):
+    encoded = b''
+    for c in text:
+        v = ord(c) - ord('A') + 49
+        e = v.to_bytes(1)
+        encoded += e
+    print(f"searching for '{text}': {hexlify(encoded, ' ', 1).decode()}")
+    file_paths = glob("../../assets/dec/*.*")
+    # file_paths = glob("../../assets/Lost Vikings II, The - Norse by Norsewest (Europe) (En,Fr,De).sfc")
+    for file_path in file_paths:
+        with open(file_path, 'rb') as file:
+            file_contents = file.read()
+        if file_contents.find(encoded) != -1:
+            print(f"MATCH: {file_path}")
+        if file_contents.find(text.encode()) != -1:
+            print(f"MATCH: {file_path}")
 
 def find_passwords():
     file_paths = glob("../../assets/dec/*.*")
@@ -37,4 +55,8 @@ def find_palette():
         if file_contents.find(b'\xA0\x10\x06\x10\x0B\x24\x11\x40') != -1: # w5 alien
             print(f"MATCH A: {file_path}")
 
-find_palette()
+# CAN YOU TAKE US
+# TO THE BIG SHINY
+# METAL THING THAT
+# BROUGHT US HERE?
+find_text('BROUGHT')
