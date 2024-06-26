@@ -4,6 +4,7 @@ import struct
 import os
 
 minitile_index_mask_size = 10
+minitile_attribute_bit_flip_x = 5
 minitile_attribute_bit_flip_y = 4
 minitile_attribute_bit_front = 3
 minitile_index_mask = (1 << minitile_index_mask_size) - 1
@@ -44,6 +45,8 @@ def compose_minitile(tile_image: Image, mini_tiles, palette, tiledef, pos) -> bo
             minitile.putpixel([x, y], palette[palette_index * 16 + minitile_data[x][y]])
     if attribute & (1 << (minitile_attribute_bit_flip_y)) != 0:
         minitile = minitile.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    if attribute & (1 << (minitile_attribute_bit_flip_x)) != 0:
+        minitile = minitile.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
     is_front = (attribute & (1 << (minitile_attribute_bit_front)) != 0)
     tile_image.paste(minitile, pos)
     minitile.close()
