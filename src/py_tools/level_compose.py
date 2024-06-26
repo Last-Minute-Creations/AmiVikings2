@@ -151,6 +151,7 @@ for i in range(tile_count):
 background_tilemap = [[0 for y in range(background_height)] for x in range(background_width)]
 if background_tilemap_index != 0xFFFF:
     background_tilemap_path = find_path(background_tilemap_index)
+    print(f"Loading bg from {background_tilemap_path}...")
     with open(background_tilemap_path, "rb") as background_tilemap_file:
         for y in range(background_height):
             for x in range(background_width):
