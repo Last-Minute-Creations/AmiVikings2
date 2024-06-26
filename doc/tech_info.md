@@ -97,3 +97,23 @@ What I've instantly noticed is that each size added to an offset doesn't add up 
 Upon further inspection it appeared that each sample is preceded by 2-byte length of it, in little endian.
 At least that's what I've thought at start, but it isn't the case for `02297B_0B52` file since that field is set to `06F6`, which isn't the correct value.
 Looks like it haven't found some audio files, notably at `2535A` and `2E08D`.
+
+## Object list
+
+STRT:
+
+```plain
+unk
+40 00 50 00  # Object db offs?
+
+posx   posy   cx     cy     kind   unk1   unk2
+50 00  80 ff  10 00  10 00  00 00  27 08  01 00  # Erik
+30 00  80 ff  10 00  10 00  01 00  2d 08  01 00  # Baelog
+10 00  80 ff  10 00  10 00  02 00  2f 08  01 00  # Olaf
+00 00  00 00  10 00  10 00  0b 00  28 08  01 00
+00 00  00 00  10 00  10 00  ce 00  28 08  00 00
+80 00  68 00  08 00  08 00  1f 00  24 00  06 01  # Help
+c0 01  60 00  10 00  10 00  af 00  6b 00  00 00  # Witch
+e0 01  60 00  08 00  08 00  98 00  2e 00  00 00  # Pot
+ff ff                                            # End
+```

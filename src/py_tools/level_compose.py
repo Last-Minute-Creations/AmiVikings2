@@ -85,9 +85,22 @@ with open(level_def_path, "rb") as file_level_def:
         else:
             break
 
-    section3_length = 0
-    while struct.unpack("<H", file_level_def.read(2))[0] != 0xFFFF:
-        section3_length += 2
+    [objlist_unk1] = struct.unpack("<H", file_level_def.read(2))
+    [objlist_unk2] = struct.unpack("<H", file_level_def.read(2))
+    print(f"Obj list unk1: {objlist_unk1:04X} ({objlist_unk1}), unk2: {objlist_unk2:04X} ({objlist_unk2})")
+    # Read objects
+    while True:
+        [obj_x] = struct.unpack("<h", file_level_def.read(2))
+        if obj_x == -1:
+            break
+        [obj_y] = struct.unpack("<h", file_level_def.read(2))
+        [obj_cx] = struct.unpack("<H", file_level_def.read(2))
+        [obj_cy] = struct.unpack("<H", file_level_def.read(2))
+        [obj_kind] = struct.unpack("<H", file_level_def.read(2))
+        [obj_unk1] = struct.unpack("<H", file_level_def.read(2))
+        [obj_unk2] = struct.unpack("<H", file_level_def.read(2))
+        print(f"object kind {obj_kind:5d} @{obj_x:4d},{obj_y:4d}, center: {obj_cx:2d},{obj_cy:2d}, unk1: {obj_unk1:04X}, unk2: {obj_unk2:04X}")
+
     # Load palette
     level_palette = [(255, 0, 255, 255) for i in range(256)]
     while True:
