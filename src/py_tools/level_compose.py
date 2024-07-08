@@ -9,6 +9,53 @@ minitile_attribute_bit_flip_y = 4
 minitile_attribute_bit_front = 3
 minitile_index_mask = (1 << minitile_index_mask_size) - 1
 
+objects = {
+    0: "Erik",
+    1: "Baelog",
+    2: "Olaf",
+    3: "Fang",
+    5: "Fang locked", # tw0!: 0829/0000
+    6: "Scorch locked", # b0mb: 082B/0000
+    11: "dunno11 W1/k4rn/b0mb",
+    16: "Openable terrain horz", # tw0!: 0062/0020
+    18: "Lever", # tw0!: 0024/0008
+    21: "Button", # sw1m: 0024/0008
+    24: "Hit block",
+    26: "Key hole red", # k3ys: 0024/0002
+    27: "Key hole silver", # k3ys: 0024/0001
+    28: "Key hole gold", # k3ys: 0024/0004
+    29: "Key item", # unk1 0020, unk2 0003: nuke, 0004: W1 red key, 0005: W1 skeleton key, 0006: W1 gold key, 000A: W1 eyeball, 000B: W1 mushroom, 000C: W1 wing, 000D: W2 egg, 000E: W2 scroll, 000F: W2 wand, 0019: time gear, 001B: time capacitor 001E: garlic
+    30: "Help box", # st3w: 0024/0008, 0024/0009, 0024/000A
+    31: "Help box autotrigger", # strt: 0024/0106
+    42: "Fireball spawner from top double", # k4rn: 0024/0000
+    43: "Fireball spawner", #st3w: 0064/0000 (left), k3ys/sw1m: 0024/0000 (right)
+    47: "Fire courtain spawner to left", # t1m3: 0064/0000
+    48: "Fire courtain spawner to bottom", #st3w: 0024/0000
+    52: "W1 enemy skeleton", # st3w: 0029/0000
+    53: "W1 enemy vamp/bat", # k3ys: 002B/0C00
+    54: "W2 key gate", # k4rn: 0062/0004
+    59: "W2 scales", # k4rn: 0022/0030
+    62: "W2 geyser", # k4rn: 0024/0000
+    65: "W2 sorceress pt2", # k4rn: 0022/0003
+    67: "W2 enemy knight", # k4rn: 002B/0500
+    68: "W2 enemy dragon red", #k4rn: 0021/1F00
+    146: "W1 toggle gate to right", # tw0!: 0064/0008
+    147: "W1 key gate", # k3ys: 0064/0001 0064/0002
+    148: "W1 bridge?", # sw1m: 0022/0008 (to right), t1m3: 0062/004 (to left)
+    151: "W1 lift", # trsh: 0022/0000
+    152: "Cauldron fire",
+    175: "W1 Witch",
+    176: "W2 Sorceress pt1", # k4rn: 006B/0002
+    177: "Time machine pt2", # t1m3: 002F/0003
+    181: "Locked Fang (dialogue? lock?)", # tw0!: 0029/0000
+    182: "Kid", # t1m3: 0069/0000
+    190: "Baelog NPC", # t1m3: 002D/0400
+    191: "Underwater spikes from bottom", # t1m3: 00A2/0000
+    192: "W1 enemy bat", # st3w: 0029/0C00
+    194: "Time machine pt1", # t1m3: 002D/0800
+    206: "dunno206 W1",
+}
+
 front_tiles = []
 
 def read_mini_tiles(mini_tiles_path: str):
@@ -99,7 +146,8 @@ with open(level_def_path, "rb") as file_level_def:
         [obj_kind] = struct.unpack("<H", file_level_def.read(2))
         [obj_unk1] = struct.unpack("<H", file_level_def.read(2))
         [obj_unk2] = struct.unpack("<H", file_level_def.read(2))
-        print(f"object kind {obj_kind:5d} @{obj_x:4d},{obj_y:4d}, center: {obj_cx:2d},{obj_cy:2d}, unk1: {obj_unk1:04X}, unk2: {obj_unk2:04X}")
+        kind_str = objects[obj_kind] if obj_kind in objects else "???"
+        print(f"object kind {obj_kind:5d} @{obj_x:4d},{obj_y:4d}, center: {obj_cx:2d},{obj_cy:2d}, unk1: {obj_unk1:04X}, unk2: {obj_unk2:04X} - {kind_str}")
 
     # Load palette
     level_palette = [(255, 0, 255, 255) for i in range(256)]
