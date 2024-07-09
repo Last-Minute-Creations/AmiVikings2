@@ -14,19 +14,26 @@ objects = {
     1: "Baelog",
     2: "Olaf",
     3: "Fang",
+    4: "Scorch",
     5: "Fang locked", # tw0!: 0829/0000
     6: "Scorch locked", # b0mb: 082B/0000
-    11: "dunno11 W1/k4rn/b0mb",
+    11: "dunno11 W1/W2",
     16: "Openable terrain horz", # tw0!: 0062/0020
+    17: "W2 terrain bridge", # wzrd: 0022/0020 0022/0040
     18: "Lever", # tw0!: 0024/0008
     21: "Button", # sw1m: 0024/0008
+    23: "W2 block puzzle button", # 0024/010 0024/0030 0024/0040
     24: "Hit block",
     26: "Key hole red", # k3ys: 0024/0002
     27: "Key hole silver", # k3ys: 0024/0001
     28: "Key hole gold", # k3ys: 0024/0004
-    29: "Key item", # unk1 0020, unk2 0003: nuke, 0004: W1 red key, 0005: W1 skeleton key, 0006: W1 gold key, 000A: W1 eyeball, 000B: W1 mushroom, 000C: W1 wing, 000D: W2 egg, 000E: W2 scroll, 000F: W2 wand, 0019: time gear, 001B: time capacitor 001E: garlic
+    29: "Key item", # unk1 0020, unk2 0002: bomb, 0003: nuke, 0004: W1 red key, 0005: W1 skeleton key, 0006: W1 gold key, 000A: W1 eyeball, 000B: W1 mushroom, 000C: W1 wing, 000D: W2 egg, 000E: W2 scroll, 000F: W2 wand, 0019: time gear, 001A time battery, 001B: time capacitor 001E: garlic, 001F: meatloaf
     30: "Help box", # st3w: 0024/0008, 0024/0009, 0024/000A
     31: "Help box autotrigger", # strt: 0024/0106
+    32: "Bomb-detonatable blocks", # b0mb: 0024/0000
+    36: "W2 Teleporter", # b0mb: 0024/384E 0024/5A0A 0024/7A4E 0024/4A2A
+    37: "W2 Teleporter one-way active", #b0mb: 0024/7606
+    40: "W2 pushblock", # wzrd: 0025/0000
     42: "Fireball spawner from top double", # k4rn: 0024/0000
     43: "Fireball spawner", #st3w: 0064/0000 (left), k3ys/sw1m: 0024/0000 (right)
     47: "Fire courtain spawner to left", # t1m3: 0064/0000
@@ -34,11 +41,18 @@ objects = {
     52: "W1 enemy skeleton", # st3w: 0029/0000
     53: "W1 enemy vamp/bat", # k3ys: 002B/0C00
     54: "W2 key gate", # k4rn: 0062/0004
+    55: "W2 button gate", # wzrd: 0022/0010
+    56: "W2 bridge?", # wzrd: 0062/0010
     59: "W2 scales", # k4rn: 0022/0030
+    61: "W2 lift", # wzrd: 0022/0000
     62: "W2 geyser", # k4rn: 0024/0000
+    63: "W2 bone swing", # b0mb: 0065/0000
     65: "W2 sorceress pt2", # k4rn: 0022/0003
+    66: "W2 block puzzle block", # blks: 0025/0010 0025/0020 0024/0040
     67: "W2 enemy knight", # k4rn: 002B/0500
-    68: "W2 enemy dragon red", #k4rn: 0021/1F00
+    68: "W2 enemy dragon", #k4rn: 0021/1F00
+    69: "W2 enemy wizard", #k4rn: 0029/1F00 0029/0000
+    115: "W2 enemy piranha", #b0mb: 0027
     146: "W1 toggle gate to right", # tw0!: 0064/0008
     147: "W1 key gate", # k3ys: 0064/0001 0064/0002
     148: "W1 bridge?", # sw1m: 0022/0008 (to right), t1m3: 0062/004 (to left)
@@ -48,11 +62,13 @@ objects = {
     176: "W2 Sorceress pt1", # k4rn: 006B/0002
     177: "Time machine pt2", # t1m3: 002F/0003
     181: "Locked Fang (dialogue? lock?)", # tw0!: 0029/0000
+    183: "Locked Scorch (dialogue? lock?)", # b0mb: 002A/0000
     182: "Kid", # t1m3: 0069/0000
     190: "Baelog NPC", # t1m3: 002D/0400
-    191: "Underwater spikes from bottom", # t1m3: 00A2/0000
+    191: "W1 Underwater spikes from bottom", # t1m3: 00A2/0000
     192: "W1 enemy bat", # st3w: 0029/0C00
     194: "Time machine pt1", # t1m3: 002D/0800
+    197: "W2 Underwater spikes from bottom/top", # wzrd: 00A4/0000 (bottom), blks: 0024/0000 (top)
     206: "dunno206 W1",
 }
 
