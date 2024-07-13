@@ -24,25 +24,34 @@ object_classes = {
     17: "W2 terrain bridge", # wzrd: 0022/0020 0022/0040
     18: "Lever", # tw0!: 0024/0008
 
+    20: "W4 Button momentary", # d4rk: 0024/0100 (enables geyser 0100)
     21: "Button", # sw1m: 0024/0008
 
     23: "W2 block puzzle button", # 0024/010 0024/0030 0024/0040
     24: "Hit block",
-
+    25: "W4 pushblock pressure plate", # d4rk: 0024/0040
     26: "Key hole red", # k3ys: 0024/0002
     27: "Key hole silver", # k3ys: 0024/0001
     28: "Key hole gold", # k3ys: 0024/0004
-    29: "Key item", # unk1 0020, unk2 0001: shield, 0002: bomb, 0003: nuke, 0004: W1 red key, 0005: W1 skeleton key, 0006: W1 gold key, 000A: W1 eyeball, 000B: W1 mushroom, 000C: W1 wing, 000D: W2 egg, 000E: W2 scroll, 000F: W2 wand, 0011: W3 tarot, 0012: W3 crystal ball, 0019: time gear, 001A time battery, 001B: time capacitor 001E: garlic, 001F: meatloaf, 0020: beer,
+    29: "Key item", # unk1 0020, unk2:
+        # 0001: shield, 0002: bomb, 0003: nuke,
+        # 0004: W1 red key, 0005: W1 skeleton key, 0006: W1 gold key,
+        # 000A: W1 eyeball, 000B: W1 mushroom, 000C: W1 wing,
+        # 000D: W2 egg, 000E: W2 scroll, 000F: W2 wand,
+        # 0010: W3 ????, 0011: W3 tarot, 0012: W3 crystal ball,
+        # 0013: skull, 0014: voodoo, 0015: horn,
+        # 0019: time gear, 001A time battery, 001B: time capacitor
+        # 001C: torch, 001E: garlic, 001F: meatloaf, 0020: beer, 0021: banana
     30: "Help box", # st3w: 0024/0008, 0024/0009, 0024/000A
     31: "Help box autotrigger", # strt: 0024/0106
     32: "W2 Bomb-detonatable blocks", # b0mb: 0024/0000
 
-    36: "W2 Teleporter", # b0mb: 0024/384E 0024/5A0A 0024/7A4E 0024/4A2A
+    36: "W2/W3 Teleporter", # b0mb: 0024/384E 0024/5A0A 0024/7A4E 0024/4A2A
     37: "W2 Teleporter one-way active", # b0mb: 0024/7606
     38: "W3 chest", # b3sv: 0024/0006, unk2 is item code
     39: "W3 underwater chest", # b3sv: 0022/0001, unk2 is item code
-    40: "W2/W3 pushblock", # wzrd: 0025/0000
-
+    40: "Pushblock", # wzrd: 0025/0000
+    41: "W4 darkness", # d4rk: 0000/0087
     42: "Fireball spawner from top double", # k4rn: 0024/0000
     43: "Fireball spawner", #st3w: 0064/0000 (left), k3ys/sw1m: 0024/0000 (right)
 
@@ -60,7 +69,7 @@ object_classes = {
     59: "W2 scales", # k4rn: 0022/0030
 
     61: "W2 lift", # wzrd: 0022/0000
-    62: "W2 geyser", # k4rn: 0024/0000
+    62: "Geyser", # k4rn: 0024/0000 d4rk: 0024/0100 (inactive)
     63: "W2 bone swing", # b0mb: 0065/0000
 
     65: "W2 Sorceress pt2", # k4rn: 0022/0003
@@ -88,15 +97,42 @@ object_classes = {
     87: "W3 enemy parrot", #b3sv: 0028/0000
     88: "W3 enemy captain", # b3sv: 0021/0000 (red) 0029/0000 (green)
 
-    93: "W3 pressure button 1", # y0vr: 0024/0080
+    90: "W4 lift on rail", # d4rk: 0822/0001 0822/0000
+    91: "W4 disappearing block", # h4rd: 0022/0000
+
+    93: "Pressure button 1", # y0vr: 0024/0080, d4rk: 0022/0080 (opens terrain with unk2 0080)
     94: "W3 pressure button 2", # drnk: 0024/0200
+    95: "W4 pushblock bottom blocker", # h4rd: 0022/0100 (button unk2)
+    96: "W4 pillar swing", # d4rk: 0063/0000
+
+    98: "W4 underwater spikes from bottom", # d4rk: 00A4/0000
+    99: "W4 underwater spear from left", # h4rd: 00A4/0000
+    100: "W4 lift up/down", # h4rd: 0022/8000
+    101: "W4 button gate multiple", # d4rk: 0062/0030 (hit block unk2 OR'd)
+    102: "W4 button gate single", # d4rk: 0062/000C (hit block unk2)
+    103: "W4 pressure button gate", # hrdr: 0062/0008 (pressure button unk2)
+    104: "W4 falling gateblock", # h4rd: 0022/0000
+
+    106: "W4 falling debris x3", # d4rk: 0022/0000
+    107: "W4 enemy barnacle", # d4rk: 0023/0000
+    108: "W4 enemy monkey", # d4rk: 0021/2100
+    109: "W4 enemy spearman", # d4rk: 002B/2100
 
     113: "W3 bubble stream to left", # t1n3: 0061/0000
     114: "W3 enemy jellyfish", # r3t0: 0027/0000
     115: "W2 enemy piranha", # b0mb: 0027
 
-    142: "dunno142 W3 r3t0 trigger", # r3t0: 0024/000C
+    135: "W4 lift self-driving up/down", # d4rk: 0022/0300
+    136: "W4 scales", # d4rk: 0022/0040
 
+    138: "W4 Shaman pt2", # d4rk: 0022/0003
+
+    140: "W4 bridge", # l0st: 0022/0400 (to right, button unk2)
+
+    142: "dunno142 W3 r3t0 trigger", # r3t0: 0024/000C
+    143: "W4 lift on rail rectangular", # hrdr: 0022/0002
+
+    145: "W4 lift self-driving roundabout", # d4rk: 0022/0300
     146: "W1 toggle gate to right", # tw0!: 0064/0008
     147: "W1 key gate", # k3ys: 0064/0001 0064/0002
     148: "W1 bridge?", # sw1m: 0022/0008 (to right), t1m3: 0062/004 (to left)
@@ -109,11 +145,13 @@ object_classes = {
     175: "W1 Witch",
     176: "W2 Sorceress pt1", # k4rn: 006B/0002
     177: "Time machine pt2", # t1m3: 002F/0003
-    178: "W3 Gypsy pt1", #b3sv: 0029/0000
+    178: "W3 Gypsy pt1", # b3sv: 0029/0000
+    179: "W4 Shaman pt1", # d4rk: 002B/0002
 
     181: "Locked Fang (dialogue? lock?)", # tw0!: 0029/0000
     182: "Kid", # t1m3: 0069/0000
     183: "Locked Scorch (dialogue? lock?)", # b0mb: 002A/0000
+    184: "W4 spike ball on chain", # d4rk: 0022/0000
 
     186: "W3 flame", # b3sv: 0025/0000
 
@@ -124,7 +162,6 @@ object_classes = {
     192: "W1 enemy bat", # st3w: 0029/0C00
 
     194: "Time machine pt1", # t1m3: 002D/0800
-
     195: "W3 Underwater spikes from bottom/top", # r3t0: 00A2/FFE0
     197: "W2 Underwater spikes from bottom/top", # wzrd: 00A4/0000 (bottom), blks: 0024/0000 (top)
 
