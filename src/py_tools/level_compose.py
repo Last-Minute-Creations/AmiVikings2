@@ -18,7 +18,7 @@ object_classes = {
     5: "Fang locked", # tw0!: 0829/0000
     6: "Scorch locked", # b0mb: 082B/0000
 
-    11: "dunno11 W1/W2/W3",
+    11: "dunno11 W1/W2/W3/W4/W5",
 
     16: "Openable terrain horz", # tw0!: 0062/0020
     17: "W2 terrain bridge", # wzrd: 0022/0020 0022/0040
@@ -26,7 +26,7 @@ object_classes = {
 
     20: "W4 Button momentary", # d4rk: 0024/0100 (enables geyser 0100)
     21: "Button", # sw1m: 0024/0008
-
+    22: "Button stays pushed", # b4dd: 0024/0004
     23: "W2 block puzzle button", # 0024/010 0024/0030 0024/0040
     24: "Hit block",
     25: "W4 pushblock pressure plate", # d4rk: 0024/0040
@@ -36,12 +36,14 @@ object_classes = {
     29: "Key item", # unk1 0020, unk2:
         # 0001: shield, 0002: bomb, 0003: nuke,
         # 0004: W1 red key, 0005: W1 skeleton key, 0006: W1 gold key,
+        # 0007: W5 red card, 0009: W5 yellow card
         # 000A: W1 eyeball, 000B: W1 mushroom, 000C: W1 wing,
         # 000D: W2 egg, 000E: W2 scroll, 000F: W2 wand,
         # 0010: W3 ????, 0011: W3 tarot, 0012: W3 crystal ball,
         # 0013: skull, 0014: voodoo, 0015: horn,
+        # 0016: pcb, 0018: cd
         # 0019: time gear, 001A time battery, 001B: time capacitor
-        # 001C: torch, 001E: garlic, 001F: meatloaf, 0020: beer, 0021: banana
+        # 001C: torch, 001E: garlic, 001F: meatloaf, 0020: beer, 0021: banana, 0022: burger
     30: "Help box", # st3w: 0024/0008, 0024/0009, 0024/000A
     31: "Help box autotrigger", # strt: 0024/0106
     32: "W2 Bomb-detonatable blocks", # b0mb: 0024/0000
@@ -70,7 +72,7 @@ object_classes = {
 
     61: "W2 lift", # wzrd: 0022/0000
     62: "Geyser", # k4rn: 0024/0000 d4rk: 0024/0100 (inactive)
-    63: "W2 bone swing", # b0mb: 0065/0000
+    63: "W2/W4 bone swing", # b0mb: 0065/0000
 
     65: "W2 Sorceress pt2", # k4rn: 0022/0003
     66: "W2 block puzzle block", # blks: 0025/0010 0025/0020 0024/0040
@@ -121,6 +123,11 @@ object_classes = {
     113: "W3 bubble stream to left", # t1n3: 0061/0000
     114: "W3 enemy jellyfish", # r3t0: 0027/0000
     115: "W2 enemy piranha", # b0mb: 0027
+    116: "W5 gravity lift", # shck: 0000/003A 0000/0026
+    117: "W5 tripwire permanent", # shck: 0024/0400
+    118: "W5 electric deathfield bottom hit block-disablable", # shck: 0024/0100 (hit block unk2)
+    119: "W5 electric deathfield momentary tripwire-disablable", # h3ll: 0062/0020 (tripwire unk2)
+    120: "W5 electric deathfield permanent tripwire-disablable", # 4rgh: 0062/1000 (hit block unk2)
 
     135: "W4 lift self-driving up/down", # d4rk: 0022/0300
     136: "W4 scales", # d4rk: 0022/0040
@@ -139,24 +146,38 @@ object_classes = {
 
     151: "W1 lift", # trsh: 0022/0000
     152: "Cauldron fire",
+    153: "W5 key gate", # shck: 0022/0001 0022/0002 0022/004 (key hole unk2)
+    154: "W5 key gate",
+    155: "W5 bridge", # shck: 0062/0020 (to left, hit block unk2)
 
-    171: "W3 expandable chain", # t1n3: 0022/0200 0022/0400
+    158: "W5 lift up/down", # shck: 0024/0000
+    159: "W5 scales", # h3ll: 0024/FFA0
 
+    161: "W5 lift on rail rectangular", # shck: 0024/0001
+    162: "W5 electric rope hit block-expandable", # shck: 0022/0800 (hit block unk2)
+    163: "W5 enemy xeno", # shck: 0029/0000
+    164: "W5 enemy robot", # shck: 002B/0000
+
+    167: "W5 fireball spawner", # shck: 0028/0000 (to right), 0068/0000 (to left)
+
+    171: "W3/W5 expandable chain", # t1n3: 0022/0200 0022/0400
+    172: "W5 electric deathfield tripwire-disablable", # shck: 0024/0400 (tripwire unk2)
+    173: "W5 tripwire momentary", # h3ll: 0024/0008 (chain unk2)
     175: "W1 Witch",
     176: "W2 Sorceress pt1", # k4rn: 006B/0002
     177: "Time machine pt2", # t1m3: 002F/0003
     178: "W3 Gypsy pt1", # b3sv: 0029/0000
     179: "W4 Shaman pt1", # d4rk: 002B/0002
-
+    180: "W5 Connor", # shck: 006B/0002
     181: "Locked Fang (dialogue? lock?)", # tw0!: 0029/0000
     182: "Kid", # t1m3: 0069/0000
     183: "Locked Scorch (dialogue? lock?)", # b0mb: 002A/0000
     184: "W4 spike ball on chain", # d4rk: 0022/0000
-
+    185: "W5 spike ball on chain", # shck: 0022/0000
     186: "W3 flame", # b3sv: 0025/0000
-
-    188: "W3 retractable chain", # y0vr: 0062/0080
-
+    187: "W5 forcefield button-momentary disablable", # 4rgh: 0022/0200 (button unk2)
+    188: "W3/W5 retractable chain/forcefield", # y0vr: 0062/0080
+    189: "W5 electric deathfield timed", # h3ll: 0062/0020
     190: "Baelog NPC", # t1m3: 002D/0400
     191: "W1 Underwater spikes from bottom", # t1m3: 00A2/0000
     192: "W1 enemy bat", # st3w: 0029/0C00
@@ -164,8 +185,21 @@ object_classes = {
     194: "Time machine pt1", # t1m3: 002D/0800
     195: "W3 Underwater spikes from bottom/top", # r3t0: 00A2/FFE0
     197: "W2 Underwater spikes from bottom/top", # wzrd: 00A4/0000 (bottom), blks: 0024/0000 (top)
+    198: "W5 electric deathfield timed-toggled", # b4dd: 0022/0200
+    199: "Tomator", # b4dd: 0827/0000
+
+    203: "W5 xeno spawner", # b4dd: 002D/1D00 002D/2200 002D/1D02 002D/2202
 
     206: "dunno206 W1",
+    207: "W5 cannon button-operated", # d4dy: 0064/0040 (button unk2)
+
+    212: "W4 Connor appear/disappear", # shck: 006B/0000
+
+    216: "W5 electric deathfield enabled on tripwires", # b4dd: 0062/0018 (tripwire unk2 OR'd)
+
+    219: "W5 Tomator flying rectangular?", # b4dd: 0022/0600
+
+    224: "W5 pushblock bottom blocker", # h3ll: 0022/0080 (button unk2)
 }
 
 front_tiles = []
