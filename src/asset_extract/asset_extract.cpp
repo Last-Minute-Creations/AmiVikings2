@@ -254,19 +254,24 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0x7A235, tAssetDef {.AssetName = "tiledef_w4", .isCompressed = {}, .onExtract = nullptr}},
 	{0x7FD84, tAssetDef {.AssetName = "tileset_w5", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
 	{0x85DA0, tAssetDef {.AssetName = "tiledef_w5", .isCompressed = {}, .onExtract = nullptr}},
-	{0xDAAAA, tAssetDef {.AssetName = "tileset_menu", .isCompressed = {}, .onExtract = nullptr}},
 	{0xD5940, tAssetDef {.AssetName = "tiledef_continue_bg", .isCompressed = {}, .onExtract = nullptr}},
 	{0xD61CE, tAssetDef {.AssetName = "tileset_continue_bg", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
 
 	{0xE237A, tAssetDef {.AssetName = "level_logo_interplay_tiles", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE241E, tAssetDef {.AssetName = "tiledef_logo_interplay", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE2583, tAssetDef {.AssetName = "tileset_logo_interplay", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
-	{0xEE468, tAssetDef {.AssetName = "level_logo_interplay_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE33F4, tAssetDef {.AssetName = "level_logo_interplay_initial_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xEE468, tAssetDef {.AssetName = "level_logo_interplay_alt_defs", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0xE34B3, tAssetDef {.AssetName = "level_logo_blizzard_tiles", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE35AD, tAssetDef {.AssetName = "tiledef_logo_blizzard", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE3863, tAssetDef {.AssetName = "tileset_logo_blizzard", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
 	{0xE4C93, tAssetDef {.AssetName = "level_logo_blizzard_defs", .isCompressed = {}, .onExtract = nullptr}},
+
+	{0xDA515, tAssetDef {.AssetName = "level_menu_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xDAAAA, tAssetDef {.AssetName = "tileset_menu", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE222A, tAssetDef {.AssetName = "level_menu_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xE22A9, tAssetDef {.AssetName = "level_menu_defs_alt", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0x59BF3, tAssetDef {.AssetName = "level_w1_a0_strt_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0x59ED9, tAssetDef {.AssetName = "level_w1_a1_st3w_defs", .isCompressed = {}, .onExtract = nullptr}},
@@ -300,8 +305,9 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0x8B031, tAssetDef {.AssetName = "level_w5_a5_b4dd_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0x8BC79, tAssetDef {.AssetName = "level_w5_a6_d4dy_defs", .isCompressed = {}, .onExtract = nullptr}},
 
-	{0xD577C, tAssetDef {.AssetName = "level_continue_bg_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD77D8, tAssetDef {.AssetName = "level_continue_bg_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD577C, tAssetDef {.AssetName = "level_continue_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD58DF, tAssetDef {.AssetName = "level_continue_bg", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD77D8, tAssetDef {.AssetName = "level_continue_defs", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0xF0E7D, tAssetDef {.AssetName = "level_cutscene_intro_viking_ship_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF0F39, tAssetDef {.AssetName = "level_cutscene_viking_ship_tiles", .isCompressed = {}, .onExtract = nullptr}},
@@ -314,9 +320,10 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xF1B63, tAssetDef {.AssetName = "level_cutscene_credits_w4_defs", .isCompressed = {}, .onExtract = nullptr}},
 	{0xF1DCC, tAssetDef {.AssetName = "level_cutscene_credits_w5_defs", .isCompressed = {}, .onExtract = nullptr}},
 
-	{0xEE7C0, tAssetDef {.AssetName = "level_cutscene_tomator_ship_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xEFA30, tAssetDef {.AssetName = "level_cutscene_tomator_ship_post_world_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF20A1, tAssetDef {.AssetName = "level_cutscene_tomator_ship_end_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xEE7C0, tAssetDef {.AssetName = "level_cutscene_spaceship_tiles", .isCompressed = {}, .onExtract = nullptr}},
+	{0xEE83C, tAssetDef {.AssetName = "level_cutscene_spaceship_bg", .isCompressed = {}, .onExtract = nullptr}},
+	{0xEFA30, tAssetDef {.AssetName = "level_cutscene_spaceship_post_world_defs", .isCompressed = {}, .onExtract = nullptr}},
+	{0xF20A1, tAssetDef {.AssetName = "level_cutscene_spaceship_end_defs", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0x59D39, tAssetDef {.AssetName = "level_w1_a0_strt_tiles", .isCompressed = {}, .onExtract = nullptr}},
 	{0x5A08A, tAssetDef {.AssetName = "level_w1_a1_st3w_tiles", .isCompressed = {}, .onExtract = nullptr}},
@@ -349,9 +356,6 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0x8A60C, tAssetDef {.AssetName = "level_w5_a2_tnnl_tiles", .isCompressed = {}, .onExtract = nullptr}},
 	{0x8B391, tAssetDef {.AssetName = "level_w5_a5_b4dd_tiles", .isCompressed = {}, .onExtract = nullptr}},
 	{0x8C00D, tAssetDef {.AssetName = "level_w5_a6_d4dy_tiles", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xDA515, tAssetDef {.AssetName = "level_menu_splash_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE22A9, tAssetDef {.AssetName = "level_menu_splash_defs", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0xC56EB, tAssetDef {.AssetName = "palette_dunno_02_w1_w2_w3_w4_w5_outroship", .isCompressed = true, .onExtract = nullptr}},
 	{0xC6CDB, tAssetDef {.AssetName = "palette_dunno_01_strt_st3w", .isCompressed = true, .onExtract = nullptr}},
@@ -386,8 +390,11 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xCF94B, tAssetDef {.AssetName = "palette_dunno_31", .isCompressed = true, .onExtract = nullptr}},
 	{0xE2325, tAssetDef {.AssetName = "palette_dunno_32", .isCompressed = true, .onExtract = nullptr}},
 	{0xEE4E8, tAssetDef {.AssetName = "palette_dunno_33", .isCompressed = true, .onExtract = nullptr}},
-	{0xF0DEC, tAssetDef {.AssetName = "palette_dunno_34", .isCompressed = true, .onExtract = nullptr}},
+	{0xF0DEC, tAssetDef {.AssetName = "palette_dunno_34_cutscene_spaceship", .isCompressed = true, .onExtract = nullptr}},
 	{0xF2342, tAssetDef {.AssetName = "palette_dunno_35", .isCompressed = true, .onExtract = nullptr}},
+	{0xEE70C, tAssetDef {.AssetName = "palette_dunno_36_cutscene_spaceship", .isCompressed = true, .onExtract = nullptr}},
+	{0xF0E12, tAssetDef {.AssetName = "palette_dunno_37_cutscene_spaceship", .isCompressed = true, .onExtract = nullptr}},
+	{0xDA45F, tAssetDef {.AssetName = "palette_dunno_38_menu", .isCompressed = true, .onExtract = nullptr}},
 
 	{0xE234B, tAssetDef {.AssetName = "palette_logo_interplay", .isCompressed = true, .onExtract = nullptr}},
 	{0xE347D, tAssetDef {.AssetName = "palette_logo_blizzard", .isCompressed = true, .onExtract = nullptr}},
