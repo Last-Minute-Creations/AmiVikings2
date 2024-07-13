@@ -313,7 +313,7 @@ with Image.new("RGBA", [level_width * (16 + tile_separation), level_height * (16
                         # annotate_context.text([x * (16 + tile_separation), y * (16 + tile_separation) - 2], f"{tile_index:02X}", font = fnt, fill = tile_index_color)
                         # if tile_attribute != 0:
                         #     annotate_context.text([x * (16 + tile_separation), y * (16 + tile_separation) - 2 + 8], "{:02X}".format(tile_attribute), font=fnt, fill=(255, 128, 0, 192))
-            for obj in objects:
+            for obj_index, obj in enumerate(objects):
                 x1 = max(0, obj["x"] - obj["cx"])
                 y1 = max(0, obj["y"] - obj["cy"])
                 x2 = max(0, obj["x"] + obj["cx"] - 1)
@@ -323,7 +323,8 @@ with Image.new("RGBA", [level_width * (16 + tile_separation), level_height * (16
                 dx2 = (x2 // 16) * (16 + tile_separation) + (x2 % 16)
                 dy2 = (y2 // 16) * (16 + tile_separation) + (y2 % 16)
                 obj_class = obj["class"]
-                annotate_context.rectangle([dx1, dy1, dx2, dy2], outline=(0, 255, 255, 80))
-                annotate_context.text([dx1 + 2, dy1 + 1], f"{obj_class:d}", font=fnt, fill=(0, 255, 255, 192))
+                color_rgb = (0, 255, 255) if obj_class in object_classes else (255, 0, 0)
+                annotate_context.rectangle([dx1, dy1, dx2, dy2], outline=color_rgb + (80,))
+                annotate_context.text([dx1 + 2, dy1 + 1], f"{obj_index:d}", font=fnt, fill=color_rgb + (192,))
             out = Image.alpha_composite(level_background, Image.alpha_composite(level_preview, annotate_bitmap))
             out.show()
