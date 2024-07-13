@@ -117,3 +117,7 @@ c0 01  60 00  10 00  10 00  af 00  6b 00  00 00  # Witch
 e0 01  60 00  08 00  08 00  98 00  2e 00  00 00  # Pot
 ff ff                                            # End
 ```
+
+## Graphics
+
+https://codepen.io/Ankougo/pen/eaQdxg

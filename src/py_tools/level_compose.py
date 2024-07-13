@@ -8,6 +8,8 @@ minitile_attribute_bit_flip_x = 5
 minitile_attribute_bit_flip_y = 4
 minitile_attribute_bit_front = 3
 minitile_index_mask = (1 << minitile_index_mask_size) - 1
+tile_index_mask = 0b11_1111_1111
+tile_separation = 1
 
 object_classes = {
     0: "Erik",
@@ -411,8 +413,6 @@ def compose(level_def_index: int, is_display: bool):
                 for x in range(background_width):
                     background_tilemap[x][y] = struct.unpack("<H", background_tilemap_file.read(2))[0]
 
-    tile_index_mask = 0b11_1111_1111
-    tile_separation = 1
     tiles_per_line = level_width
     tiles_lines = level_height
     tile_size = 16
@@ -480,5 +480,5 @@ def report_all():
 
 
 # report_all()
-compose(28, is_display=True)
+compose(level_def_index = 28, is_display = True)
 print("All done!")

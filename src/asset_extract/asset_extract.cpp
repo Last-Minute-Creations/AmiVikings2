@@ -139,6 +139,7 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xC9E5A, tAssetDef {.AssetName = "obstacle_spike_ball_underwater_2", .isCompressed = {}, .onExtract = nullptr}}, // other palette
 	{0xCA5F5, tAssetDef {.AssetName = "obstacle_zap2", .isCompressed = {}, .onExtract = nullptr}},
 	{0xCA6CD, tAssetDef {.AssetName = "obstacle_zap", .isCompressed = {}, .onExtract = nullptr}},
+	{0xD0F53, tAssetDef {.AssetName = "obstacle_flame", .isCompressed = {}, .onExtract = nullptr}},
 	{0xECD65, tAssetDef {.AssetName = "obstacle_burning_rope", .isCompressed = {}, .onExtract = nullptr}},
 	{0xEE368, tAssetDef {.AssetName = "obstacle_zap3", .isCompressed = {}, .onExtract = nullptr}},
 
@@ -162,9 +163,13 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xEEC71, tAssetDef {.AssetName = "dunno_13_tech_tiles", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0xC5711, tAssetDef {.AssetName = "items_keys", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC8F07, tAssetDef {.AssetName = "items_skull_voodoo", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC72AD, tAssetDef {.AssetName = "items_specials_w1", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC7F68, tAssetDef {.AssetName = "items_specials_w2", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC8225, tAssetDef {.AssetName = "items_specials_w3", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC8F07, tAssetDef {.AssetName = "items_specials_w4", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC9B06, tAssetDef {.AssetName = "items_torch", .isCompressed = {}, .onExtract = nullptr}},
 	{0xC9F3C, tAssetDef {.AssetName = "item_keycards", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCA410, tAssetDef {.AssetName = "items_pcb_battery_disk_burger", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCA410, tAssetDef {.AssetName = "items_specials_w5", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE6CC1, tAssetDef {.AssetName = "item_machine_parts", .isCompressed = {}, .onExtract = nullptr}},
 	{0xE6D9E, tAssetDef {.AssetName = "item_capacitor", .isCompressed = {}, .onExtract = nullptr}},
 
@@ -218,10 +223,14 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0xC8E04, tAssetDef {.AssetName = "projectile_rock", .isCompressed = {}, .onExtract = nullptr}},
 	{0xCF971, tAssetDef {.AssetName = "projectile_magic", .isCompressed = {}, .onExtract = nullptr}},
 	{0xC5ABE, tAssetDef {.AssetName = "projectile_fireball", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC6167, tAssetDef {.AssetName = "projectile_fireball_from_top", .isCompressed = {}, .onExtract = nullptr}},
 	{0xCA7B3, tAssetDef {.AssetName = "projectile_dunno1", .isCompressed = {}, .onExtract = nullptr}},
 	{0xC8D9B, tAssetDef {.AssetName = "projectile_dunno2", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCA001, tAssetDef {.AssetName = "interact_keyslots", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC626A, tAssetDef {.AssetName = "interact_key_slots_1", .isCompressed = {}, .onExtract = nullptr}},
+	{0xCA001, tAssetDef {.AssetName = "interact_key_slots_2", .isCompressed = {}, .onExtract = nullptr}},
 	{0xC5BA1, tAssetDef {.AssetName = "tile_pipe", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC66A2, tAssetDef {.AssetName = "interact_help_box", .isCompressed = {}, .onExtract = nullptr}},
+	{0xC7190, tAssetDef {.AssetName = "interact_grapple_anchor", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0x8CA18, tAssetDef {.AssetName = "frames_erik", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteErik, 0)}},
 	{0x94A18, tAssetDef {.AssetName = "frames_erik", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteErik, 64)}},
@@ -358,7 +367,7 @@ static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
 	{0x8C00D, tAssetDef {.AssetName = "level_w5_a6_d4dy_tiles", .isCompressed = {}, .onExtract = nullptr}},
 
 	{0xC56EB, tAssetDef {.AssetName = "palette_dunno_02_w1_w2_w3_w4_w5_outroship", .isCompressed = true, .onExtract = nullptr}},
-	{0xC6CDB, tAssetDef {.AssetName = "palette_dunno_01_strt_st3w", .isCompressed = true, .onExtract = nullptr}},
+	{0xC6CDB, tAssetDef {.AssetName = "palette_dunno_01_w1", .isCompressed = true, .onExtract = nullptr}},
 	{0xC75B8, tAssetDef {.AssetName = "palette_dunno_05_w2", .isCompressed = true, .onExtract = nullptr}},
 	{0xCCDDD, tAssetDef {.AssetName = "palette_dunno_03_st3w_k3ys_trsh", .isCompressed = true, .onExtract = nullptr}},
 	{0xCEE82, tAssetDef {.AssetName = "palette_dunno_06_w2", .isCompressed = true, .onExtract = nullptr}},
@@ -902,7 +911,7 @@ int main(int lArgCount, const char *pArgs[])
 				);
 				if(uwSizeDecompressed < ulSizeInRom) {
 					fmt::print(FMT_STRING(", U?"));
-					vAssetToc[i - 1].isUncompressed = true;
+					vAssetToc[i - 1].isUncompressed = false;
 				}
 				else {
 					fmt::print(FMT_STRING(", C?"));
