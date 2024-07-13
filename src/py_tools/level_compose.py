@@ -221,8 +221,6 @@ object_classes = {
     224: "W5 pushblock bottom blocker", # h3ll: 0022/0080 (button unk2)
 }
 
-front_tiles = []
-
 def read_mini_tiles(mini_tiles_path: str, is_8bpp: bool):
     tile_count = os.path.getsize(mini_tiles_path) // ((8 if is_8bpp else 4) * 8)
     mini_tiles = [[[0 for x in range(8)] for y in range(8)] for i in range(tile_count)]
@@ -278,190 +276,209 @@ def compose_minitile(tile_image: Image, mini_tiles, palette, tiledef, pos) -> bo
     minitile.close()
     return is_front
 
+def compose(level_def_index: int, is_display: bool):
+    front_tiles = []
+    level_def_path = find_path(level_def_index)
+    print(f"loading_level {level_def_path}...")
 
-level_def_path = find_path(28)
-print(f"loading_level {level_def_path}...")
+    with open(level_def_path, "rb") as file_level_def:
+        file_level_def.seek(31, 0)
+        [level_width] = struct.unpack("<H", file_level_def.read(2))
+        [level_height] = struct.unpack("<H", file_level_def.read(2))
+        file_level_def.seek(36, 0)
+        [level_tilemap_index] = struct.unpack("<H", file_level_def.read(2))
+        [mini_tiles_index] = struct.unpack("<H", file_level_def.read(2))
+        [tile_defs_index] = struct.unpack("<H", file_level_def.read(2))
+        [background_width] = struct.unpack("<H", file_level_def.read(2))
+        [background_height] = struct.unpack("<H", file_level_def.read(2))
+        file_level_def.seek(47, 0)
+        [background_tilemap_index] = struct.unpack("<H", file_level_def.read(2))
+        file_level_def.seek(49, 0)
 
-with open(level_def_path, "rb") as file_level_def:
-    file_level_def.seek(31, 0)
-    [level_width] = struct.unpack("<H", file_level_def.read(2))
-    [level_height] = struct.unpack("<H", file_level_def.read(2))
-    file_level_def.seek(36, 0)
-    [level_tilemap_index] = struct.unpack("<H", file_level_def.read(2))
-    [mini_tiles_index] = struct.unpack("<H", file_level_def.read(2))
-    [tile_defs_index] = struct.unpack("<H", file_level_def.read(2))
-    [background_width] = struct.unpack("<H", file_level_def.read(2))
-    [background_height] = struct.unpack("<H", file_level_def.read(2))
-    file_level_def.seek(47, 0)
-    [background_tilemap_index] = struct.unpack("<H", file_level_def.read(2))
-    file_level_def.seek(49, 0)
+        [end1] = struct.unpack("<H", file_level_def.read(2))
+        if end1 != 0xFFFF:
+            print(f"1st section is not empty! Pos: {file_level_def.tell()}")
+            exit(1)
 
-    [end1] = struct.unpack("<H", file_level_def.read(2))
-    if end1 != 0xFFFF:
-        print(f"1st section is not empty! Pos: {file_level_def.tell()}")
-        exit(1)
+        # Section 2 - DRNK 0V4L T1N3 Y0VR B3SV R3T0 intro_ship
+        is_section2_empty = True
+        [end2] = struct.unpack("<H", file_level_def.read(2))
+        if end2 != 0xFFFF and is_section2_empty:
+            is_section2_empty = False
+            print(f"2nd section is not empty! Value: {end2:04X}")
 
-    # Section 2 - DRNK 0V4L T1N3 Y0VR B3SV R3T0 intro_ship
-    is_section2_empty = True
-    [end2] = struct.unpack("<H", file_level_def.read(2))
-    if end2 != 0xFFFF and is_section2_empty:
-        is_section2_empty = False
-        print(f"2nd section is not empty! Value: {end2:04X}")
-
-    [objlist_unk1] = struct.unpack("<H", file_level_def.read(2))
-    [objlist_unk2] = struct.unpack("<H", file_level_def.read(2))
-    print(f"Obj list unk1: {objlist_unk1:04X} ({objlist_unk1}), unk2: {objlist_unk2:04X} ({objlist_unk2})")
-    # Read objects
-    objects = []
-    while True:
-        [obj_x] = struct.unpack("<h", file_level_def.read(2))
-        if obj_x == -1:
-            break
-        [obj_y] = struct.unpack("<h", file_level_def.read(2))
-        [obj_cx] = struct.unpack("<H", file_level_def.read(2))
-        [obj_cy] = struct.unpack("<H", file_level_def.read(2))
-        [obj_class_index] = struct.unpack("<H", file_level_def.read(2))
-        [obj_unk1] = struct.unpack("<H", file_level_def.read(2))
-        [obj_unk2] = struct.unpack("<H", file_level_def.read(2))
-        kind_str = object_classes[obj_class_index] if obj_class_index in object_classes else "???"
-        print(f"object {len(objects):02d} class {obj_class_index:3d} @{obj_x:4d},{obj_y:4d}, center: {obj_cx:2d},{obj_cy:2d}, unk1: {obj_unk1:04X}, unk2: {obj_unk2:04X} - {kind_str}")
-        objects.append({"class": obj_class_index, "x": obj_x, "y": obj_y, "cx": obj_cx, "cy": obj_cy})
-
-    # Load palette
-    level_palette = [(255, 0, 255, 255) for i in range(256)]
-    while True:
-        [subpalette_file_index] = struct.unpack("<H", file_level_def.read(2))
-        if subpalette_file_index == 0xFFFF:
-            break
-        [palette_start_pos] = struct.unpack("<B", file_level_def.read(1))
-        subpalette_file_path = find_path(subpalette_file_index)
-        print(f"Loading palette from {subpalette_file_path} at pos {palette_start_pos}...")
-        subpalette_color_count = os.path.getsize(subpalette_file_path) // (2)
-        with open(subpalette_file_path, "rb") as file_subpalette:
-            for i in range(subpalette_color_count):
-                [color_value] = struct.unpack("<H", file_subpalette.read(2))
-                r = (((color_value >> 0) & 0b11111) * 255 // 0b11111)
-                g = (((color_value >> 5) & 0b11111) * 255 // 0b11111)
-                b = (((color_value >> 10) & 0b11111) * 255 // 0b11111)
-                # print(f"color {palette_start_pos + i:02X}: {color_value:04X} -> {r:02X}{g:02X}{b:02X}")
-                level_palette[palette_start_pos + i] = (r, g, b, 255)
-
-print(f"dimensions: {level_width}x{level_height}, level tilemap: {level_tilemap_index}, mini_tiles: {mini_tiles_index}, tiledefs: {tile_defs_index}, background: {background_tilemap_index}")
-
-mini_tiles_path = find_path(mini_tiles_index)
-
-tile_defs = None
-tiles = None
-if tile_defs_index == 65535:
-    print(f"WARN: No tile defs specified")
-    print(f"Reading 8bpp mini tiles from {mini_tiles_path}...")
-    mini_tiles = read_mini_tiles(mini_tiles_path, True)
-    print(f"Found {len(mini_tiles)} 8bpp tiles")
-
-else:
-    print(f"Reading 4bpp mini tiles from {mini_tiles_path}...")
-    mini_tiles = read_mini_tiles(mini_tiles_path, False)
-    print(f"Found {len(mini_tiles)} 4bpp tiles")
-    tile_defs = []
-    tile_defs_path = find_path(tile_defs_index)
-    with open(tile_defs_path, "rb") as file_mini_tiles:
+        [objlist_unk1] = struct.unpack("<H", file_level_def.read(2))
+        [objlist_unk2] = struct.unpack("<H", file_level_def.read(2))
+        print(f"Obj list unk1: {objlist_unk1:04X} ({objlist_unk1}), unk2: {objlist_unk2:04X} ({objlist_unk2})")
+        # Read objects
+        objects = []
         while True:
-            chunk = file_mini_tiles.read(8)
-            if len(chunk) != 8:
-                if len(chunk) != 0:
-                    print(f"unexpected last chunk length: {len(chunk)}")
+            [obj_x] = struct.unpack("<h", file_level_def.read(2))
+            if obj_x == -1:
                 break
-            tile_defs.append(struct.unpack("<HHHH", chunk))
+            [obj_y] = struct.unpack("<h", file_level_def.read(2))
+            [obj_cx] = struct.unpack("<H", file_level_def.read(2))
+            [obj_cy] = struct.unpack("<H", file_level_def.read(2))
+            [obj_class_index] = struct.unpack("<H", file_level_def.read(2))
+            [obj_unk1] = struct.unpack("<H", file_level_def.read(2))
+            [obj_unk2] = struct.unpack("<H", file_level_def.read(2))
+            kind_str = object_classes[obj_class_index] if obj_class_index in object_classes else "???"
+            print(f"object {len(objects):02d} class {obj_class_index:3d} @{obj_x:4d},{obj_y:4d}, center: {obj_cx:2d},{obj_cy:2d}, unk1: {obj_unk1:04X}, unk2: {obj_unk2:04X} - {kind_str}")
+            objects.append({"class": obj_class_index, "x": obj_x, "y": obj_y, "cx": obj_cx, "cy": obj_cy})
+
+        # Load palette
+        level_palette = [(255, 0, 255, 255) for i in range(256)]
+        while True:
+            [subpalette_file_index] = struct.unpack("<H", file_level_def.read(2))
+            if subpalette_file_index == 0xFFFF:
+                break
+            [palette_start_pos] = struct.unpack("<B", file_level_def.read(1))
+            subpalette_file_path = find_path(subpalette_file_index)
+            print(f"Loading palette from {subpalette_file_path} at pos {palette_start_pos}...")
+            subpalette_color_count = os.path.getsize(subpalette_file_path) // (2)
+            with open(subpalette_file_path, "rb") as file_subpalette:
+                for i in range(subpalette_color_count):
+                    [color_value] = struct.unpack("<H", file_subpalette.read(2))
+                    r = (((color_value >> 0) & 0b11111) * 255 // 0b11111)
+                    g = (((color_value >> 5) & 0b11111) * 255 // 0b11111)
+                    b = (((color_value >> 10) & 0b11111) * 255 // 0b11111)
+                    # print(f"color {palette_start_pos + i:02X}: {color_value:04X} -> {r:02X}{g:02X}{b:02X}")
+                    level_palette[palette_start_pos + i] = (r, g, b, 255)
+
+    print(f"dimensions: {level_width}x{level_height}, level tilemap: {level_tilemap_index}, mini_tiles: {mini_tiles_index}, tiledefs: {tile_defs_index}, background: {background_tilemap_index}")
+
+    mini_tiles_path = find_path(mini_tiles_index)
+
+    tile_defs = None
+    tiles = None
+    if tile_defs_index == 65535:
+        print(f"WARN: No tile defs specified")
+        print(f"Reading 8bpp mini tiles from {mini_tiles_path}...")
+        mini_tiles = read_mini_tiles(mini_tiles_path, True)
+        print(f"Found {len(mini_tiles)} 8bpp tiles")
+
+    else:
+        print(f"Reading 4bpp mini tiles from {mini_tiles_path}...")
+        mini_tiles = read_mini_tiles(mini_tiles_path, False)
+        print(f"Found {len(mini_tiles)} 4bpp tiles")
+        tile_defs = []
+        tile_defs_path = find_path(tile_defs_index)
+        with open(tile_defs_path, "rb") as file_mini_tiles:
+            while True:
+                chunk = file_mini_tiles.read(8)
+                if len(chunk) != 8:
+                    if len(chunk) != 0:
+                        print(f"unexpected last chunk length: {len(chunk)}")
+                    break
+                tile_defs.append(struct.unpack("<HHHH", chunk))
 
 
-    tiles = []
-    tile_count = len(tile_defs)
-    print(f"tile count: {tile_count}")
-    for i in range(tile_count):
-        tile_image = Image.new("RGBA", [16, 16], (0, 0, 0, 0))
+        tiles = []
+        tile_count = len(tile_defs)
+        print(f"tile count: {tile_count}")
+        for i in range(tile_count):
+            tile_image = Image.new("RGBA", [16, 16], (0, 0, 0, 0))
 
-        # attribute_a = defs[i][0] >> minitile_index_mask_size
-        # attribute_b = defs[i][1] >> minitile_index_mask_size
-        # attribute_c = defs[i][2] >> minitile_index_mask_size
-        # attribute_d = defs[i][3] >> minitile_index_mask_size
-        # print("tile {:03X} attribute {:06b} {:06b} {:06b} {:06b}".format(i, attribute_a, attribute_b, attribute_c, attribute_d))
+            # attribute_a = defs[i][0] >> minitile_index_mask_size
+            # attribute_b = defs[i][1] >> minitile_index_mask_size
+            # attribute_c = defs[i][2] >> minitile_index_mask_size
+            # attribute_d = defs[i][3] >> minitile_index_mask_size
+            # print("tile {:03X} attribute {:06b} {:06b} {:06b} {:06b}".format(i, attribute_a, attribute_b, attribute_c, attribute_d))
 
-        front_tiles.append(0)
-        if compose_minitile(tile_image, mini_tiles, level_palette, tile_defs[i][0], [0, 0]):
-            front_tiles[i] += 1
-        if compose_minitile(tile_image, mini_tiles, level_palette, tile_defs[i][1], [8, 0]):
-            front_tiles[i] += 1
-        if compose_minitile(tile_image, mini_tiles, level_palette, tile_defs[i][2], [0, 8]):
-            front_tiles[i] += 1
-        if compose_minitile(tile_image, mini_tiles, level_palette, tile_defs[i][3], [8, 8]):
-            front_tiles[i] += 1
-        if front_tiles[i] != 0 and front_tiles[i] < 4:
-            print(f"WARN: Tile {i:03X} has mixed front attributes: {front_tiles[i]}/4")
-        tiles.append(tile_image)
+            front_tiles.append(0)
+            if compose_minitile(tile_image, mini_tiles, level_palette, tile_defs[i][0], [0, 0]):
+                front_tiles[i] += 1
+            if compose_minitile(tile_image, mini_tiles, level_palette, tile_defs[i][1], [8, 0]):
+                front_tiles[i] += 1
+            if compose_minitile(tile_image, mini_tiles, level_palette, tile_defs[i][2], [0, 8]):
+                front_tiles[i] += 1
+            if compose_minitile(tile_image, mini_tiles, level_palette, tile_defs[i][3], [8, 8]):
+                front_tiles[i] += 1
+            if front_tiles[i] != 0 and front_tiles[i] < 4:
+                print(f"WARN: Tile {i:03X} has mixed front attributes: {front_tiles[i]}/4")
+            tiles.append(tile_image)
 
 
-background_tilemap = None
-if background_tilemap_index == 0xFFFF:
-    print(f"WARN: No background tilemap")
-else:
-    background_tilemap = [[0 for y in range(background_height)] for x in range(background_width)]
-    background_tilemap_path = find_path(background_tilemap_index)
-    print(f"Loading bg from {background_tilemap_path}...")
-    with open(background_tilemap_path, "rb") as background_tilemap_file:
-        for y in range(background_height):
-            for x in range(background_width):
-                background_tilemap[x][y] = struct.unpack("<H", background_tilemap_file.read(2))[0]
+    background_tilemap = None
+    if background_tilemap_index == 0xFFFF:
+        print(f"WARN: No background tilemap")
+    else:
+        background_tilemap = [[0 for y in range(background_height)] for x in range(background_width)]
+        background_tilemap_path = find_path(background_tilemap_index)
+        print(f"Loading bg from {background_tilemap_path}...")
+        with open(background_tilemap_path, "rb") as background_tilemap_file:
+            for y in range(background_height):
+                for x in range(background_width):
+                    background_tilemap[x][y] = struct.unpack("<H", background_tilemap_file.read(2))[0]
 
-tile_index_mask = 0b11_1111_1111
-tile_separation = 1
-tiles_per_line = level_width
-tiles_lines = level_height
-tile_size = 16
-if tile_defs == None:
-    tiles_per_line *= 2
-    tiles_lines *= 2
-    tile_size //= 2
-with Image.new("RGBA", [tiles_per_line * (tile_size + tile_separation), tiles_lines * (tile_size + tile_separation)], (255, 255, 255, 0)) as level_preview:
-    with Image.new("RGBA", level_preview.size, (0, 0, 64, 255)) as level_background:
-        with Image.new("RGBA", level_preview.size, (255, 255, 255, 0)) as annotate_bitmap:
-            fnt = ImageFont.truetype("uni05.ttf", 8)
-            annotate_context = ImageDraw.Draw(annotate_bitmap)
-            level_tilemap_path = find_path(level_tilemap_index)
-            print(f"Reading tilemap from {level_tilemap_path}...")
-            with open(level_tilemap_path, "rb") as file_tilemap:
-                for y in range(tiles_lines):
-                    for x in range(tiles_per_line):
-                        chunk = file_tilemap.read(2)
-                        [value] = struct.unpack("<H", chunk)
-                        # value = (y * level_width + x) % len(tiles)
-                        tile_index = value & tile_index_mask
-                        tile_attribute = value >> 10
-                        if background_tilemap != None:
-                            level_background.paste(tiles[background_tilemap[x % background_width][y % background_height]], [x * (tile_size + tile_separation), y * (tile_size + tile_separation)])
-                        if tiles != None:
-                            level_preview.paste(tiles[tile_index], [x * (tile_size + tile_separation), y * (tile_size + tile_separation)])
-                            tile_index_color = (0, 0, 255, 192) if front_tiles[tile_index] > 0 else (128, 128, 0, 192)
-                            # annotate_context.text([x * (tile_size + tile_separation), y * (tile_size + tile_separation) - 2], f"{tile_index:02X}", font = fnt, fill = tile_index_color)
-                            # if tile_attribute != 0:
-                            #     annotate_context.text([x * (tile_size + tile_separation), y * (tile_size + tile_separation) - 2 + 8], "{:02X}".format(tile_attribute), font=fnt, fill=(255, 128, 0, 192))
-                        else:
-                            tile_image = Image.new("RGBA", [tile_size, tile_size], (0, 0, 0, 0))
-                            compose_minitile(tile_image, mini_tiles, level_palette, tile_index, [0, 0])
-                            level_preview.paste(tile_image, [x * (8 + tile_separation), y * (8 + tile_separation)])
-            for obj_index, obj in enumerate(objects):
-                x1 = max(0, obj["x"] - obj["cx"])
-                y1 = max(0, obj["y"] - obj["cy"])
-                x2 = max(0, obj["x"] + obj["cx"] - 1)
-                y2 = max(0, obj["y"] + obj["cy"] - 1)
-                dx1 = (x1 // tile_size) * (tile_size + tile_separation) + (x1 % tile_size)
-                dy1 = (y1 // tile_size) * (tile_size + tile_separation) + (y1 % tile_size)
-                dx2 = (x2 // tile_size) * (tile_size + tile_separation) + (x2 % tile_size)
-                dy2 = (y2 // tile_size) * (tile_size + tile_separation) + (y2 % tile_size)
-                obj_class = obj["class"]
-                color_rgb = (0, 255, 255) if obj_class in object_classes else (255, 0, 0)
-                annotate_context.rectangle([dx1, dy1, dx2, dy2], outline=color_rgb + (80,))
-                annotate_context.text([dx1 + 2, dy1 + 1], f"{obj_index:d}", font=fnt, fill=color_rgb + (192,))
-            out = Image.alpha_composite(level_background, Image.alpha_composite(level_preview, annotate_bitmap))
-            out.show()
+    tile_index_mask = 0b11_1111_1111
+    tile_separation = 1
+    tiles_per_line = level_width
+    tiles_lines = level_height
+    tile_size = 16
+    if tile_defs == None:
+        tiles_per_line *= 2
+        tiles_lines *= 2
+        tile_size //= 2
+    with Image.new("RGBA", [tiles_per_line * (tile_size + tile_separation), tiles_lines * (tile_size + tile_separation)], (255, 255, 255, 0)) as level_preview:
+        with Image.new("RGBA", level_preview.size, (0, 0, 64, 255)) as level_background:
+            with Image.new("RGBA", level_preview.size, (255, 255, 255, 0)) as annotate_bitmap:
+                fnt = ImageFont.truetype("uni05.ttf", 8)
+                annotate_context = ImageDraw.Draw(annotate_bitmap)
+                level_tilemap_path = find_path(level_tilemap_index)
+                print(f"Reading tilemap from {level_tilemap_path}...")
+                with open(level_tilemap_path, "rb") as file_tilemap:
+                    for y in range(tiles_lines):
+                        for x in range(tiles_per_line):
+                            chunk = file_tilemap.read(2)
+                            [value] = struct.unpack("<H", chunk)
+                            # value = (y * level_width + x) % len(tiles)
+                            tile_index = value & tile_index_mask
+                            tile_attribute = value >> 10
+                            if background_tilemap != None:
+                                level_background.paste(tiles[background_tilemap[x % background_width][y % background_height]], [x * (tile_size + tile_separation), y * (tile_size + tile_separation)])
+                            if tiles != None:
+                                level_preview.paste(tiles[tile_index], [x * (tile_size + tile_separation), y * (tile_size + tile_separation)])
+                                tile_index_color = (0, 0, 255, 192) if front_tiles[tile_index] > 0 else (128, 128, 0, 192)
+                                # annotate_context.text([x * (tile_size + tile_separation), y * (tile_size + tile_separation) - 2], f"{tile_index:02X}", font = fnt, fill = tile_index_color)
+                                # if tile_attribute != 0:
+                                #     annotate_context.text([x * (tile_size + tile_separation), y * (tile_size + tile_separation) - 2 + 8], "{:02X}".format(tile_attribute), font=fnt, fill=(255, 128, 0, 192))
+                            else:
+                                tile_image = Image.new("RGBA", [tile_size, tile_size], (0, 0, 0, 0))
+                                compose_minitile(tile_image, mini_tiles, level_palette, tile_index, [0, 0])
+                                level_preview.paste(tile_image, [x * (8 + tile_separation), y * (8 + tile_separation)])
+                for obj_index, obj in enumerate(objects):
+                    x1 = max(0, obj["x"] - obj["cx"])
+                    y1 = max(0, obj["y"] - obj["cy"])
+                    x2 = max(0, obj["x"] + obj["cx"] - 1)
+                    y2 = max(0, obj["y"] + obj["cy"] - 1)
+                    dx1 = (x1 // tile_size) * (tile_size + tile_separation) + (x1 % tile_size)
+                    dy1 = (y1 // tile_size) * (tile_size + tile_separation) + (y1 % tile_size)
+                    dx2 = (x2 // tile_size) * (tile_size + tile_separation) + (x2 % tile_size)
+                    dy2 = (y2 // tile_size) * (tile_size + tile_separation) + (y2 % tile_size)
+                    obj_class = obj["class"]
+                    color_rgb = (0, 255, 255) if obj_class in object_classes else (255, 0, 0)
+                    annotate_context.rectangle([dx1, dy1, dx2, dy2], outline=color_rgb + (80,))
+                    annotate_context.text([dx1 + 2, dy1 + 1], f"{obj_index:d}", font=fnt, fill=color_rgb + (192,))
+                if is_display:
+                    out = Image.alpha_composite(level_background, Image.alpha_composite(level_preview, annotate_bitmap))
+                    out.show()
 
+def report_all():
+    def_indices = [
+        28, 30, 32, 34, 36, 38, 40, # W1
+        47, 49, 51, 53, 55, 57, # W2
+        63, 65, 67, 69, 71, 73, # W3
+        79, 81, 83, 85, 87, 89, # W4
+        95, 97, 99, 101, 103, 105, # W5
+        239, 245, 246, 252, 257, 305, # Logo/menu
+        314, 319, 321, 323, 327, 328, 329, 330, 331, 332 # Cutscene
+    ]
+    for index in def_indices:
+        compose(index, is_display=False)
+        print("")
+
+
+# report_all()
+compose(28, is_display=True)
 print("All done!")
