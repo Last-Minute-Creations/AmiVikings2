@@ -295,7 +295,6 @@ def compose(level_def_index: int, is_display: bool):
         [background_height] = struct.unpack("<H", file_level_def.read(2))
         file_level_def.seek(47, 0)
         [background_tilemap_index] = struct.unpack("<H", file_level_def.read(2))
-        file_level_def.seek(49, 0)
 
         [end1] = struct.unpack("<H", file_level_def.read(2))
         if end1 != 0xFFFF:
@@ -336,8 +335,8 @@ def compose(level_def_index: int, is_display: bool):
                 break
             [palette_start_pos] = struct.unpack("<B", file_level_def.read(1))
             subpalette_file_path = find_path(subpalette_file_index)
-            print(f"Loading palette from {subpalette_file_path} at pos {palette_start_pos}...")
             subpalette_color_count = os.path.getsize(subpalette_file_path) // (2)
+            print(f"Loading {subpalette_color_count} colors from palette {subpalette_file_path} at pos 0x{palette_start_pos:02X}...")
             with open(subpalette_file_path, "rb") as file_subpalette:
                 for i in range(subpalette_color_count):
                     [color_value] = struct.unpack("<H", file_subpalette.read(2))
@@ -346,6 +345,16 @@ def compose(level_def_index: int, is_display: bool):
                     b = (((color_value >> 10) & 0b11111) * 255 // 0b11111)
                     # print(f"color {palette_start_pos + i:02X}: {color_value:04X} -> {r:02X}{g:02X}{b:02X}")
                     level_palette[palette_start_pos + i] = (r, g, b, 255)
+        print("Final palette:")
+        for i in range(256):
+            if i % 16 == 0:
+                print(f"{(i // 16 * 16):02X}: ", end="")
+            print(f"{level_palette[i][0]:02X}{level_palette[i][1]:02X}{level_palette[i][2]:02X}", end=(f"\n" if (i % 16 == 15) else " "))
+
+
+        remaining_size = os.path.getsize(level_def_path) - file_level_def.tell()
+        if remaining_size != 0:
+            print(f"WARN: Level def has {remaining_size} unread bytes starting at 0x{file_level_def.tell():X}")
 
     print(f"dimensions: {level_width}x{level_height}, level tilemap: {level_tilemap_index}, mini_tiles: {mini_tiles_index}, tiledefs: {tile_defs_index}, background: {background_tilemap_index}")
 
