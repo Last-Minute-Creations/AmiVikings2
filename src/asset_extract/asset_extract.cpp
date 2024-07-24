@@ -736,6 +736,9 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 	uint8_t ubRepeatBits;
 	FileRom.seekg(ulOffsStart, std::ios::beg);
 	FileRom.read(reinterpret_cast<char*>(&uwDecompressedSize), sizeof(uwDecompressedSize));
+	if(uwDecompressedSize == 0) {
+		throw std::runtime_error(fmt::format(FMT_STRING("Decompressed size = %hu", uwDecompressedSize)));
+	}
 
 	// Decompression algorithm depends on the first 4096 bytes being set to zero.
 	tRleTable RleTable;
@@ -870,15 +873,22 @@ int main(int lArgCount, const char *pArgs[])
 	// extractGfxTiles(FileRom, s_ulOffsOlafOldStart, s_ulOffsOlafOldEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutDir, "olaf_old"));
 
 	// Read asset TOC
-	fmt::print("List of assets at 0x{:06X}:\n", 0x050000);
-	FileRom.seekg(0x050000, std::ios::beg);
+	auto PackFileAddr = 0x8A8000;
+	auto PackFileAddrRom = snesAddressToRomOffset(PackFileAddr);
+	FileRom.seekg(PackFileAddrRom, std::ios::beg);
+	uint32_t ulFirstOffs;
+	FileRom.read(reinterpret_cast<char*>(&ulFirstOffs), sizeof(ulFirstOffs));
+	auto AssetCount = ulFirstOffs / sizeof(ulFirstOffs);
+	FileRom.seekg(PackFileAddrRom, std::ios::beg);
+	fmt::print("Found {} assets at 0x{:06X}, rom offs 0x{:06X}:\n", AssetCount, PackFileAddr, PackFileAddrRom);
+
 	std::vector<tAssetTocEntry> vAssetToc;
 	for(uint32_t i = 0; i < 0x155; ++i) {
 		// Read offset
 		uint32_t ulOffs;
 		FileRom.read(reinterpret_cast<char*>(&ulOffs), sizeof(ulOffs));
 		uint32_t ulOffsEntryNext = uint32_t(FileRom.tellg());
-		auto OffsCpu = ulOffs + 0x8A8000;
+		auto OffsCpu = ulOffs + PackFileAddr;
 		auto OffsRom = snesAddressToRomOffset(OffsCpu);
 
 		if(i > 0) {
@@ -930,7 +940,7 @@ int main(int lArgCount, const char *pArgs[])
 
 		FileRom.seekg(ulOffsEntryNext, std::ios::beg);
 
-		fmt::print(FMT_STRING("idx: {:3d} ({:04X}), raw: 0x{:06X}, rom: 0x{:08X}"), i, i, ulOffs, OffsRom);
+		fmt::print(FMT_STRING("idx: {:3d} ({:04X}), raw: 0x{:06X}, cpu: 0x{:08X}, rom: 0x{:08X}"), i, i, ulOffs, OffsCpu, OffsRom);
 	}
 	fmt::print("\n");
 
