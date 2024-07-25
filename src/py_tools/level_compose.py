@@ -278,12 +278,23 @@ def compose_minitile(tile_image: Image, mini_tiles, palette, tiledef, pos) -> bo
     minitile.close()
     return is_front
 
+def snes_color_to_rgb(snes_color: int):
+    r = (((snes_color >> 0) & 0b11111) * 255 // 0b11111)
+    g = (((snes_color >> 5) & 0b11111) * 255 // 0b11111)
+    b = (((snes_color >> 10) & 0b11111) * 255 // 0b11111)
+    return (r, g, b)
+
+def rgb_to_hex(rgb):
+    return f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+
 def compose(level_def_index: int, is_display: bool):
     front_tiles = []
     level_def_path = find_path(level_def_index)
     print(f"loading_level {level_def_path}...")
 
     with open(level_def_path, "rb") as file_level_def:
+        file_level_def.seek(5, 0) # 0: menu, 1-5: worlds, 6: game over, 7: spaceship, 8: outro, 9: no music, A+: no audio
+        [music_index] = struct.unpack("<B", file_level_def.read(1))
         file_level_def.seek(31, 0)
         [level_width] = struct.unpack("<H", file_level_def.read(2))
         [level_height] = struct.unpack("<H", file_level_def.read(2))
@@ -308,10 +319,10 @@ def compose(level_def_index: int, is_display: bool):
             is_section2_empty = False
             print(f"2nd section is not empty! Value: {end2:04X}")
 
+        # Read objects
         [objlist_unk1] = struct.unpack("<H", file_level_def.read(2))
         [objlist_unk2] = struct.unpack("<H", file_level_def.read(2))
-        print(f"Obj list unk1: {objlist_unk1:04X} ({objlist_unk1}), unk2: {objlist_unk2:04X} ({objlist_unk2})")
-        # Read objects
+        print(f"\nObj list unk1: {objlist_unk1:04X} ({objlist_unk1}), unk2: {objlist_unk2:04X} ({objlist_unk2})")
         objects = []
         while True:
             [obj_x] = struct.unpack("<h", file_level_def.read(2))
@@ -324,10 +335,11 @@ def compose(level_def_index: int, is_display: bool):
             [obj_unk1] = struct.unpack("<H", file_level_def.read(2))
             [obj_unk2] = struct.unpack("<H", file_level_def.read(2))
             kind_str = object_classes[obj_class_index] if obj_class_index in object_classes else "???"
-            print(f"object {len(objects):02d} class {obj_class_index:3d} @{obj_x:4d},{obj_y:4d}, center: {obj_cx:2d},{obj_cy:2d}, unk1: {obj_unk1:04X}, unk2: {obj_unk2:04X} - {kind_str}")
+            print(f"\tObject {len(objects):02d} class {obj_class_index:3d} @{obj_x:4d},{obj_y:4d}, center: {obj_cx:2d},{obj_cy:2d}, unk1: {obj_unk1:04X}, unk2: {obj_unk2:04X} - {kind_str}")
             objects.append({"class": obj_class_index, "x": obj_x, "y": obj_y, "cx": obj_cx, "cy": obj_cy})
 
-        # Load palette
+        # Palette
+        print("\nPalette elements:")
         level_palette = [(255, 0, 255, 255) for i in range(256)]
         while True:
             [subpalette_file_index] = struct.unpack("<H", file_level_def.read(2))
@@ -336,27 +348,102 @@ def compose(level_def_index: int, is_display: bool):
             [palette_start_pos] = struct.unpack("<B", file_level_def.read(1))
             subpalette_file_path = find_path(subpalette_file_index)
             subpalette_color_count = os.path.getsize(subpalette_file_path) // (2)
-            print(f"Loading {subpalette_color_count} colors from palette {subpalette_file_path} at pos 0x{palette_start_pos:02X}...")
+            print(f"\tLoading {subpalette_color_count} colors from palette {subpalette_file_path} at pos 0x{palette_start_pos:02X}...")
             with open(subpalette_file_path, "rb") as file_subpalette:
                 for i in range(subpalette_color_count):
                     [color_value] = struct.unpack("<H", file_subpalette.read(2))
-                    r = (((color_value >> 0) & 0b11111) * 255 // 0b11111)
-                    g = (((color_value >> 5) & 0b11111) * 255 // 0b11111)
-                    b = (((color_value >> 10) & 0b11111) * 255 // 0b11111)
+                    rgb = snes_color_to_rgb(color_value)
                     # print(f"color {palette_start_pos + i:02X}: {color_value:04X} -> {r:02X}{g:02X}{b:02X}")
-                    level_palette[palette_start_pos + i] = (r, g, b, 255)
+                    level_palette[palette_start_pos + i] = rgb + (255, )
         print("Final palette:")
         for i in range(256):
             if i % 16 == 0:
-                print(f"{(i // 16 * 16):02X}: ", end="")
-            print(f"{level_palette[i][0]:02X}{level_palette[i][1]:02X}{level_palette[i][2]:02X}", end=(f"\n" if (i % 16 == 15) else " "))
+                print(f"\t{(i // 16 * 16):02X}: ", end="")
+            print(rgb_to_hex(level_palette[i]), end=(f"\n" if (i % 16 == 15) else " "))
 
+        # Color cycle section
+        [color_cycle_active_mask] = struct.unpack("<H", file_level_def.read(2))
+        i = 0
+        print(f"\nColor cycle enable mask: {color_cycle_active_mask:04X}")
+        while True:
+            [cooldown] = struct.unpack("<B", file_level_def.read(1))
+            if cooldown == 0:
+                break
+            [indexFirst] = struct.unpack("<B", file_level_def.read(1))
+            [indexLast] = struct.unpack("<B", file_level_def.read(1))
+            colors = []
+            while True:
+                [color] = struct.unpack("<H", file_level_def.read(2))
+                if color == 0xFFFF:
+                    break
+                colors.append(color)
+            enable_state_str = " ON" if (color_cycle_active_mask & (1 << i)) != 0 else "OFF"
+            print(f"\t{enable_state_str} cooldown: {cooldown} ticks ({cooldown * 3} frames), indices: {indexFirst}..{indexLast}, colors: {', '.join(rgb_to_hex(snes_color_to_rgb(color)) for color in colors)}")
+            i += 1
+
+        # Tile anim section - water, rope fire, zap
+        [tile_cycle_active_mask] = struct.unpack("<H", file_level_def.read(2))
+        i = 0
+        print(f"\nTile anim enable mask: {tile_cycle_active_mask:04X}")
+        while True:
+            [cooldown] = struct.unpack("<B", file_level_def.read(1))
+            if cooldown == 0:
+                break
+            [frames_per_tile] = struct.unpack("<B", file_level_def.read(1))
+            [unk1] = struct.unpack("<B", file_level_def.read(1))
+            [unk2] = struct.unpack("<B", file_level_def.read(1))
+            [unk3] = struct.unpack("<H", file_level_def.read(2))
+            [file_index] = struct.unpack("<H", file_level_def.read(2))
+            enable_state_str = " ON" if (tile_cycle_active_mask & (1 << i)) != 0 else "OFF"
+            print(f"\t{enable_state_str} cooldown: {cooldown} ticks ({cooldown * 3} frames), frames per tile: {frames_per_tile}, unk {unk1:02X} {unk2:02X} {unk3:04X}, file: {find_path(file_index)}")
+            i += 1
+        # Water anim is animated 0-2-4-6 and 1-3-5-7 every 9 frames
+        #       mask  freq framesPerTile               idx
+        # sw1m: 03 00 03   04            00 01  80 00  27 01   # water - frame size: 2x1 blocks, 8 frames total, 4 frames per tile, updates every 9 frames
+        #             03   04            02 05  80 00  27 01
+        #             00
+        # k4rn: 03 00 03   04            00 01  80 00  26 01   # water - frame size: 2x1 blocks, 8 frames total, 4 frames per tile
+        #             03   04            02 05  80 00  26 01
+        #             00
+        # b3sv: 0f 00 03   04            00 01  80 00  25 01   # water - frame size: 2x1 blocks, 8 frames total, 4 frames per tile, updates every 3 frames
+        #             03   04            02 05  80 00  25 01
+        #             02   05            00 09  c0 00  2c 01   # burning rope - frame size: 2x3 blocks, 5 frames total, updates every 6 frames
+        #             02   05            02 0f  c0 00  2c 01
+        #             00
+        # d4rk: 03 00 03   04            00 01  80 00  2a 01   # water - frame size: 2x1 blocks, 8 frames total, 4 frames per tile
+        #             03   04            02 05  80 00  2a 01
+        #             00
+        # shck: 0f 00 03   04            00 01  80 00  2b 01   # water - frame size: 2x1 blocks, 8 frames total, 4 frames per tile
+        #             03   04            02 05  80 00  2b 01
+        #             02   02            00 09  80 00  30 01   # zap   - frame size: 2x2 blocks, 2 frames total, updates every 6 frames
+        #             02   02            01 0d  80 00  30 01
+        #             00
+
+        print("\nGfx preload:")
+        while True:
+            [file_index] = struct.unpack("<H", file_level_def.read(2))
+            if file_index == 0xFFFF:
+                break
+            [unk] = struct.unpack("<H", file_level_def.read(2))
+            [block_width] = struct.unpack("<B", file_level_def.read(1))
+            [block_height] = struct.unpack("<B", file_level_def.read(1))
+            print(f"\tUnk: {unk:04X} ({unk}), size: {block_width}x{block_height} blocks ({block_width * 8}x{block_height * 8} px), file: {find_path(file_index)}")
+
+        print("\nAnim gfx preload:")
+        while True:
+            [file_index] = struct.unpack("<H", file_level_def.read(2))
+            if file_index == 0xFFFF:
+                break
+            [block_width] = struct.unpack("<B", file_level_def.read(1))
+            [block_height] = struct.unpack("<B", file_level_def.read(1))
+            [is_compressed] = struct.unpack("<B", file_level_def.read(1))
+            print(f"\tsize: {block_width}x{block_height} blocks ({block_width * 8}x{block_height * 8} px), compressed: {is_compressed}, file: {find_path(file_index)}")
 
         remaining_size = os.path.getsize(level_def_path) - file_level_def.tell()
         if remaining_size != 0:
-            print(f"WARN: Level def has {remaining_size} unread bytes starting at 0x{file_level_def.tell():X}")
+            print(f"\nWARN: Level def has {remaining_size} unread bytes starting at 0x{file_level_def.tell():X}")
 
-    print(f"dimensions: {level_width}x{level_height}, level tilemap: {level_tilemap_index}, mini_tiles: {mini_tiles_index}, tiledefs: {tile_defs_index}, background: {background_tilemap_index}")
+    print(f"\nMusic index: {music_index}, dimensions: {level_width}x{level_height}, level tilemap: {level_tilemap_index}, mini_tiles: {mini_tiles_index}, tiledefs: {tile_defs_index}, background: {background_tilemap_index}")
 
     mini_tiles_path = find_path(mini_tiles_index)
 
@@ -441,7 +528,7 @@ def compose(level_def_index: int, is_display: bool):
                         for x in range(tiles_per_line):
                             chunk = file_tilemap.read(2)
                             [value] = struct.unpack("<H", chunk)
-                            # value = (y * level_width + x) % len(tiles)
+                            # value = (y * level_width + x) % len(tiles) # debug all tiles
                             tile_index = value & tile_index_mask
                             tile_attribute = value >> 10
                             if background_tilemap != None:
