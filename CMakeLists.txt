@@ -38,7 +38,7 @@ endif()
 if(AMIGA AND BUILD_GAME)
 	add_subdirectory(deps/ace)
 
-	file(GLOB GAME_src src/game/*.cpp src/game/*.c src/game/*.h)
+	file(GLOB_RECURSE GAME_src src/game/*.cpp src/game/*.c src/game/*.h)
 
 	if(ELF2HUNK)
 		set(LV2_EXECUTABLE AmiVikings2.elf)

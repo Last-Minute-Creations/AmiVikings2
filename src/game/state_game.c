@@ -14,7 +14,7 @@
 #include <ace/utils/chunky.h>
 #include <ace/utils/font.h>
 #include <ace/utils/string.h>
-#include "entity_erik.h"
+#include <entity/entity_erik.h>
 #include "assets.h"
 #include "tile.h"
 #include "steer.h"

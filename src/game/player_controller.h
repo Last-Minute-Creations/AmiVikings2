@@ -3,7 +3,7 @@
 
 #include <ace/types.h>
 #include "steer.h"
-#include "entity.h"
+#include <entity/entity.h>
 
 #define VIKING_ENTITY_MAX 3
 

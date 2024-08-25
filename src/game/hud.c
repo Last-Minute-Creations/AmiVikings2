@@ -6,8 +6,7 @@
 #include <ace/managers/viewport/simplebuffer.h>
 #include <ace/utils/palette.h>
 #include <ace/utils/string.h>
-#include "entity.h"
-#include "entity_erik.h"
+#include <entity/entity_erik.h>
 
 static tVPort *s_pVpHud;
 static tSimpleBufferManager *s_pBufferHud;

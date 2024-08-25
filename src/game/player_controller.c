@@ -1,5 +1,4 @@
 #include "player_controller.h"
-#include "entity.h"
 
 typedef struct tPlayerState {
 	UBYTE ubActiveVikingIndex;
