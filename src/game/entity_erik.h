@@ -21,7 +21,7 @@ typedef enum tMoveState {
 
 typedef struct tEntityErik {
 	tEntity sBase;
-	tSteerRequest eSteer;
+	tSteer *pSteer;
 	UBYTE ubJoy;
 	UBYTE ubAnimFrameIdx;
 	tVikingState eState;

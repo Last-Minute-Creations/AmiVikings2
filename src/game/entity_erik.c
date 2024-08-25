@@ -13,7 +13,7 @@
 
 tEntityErik *entityErikCreate(UWORD uwPosX, UWORD uwPosY) {
 	tEntityErik *pErik = memAllocFast(sizeof(*pErik));
-	pErik->sBase.eType = ENTITY_TYPE_ERIK;
+	pErik->sBase.eType = ENTITY_KIND_ERIK;
 
 	pErik->sPos.uwX = uwPosX;
 	pErik->sPos.uwY = uwPosY;
@@ -33,11 +33,13 @@ void entityErikProcess(tEntityErik *pEntity) {
 	BYTE bMovingX = 0;
 
 	if(pEntity->eMoveState == MOVE_STATE_FALLING) {
-		if(pEntity->eSteer & STEER_LEFT) {
-			bMovingX = -1;
-		}
-		if(pEntity->eSteer & STEER_RIGHT) {
-			bMovingX = 1;
+		if(pEntity->pSteer) {
+			if(steerCheck(pEntity->pSteer, STEER_ACTION_LEFT)) {
+				bMovingX = -1;
+			}
+			if(steerCheck(pEntity->pSteer, STEER_ACTION_RIGHT)) {
+				bMovingX = 1;
+			}
 		}
 
 		// Gravity - not proper
@@ -60,11 +62,13 @@ void entityErikProcess(tEntityErik *pEntity) {
 	else if(pEntity->eMoveState == MOVE_STATE_WALKING) {
 		// Check if it's possible to move left/right
 		UBYTE ubSpeedX = 4;
-		if(pEntity->eSteer & STEER_LEFT) {
-			bMovingX = -ubSpeedX;
-		}
-		if(pEntity->eSteer & STEER_RIGHT) {
-			bMovingX = ubSpeedX;
+		if(pEntity->pSteer) {
+			if(steerCheck(pEntity->pSteer, STEER_ACTION_LEFT)) {
+				bMovingX = -ubSpeedX;
+			}
+			if(steerCheck(pEntity->pSteer, STEER_ACTION_RIGHT)) {
+				bMovingX = ubSpeedX;
+			}
 		}
 		sNewPos.uwX += bMovingX;
 
@@ -213,7 +217,6 @@ void entityErikProcess(tEntityErik *pEntity) {
 	// 	}
 	// }
 
-	pEntity->eSteer = 0;
 	pEntity->sPos.ulYX = sNewPos.ulYX;
 	BYTE bFrameOffsX = -6;
 	pEntity->sBase.sBob.sPos.uwX = pEntity->sPos.uwX -10 + bFrameOffsX;

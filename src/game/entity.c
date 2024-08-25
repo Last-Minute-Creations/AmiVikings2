@@ -12,7 +12,7 @@ tEntity *s_pEntities[ENTITIES_MAX] = {0};
 
 static void entityDestroy(tEntity *pEntity) {
 	switch(pEntity->eType) {
-		case ENTITY_TYPE_ERIK:
+		case ENTITY_KIND_ERIK:
 			entityErikDestroy((tEntityErik*)pEntity);
 			break;
 		default:
@@ -37,7 +37,7 @@ void entityManagerProcess(void) {
 		}
 		// TODO: check if on screen
 		switch(pEntity->eType) {
-			case ENTITY_TYPE_ERIK:
+			case ENTITY_KIND_ERIK:
 				entityErikProcess((tEntityErik*)pEntity);
 				break;
 			default:
@@ -56,14 +56,14 @@ void entityAdd(tEntity *pEntity) {
 	logWrite("ERR: Can't add entity %p - no more space!", pEntity);
 }
 
-void entitySetSteer(tEntity *pEntity, tSteerRequest eSteer) {
+void entitySetSteer(tEntity *pEntity, tSteer *pSteer) {
 	switch(pEntity->eType) {
-		case ENTITY_TYPE_ERIK:
-		case ENTITY_TYPE_BAELOG:
-		case ENTITY_TYPE_OLAF:
-		case ENTITY_TYPE_FANG:
-		case ENTITY_TYPE_SCORCH:
-			((tEntityErik*)pEntity)->eSteer = eSteer;
+		case ENTITY_KIND_ERIK:
+		case ENTITY_KIND_BAELOG:
+		case ENTITY_KIND_OLAF:
+		case ENTITY_KIND_FANG:
+		case ENTITY_KIND_SCORCH:
+			((tEntityErik*)pEntity)->pSteer = pSteer;
 			break;
 		default:
 			// shouldn't happen!

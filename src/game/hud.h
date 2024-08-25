@@ -8,22 +8,16 @@
 #include <ace/types.h>
 #include <ace/utils/extview.h>
 #include "entity.h"
+#include "player_controller.h"
 
 #define HUD_BPP 5
-
-typedef enum tPlayerIdx {
-	PLAYER_1,
-	PLAYER_2,
-	PLAYER_COUNT,
-	PLAYER_NONE = PLAYER_COUNT,
-} tPlayerIdx;
 
 void hudCreate(tView *pView);
 
 void hudDestroy(void);
 
-void hudReset(tEntity **pEntities);
+void hudReset(void);
 
-tEntity *hudProcessPlayerSteer(UBYTE ubPlayerIdx, tSteerRequest eReq);
+tEntity *hudProcessPlayerSteer(tPlayerIdx ePlayerIdx, tSteer *pSteer);
 
 #endif // _HUD_H_

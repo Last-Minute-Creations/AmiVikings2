@@ -6,22 +6,22 @@
 #define _ENTITY_H_
 
 #include <ace/managers/bob.h>
-#include "player.h"
+#include "steer.h"
 
-typedef enum tEntityType {
-	ENTITY_TYPE_INVALID = 0,
-	ENTITY_TYPE_ERIK,
-	ENTITY_TYPE_OLAF,
-	ENTITY_TYPE_BAELOG,
-	ENTITY_TYPE_FANG,
-	ENTITY_TYPE_SCORCH,
-	ENTITY_TYPE_PLATFORM,
-	ENTITY_TYPE_BLOCK,
-} tEntityType;
+typedef enum tEntityKind {
+	ENTITY_KIND_INVALID = 0,
+	ENTITY_KIND_ERIK,
+	ENTITY_KIND_OLAF,
+	ENTITY_KIND_BAELOG,
+	ENTITY_KIND_FANG,
+	ENTITY_KIND_SCORCH,
+	ENTITY_KIND_PLATFORM,
+	ENTITY_KIND_BLOCK,
+} tEntityKind;
 
 typedef struct tEntity {
 	tBob sBob;
-	tEntityType eType;
+	tEntityKind eType;
 } tEntity;
 
 void entityManagerReset(void);
@@ -30,6 +30,6 @@ void entityManagerProcess(void);
 
 void entityAdd(tEntity *pEntity);
 
-void entitySetSteer(tEntity *pEntity, tSteerRequest eSteer);
+void entitySetSteer(tEntity *pEntity, tSteer *pSteer);
 
 #endif // _ENTITY_H_

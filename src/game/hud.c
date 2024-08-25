@@ -9,26 +9,21 @@
 #include "entity.h"
 #include "entity_erik.h"
 
-#define HUD_CHARACTER_SLOT_COUNT 3
-
 static tVPort *s_pVpHud;
 static tSimpleBufferManager *s_pBufferHud;
-static tBitMap *s_pPortaits[HUD_CHARACTER_SLOT_COUNT] = {0};
-static tEntity *s_pCharacters[HUD_CHARACTER_SLOT_COUNT];
-static UBYTE s_pCharSelectedByPlayer[PLAYER_COUNT];
+static tBitMap *s_pPortaits[VIKING_ENTITY_MAX] = {0};
 static tBitMap *s_pPortraitLocked;
-static UBYTE s_isActiveP2;
 
 static void hudDrawPortrait(UBYTE ubIdx) {
-	static const UBYTE pOffsets[HUD_CHARACTER_SLOT_COUNT] = {16, 88, 168};
+	static const UBYTE pOffsets[VIKING_ENTITY_MAX] = {16, 88, 168};
 	UBYTE ubOffsY = 0;
-	tEntityErik *pEntity = (tEntityErik*)s_pCharacters[ubIdx];
+	tEntityErik *pEntity = (tEntityErik*)playerControllerGetVikingByIndex(ubIdx);
 	tBitMap *pPortrait = s_pPortaits[ubIdx];
 	if(pEntity) {
 		if(pEntity->eState == VIKING_STATE_ALIVE) {
 			if(
-				ubIdx != s_pCharSelectedByPlayer[0] &&
-				(!s_isActiveP2 || ubIdx != s_pCharSelectedByPlayer[1])
+				pEntity != playerControllerGetVikingByPlayer(PLAYER_1) &&
+				(!playerIsActive(PLAYER_2) || ubIdx != playerControllerGetVikingIndexByPlayer(PLAYER_2))
 			) {
 				// Inactive portrait
 				ubOffsY = 24;
@@ -53,6 +48,7 @@ static void hudDrawPortrait(UBYTE ubIdx) {
 void hudCreate(tView *pView) {
 	UWORD pPaletteHud[32];
 	paletteLoad("data/aminer.plt", pPaletteHud, 32);
+	paletteLoad("data/vikings.plt", pPaletteHud, 24);
 
 	s_pVpHud = vPortCreate(0,
 		TAG_VPORT_BPP, HUD_BPP,
@@ -71,7 +67,6 @@ void hudCreate(tView *pView) {
 	TAG_END);
 
 	s_pPortraitLocked = bitmapCreateFromFile("data/hud/unk.bm", 0);
-	s_isActiveP2 = 0;
 }
 
 void hudDestroy(void) {
@@ -80,24 +75,24 @@ void hudDestroy(void) {
 	bitmapDestroy(s_pPortraitLocked);
 }
 
-void hudReset(tEntity **pEntities) {
-	for(UBYTE i = 0; i < HUD_CHARACTER_SLOT_COUNT; ++i) {
+void hudReset(void) {
+	for(UBYTE i = 0; i < VIKING_ENTITY_MAX; ++i) {
 		if(s_pPortaits[i] != 0) {
 			bitmapDestroy(s_pPortaits[i]);
 			s_pPortaits[i] = 0;
 		}
-		s_pCharacters[i] = pEntities[i];
 		s_pPortaits[i] = 0;
-		if(pEntities[i]) {
+		tEntity *pVikingEntity = playerControllerGetVikingByIndex(i);
+		if(pVikingEntity) {
 			char szPath[25];
 			char *pEnd = stringCopy("data/hud/", szPath);
-			if(pEntities[i]->eType == ENTITY_TYPE_ERIK) {
+			if(pVikingEntity->eType == ENTITY_KIND_ERIK) {
 				pEnd = stringCopy("erik", pEnd);
 			}
-			else if(pEntities[i]->eType == ENTITY_TYPE_BAELOG) {
+			else if(pVikingEntity->eType == ENTITY_KIND_BAELOG) {
 				pEnd = stringCopy("baelog", pEnd);
 			}
-			else if(pEntities[i]->eType == ENTITY_TYPE_OLAF) {
+			else if(pVikingEntity->eType == ENTITY_KIND_OLAF) {
 				pEnd = stringCopy("olaf", pEnd);
 			}
 			pEnd = stringCopy(".bm", pEnd);
@@ -105,44 +100,48 @@ void hudReset(tEntity **pEntities) {
 		}
 	}
 
-	// TODO: handle gap when middle char is inactive
-	s_pCharSelectedByPlayer[PLAYER_1] = 0;
-	s_pCharSelectedByPlayer[PLAYER_2] = 1;
-
-	for(UBYTE i = 0; i < HUD_CHARACTER_SLOT_COUNT; ++i) {
+	for(UBYTE i = 0; i < VIKING_ENTITY_MAX; ++i) {
 		hudDrawPortrait(i);
 	}
 }
 
-tEntity *hudProcessPlayerSteer(UBYTE ubPlayerIdx, tSteerRequest eReq) {
-	UBYTE ubOld = s_pCharSelectedByPlayer[ubPlayerIdx];
-	BYTE bNew = s_pCharSelectedByPlayer[ubPlayerIdx];
-	if(eReq & STEER_L) {
+tEntity *hudProcessPlayerSteer(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
+	UBYTE ubOldIndex = playerControllerGetVikingIndexByPlayer(ePlayerIdx);
+	BYTE bNewIndex = ubOldIndex;
+	tEntity *pNewViking = playerControllerGetVikingByIndex(bNewIndex);
+
+	// TODO: move somewhere else?
+	if(steerUse(pSteer, STEER_ACTION_PREV_VIKING)) {
 		do {
-			if(--bNew < 0) {
-				bNew = HUD_CHARACTER_SLOT_COUNT - 1;
+			if(--bNewIndex < 0) {
+				bNewIndex = VIKING_ENTITY_MAX - 1;
 			}
+			pNewViking = playerControllerGetVikingByIndex(bNewIndex);
 		} while(
-			s_pCharacters[bNew] == 0 ||
-			((ubPlayerIdx == 1 || s_isActiveP2) && bNew == s_pCharSelectedByPlayer[!ubPlayerIdx]) ||
-			((tEntityErik *)s_pCharacters[bNew])->eState != VIKING_STATE_ALIVE
+			pNewViking == 0 ||
+			(playerIsActive(!ePlayerIdx) && pNewViking == playerControllerGetVikingByPlayer(!ePlayerIdx)) ||
+			((tEntityErik *)pNewViking)->eState != VIKING_STATE_ALIVE
 		);
 	}
-	if(eReq & STEER_R) {
+
+	if(steerUse(pSteer, STEER_ACTION_NEXT_VIKING)) {
 		do {
-			if(++bNew >= HUD_CHARACTER_SLOT_COUNT) {
-				bNew = 0;
+			if(++bNewIndex >= VIKING_ENTITY_MAX) {
+				bNewIndex = 0;
 			}
+			pNewViking = playerControllerGetVikingByIndex(bNewIndex);
 		} while(
-			s_pCharacters[bNew] == 0 ||
-			((ubPlayerIdx == 1 || s_isActiveP2) && bNew == s_pCharSelectedByPlayer[!ubPlayerIdx]) ||
-			((tEntityErik *)s_pCharacters[bNew])->eState != VIKING_STATE_ALIVE
+			pNewViking == 0 ||
+			(playerIsActive(!ePlayerIdx) && pNewViking == playerControllerGetVikingByPlayer(!ePlayerIdx)) ||
+			((tEntityErik *)pNewViking)->eState != VIKING_STATE_ALIVE
 		);
 	}
-	if(ubOld != bNew) {
-		s_pCharSelectedByPlayer[ubPlayerIdx] = bNew;
-		hudDrawPortrait(ubOld);
-		hudDrawPortrait(bNew);
+
+	if(ubOldIndex != bNewIndex) {
+		playerControllerSetControlledVikingIndex(ePlayerIdx, bNewIndex);
+		hudDrawPortrait(ubOldIndex);
+		hudDrawPortrait(bNewIndex);
 	}
-	return s_pCharacters[s_pCharSelectedByPlayer[ubPlayerIdx]];
+
+	return pNewViking;
 }

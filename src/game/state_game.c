@@ -17,8 +17,9 @@
 #include "entity_erik.h"
 #include "assets.h"
 #include "tile.h"
-#include "player.h"
+#include "steer.h"
 #include "hud.h"
+#include "player_controller.h"
 
 #define MAIN_BPP 6
 #define BOB_COUNT 4
@@ -29,8 +30,8 @@ static tTileBufferManager *s_pBufferMain;
 
 static tBitMap *s_pTileset;
 static tBob s_pBobs[BOB_COUNT];
-static tFont *s_pFont;
-static tTextBitMap *s_pTextTile;
+// static tFont *s_pFont;
+// static tTextBitMap *s_pTextTile;
 
 // [y][x]
 static UBYTE s_pTilesStrt[][32] = {
@@ -143,8 +144,10 @@ void stateGameCreate(void) {
 	TAG_END);
 
 	assetsGlobalCreate();
-	s_pFont = fontCreate("data/uni54.fnt");
-	s_pTextTile = fontCreateTextBitMap(320, 8);
+	// s_pFont = fontCreate("data/uni54.fnt");
+	// s_pTextTile = fontCreateTextBitMap(320, 8);
+	playerControllerReset();
+	playerControllerSetSteerPresets(STEER_KIND_PRESET1, STEER_KIND_NULL);
 
 	bobManagerCreate(
 		s_pBufferMain->pScroll->pFront, s_pBufferMain->pScroll->pBack,
@@ -156,17 +159,24 @@ void stateGameCreate(void) {
 	for(UBYTE i = 0; i < BOB_COUNT; ++i) {
 		bobInit(&s_pBobs[i], 32, 32, 1, bobCalcFrameAddress(g_pBobBmErik, 0), bobCalcFrameAddress(g_pBobBmErikMask, 0), 32 + 48 * (i + 1), 32);
 	}
+
 	tEntity *pPlayerEntity1 = &entityErikCreate(32, 32)->sBase;
 	entityAdd(pPlayerEntity1);
 	tEntity *pPlayerEntity2 = &entityErikCreate(64, 32)->sBase;
 	entityAdd(pPlayerEntity2);
+
+	playerControllerSetVikingEntity(0, pPlayerEntity1);
+	playerControllerSetVikingEntity(1, pPlayerEntity2);
+	playerControllerSetVikingEntity(2, 0);
+
+	playerControllerSetDefaultSelection();
 
 	bobReallocateBgBuffers();
 
 	systemUnuse();
 
 	loadMap();
-	hudReset((tEntity*[3]){pPlayerEntity1, pPlayerEntity2, 0});
+	hudReset();
 
 	tileBufferRedrawAll(s_pBufferMain);
 	viewLoad(s_pView);
@@ -179,14 +189,10 @@ void stateGameLoop(void) {
 	}
 
 	for(UBYTE ubPlayerIdx = 0; ubPlayerIdx < 2; ++ubPlayerIdx) {
-		if(ubPlayerIdx == 1) {
-			// TODO: p2 turned off
-			continue;
-		}
-		tSteerRequest eReq = playerProcessSteer(ubPlayerIdx);
-		tEntity *pActiveEntity = hudProcessPlayerSteer(ubPlayerIdx, eReq);
+		tSteer *pSteer = playerControllerGetSteer(ubPlayerIdx);
+		steerUpdate(pSteer);
+		tEntity *pActiveEntity = hudProcessPlayerSteer(ubPlayerIdx, pSteer);
 		if(pActiveEntity) {
-			entitySetSteer(pActiveEntity, eReq);
 			if(ubPlayerIdx == 0) {
 				cameraCenterAt(
 					s_pBufferMain->pCamera,
@@ -221,8 +227,8 @@ void stateGameDestroy(void) {
 	systemUse();
 	bobManagerDestroy();
 	assetsGlobalDestroy();
-	fontDestroy(s_pFont);
-	fontDestroyTextBitMap(s_pTextTile);
+	// fontDestroy(s_pFont);
+	// fontDestroyTextBitMap(s_pTextTile);
 	bitmapDestroy(s_pTileset);
 	hudDestroy();
 	viewDestroy(s_pView);

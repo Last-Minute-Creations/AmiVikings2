@@ -74,6 +74,7 @@ if(AMIGA AND BUILD_GAME)
 
 	# Temporary assets
 	file(COPY tmp/aminer.plt DESTINATION ${DATA_DIR})
+	file(COPY tmp/vikings.plt DESTINATION ${DATA_DIR})
 	convertBitmaps(
 		TARGET ${LV2_EXECUTABLE} PALETTE ${DATA_DIR}/aminer.plt INTERLEAVED
 		SOURCES
@@ -86,14 +87,16 @@ if(AMIGA AND BUILD_GAME)
 		${DATA_DIR}/tiles.bm
 	)
 	convertBitmaps(
-		TARGET ${LV2_EXECUTABLE} PALETTE ${DATA_DIR}/aminer.plt INTERLEAVED
+		TARGET ${LV2_EXECUTABLE} PALETTE ${DATA_DIR}/vikings.plt EHB INTERLEAVED
 		MASK_COLOR "#FF00FF"
 		SOURCES
-			tmp/erik.png
+			tmp/erik.png tmp/baelog.png tmp/olaf.png tmp/fang.png tmp/scorch.png
 		DESTINATIONS
-			${DATA_DIR}/erik.bm
+			${DATA_DIR}/erik.bm ${DATA_DIR}/baelog.bm ${DATA_DIR}/olaf.bm
+			${DATA_DIR}/fang.bm ${DATA_DIR}/scorch.bm
 		MASKS
-			${DATA_DIR}/erik_mask.bm
+			${DATA_DIR}/erik_mask.bm ${DATA_DIR}/baelog_mask.bm ${DATA_DIR}/olaf_mask.bm
+			${DATA_DIR}/fang_mask.bm ${DATA_DIR}/scorch_mask.bm
 	)
 
 endif()
