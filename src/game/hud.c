@@ -6,7 +6,7 @@
 #include <ace/managers/viewport/simplebuffer.h>
 #include <ace/utils/palette.h>
 #include <ace/utils/string.h>
-#include <entity/entity_erik.h>
+#include <entity/entity_viking.h>
 
 static tVPort *s_pVpHud;
 static tSimpleBufferManager *s_pBufferHud;
@@ -16,10 +16,11 @@ static tBitMap *s_pPortraitLocked;
 static void hudDrawPortrait(UBYTE ubIdx) {
 	static const UBYTE pOffsets[VIKING_ENTITY_MAX] = {16, 88, 168};
 	UBYTE ubOffsY = 0;
-	tEntityErik *pEntity = (tEntityErik*)playerControllerGetVikingByIndex(ubIdx);
+	tEntity *pEntity = (tEntity*)playerControllerGetVikingByIndex(ubIdx);
 	tBitMap *pPortrait = s_pPortaits[ubIdx];
 	if(pEntity) {
-		if(pEntity->eState == VIKING_STATE_ALIVE) {
+		tEntityVikingData *pVikingData = (tEntityVikingData *)pEntity->pData;
+		if(pVikingData->eState == VIKING_STATE_ALIVE) {
 			if(
 				pEntity != playerControllerGetVikingByPlayer(PLAYER_1) &&
 				(!playerIsActive(PLAYER_2) || ubIdx != playerControllerGetVikingIndexByPlayer(PLAYER_2))
@@ -28,10 +29,10 @@ static void hudDrawPortrait(UBYTE ubIdx) {
 				ubOffsY = 24;
 			}
 		}
-		else if(pEntity->eState == VIKING_STATE_DEAD) {
+		else if(pVikingData->eState == VIKING_STATE_DEAD) {
 			ubOffsY = 48;
 		}
-		else if(pEntity->eState == VIKING_STATE_LOCKED) {
+		else if(pVikingData->eState == VIKING_STATE_LOCKED) {
 			pPortrait = s_pPortraitLocked;
 		}
 	}
@@ -81,21 +82,28 @@ void hudReset(void) {
 			s_pPortaits[i] = 0;
 		}
 		s_pPortaits[i] = 0;
-		tEntity *pVikingEntity = playerControllerGetVikingByIndex(i);
-		if(pVikingEntity) {
+		tEntity *pEnity = playerControllerGetVikingByIndex(i);
+		if(pEnity) {
 			char szPath[25];
 			char *pEnd = stringCopy("data/hud/", szPath);
-			if(pVikingEntity->eType == ENTITY_KIND_ERIK) {
-				pEnd = stringCopy("erik", pEnd);
-			}
-			else if(pVikingEntity->eType == ENTITY_KIND_BAELOG) {
-				pEnd = stringCopy("baelog", pEnd);
-			}
-			else if(pVikingEntity->eType == ENTITY_KIND_OLAF) {
-				pEnd = stringCopy("olaf", pEnd);
+			switch(pEnity->pDef->eKind) {
+				case ENTITY_KIND_ERIK:
+					pEnd = stringCopy("erik", pEnd);
+					break;
+				case ENTITY_KIND_BAELOG:
+					pEnd = stringCopy("baelog", pEnd);
+					break;
+				case ENTITY_KIND_OLAF:
+					pEnd = stringCopy("olaf", pEnd);
+					break;
+				default:
+					logWrite("ERR: Unsupported entity for HUD: %d", pEnity->pDef->eKind);
 			}
 			pEnd = stringCopy(".bm", pEnd);
 			s_pPortaits[i] = bitmapCreateFromFile(szPath, 0);
+		}
+		else {
+			s_pPortaits[i] = s_pPortraitLocked;
 		}
 	}
 
@@ -119,7 +127,7 @@ tEntity *hudProcessPlayerSteer(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 		} while(
 			pNewViking == 0 ||
 			(playerIsActive(!ePlayerIdx) && pNewViking == playerControllerGetVikingByPlayer(!ePlayerIdx)) ||
-			((tEntityErik *)pNewViking)->eState != VIKING_STATE_ALIVE
+			((tEntityVikingData*)pNewViking->pData)->eState != VIKING_STATE_ALIVE
 		);
 	}
 
@@ -132,7 +140,7 @@ tEntity *hudProcessPlayerSteer(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 		} while(
 			pNewViking == 0 ||
 			(playerIsActive(!ePlayerIdx) && pNewViking == playerControllerGetVikingByPlayer(!ePlayerIdx)) ||
-			((tEntityErik *)pNewViking)->eState != VIKING_STATE_ALIVE
+			((tEntityVikingData*)pNewViking->pData)->eState != VIKING_STATE_ALIVE
 		);
 	}
 

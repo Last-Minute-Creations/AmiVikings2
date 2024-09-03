@@ -3,70 +3,65 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <entity/entity.h>
-#include <entity/entity_erik.h>
+#include <entity/entity_viking.h>
 #include <ace/managers/log.h>
 
-#define ENTITIES_MAX 10
+#define ENTITY_INSTANCE_MAX 10
 
-tEntity *s_pEntities[ENTITIES_MAX] = {0};
+static const tEntityDef s_pEntityDefs[] = {
+	[ENTITY_KIND_INVALID] = {.eKind = ENTITY_KIND_INVALID, .cbReset = 0, .cbProcess = 0, .cbDestroy = 0},
+	[ENTITY_KIND_ERIK] = {.eKind = ENTITY_KIND_ERIK, .cbReset = entityVikingCreate, .cbProcess = entityVikingProcess, .cbDestroy = entityVikingDestroy},
+	[ENTITY_KIND_OLAF] = {.eKind = ENTITY_KIND_OLAF, .cbReset = entityVikingCreate, .cbProcess = entityVikingProcess, .cbDestroy = entityVikingDestroy},
+	[ENTITY_KIND_BAELOG] = {.eKind = ENTITY_KIND_BAELOG, .cbReset = entityVikingCreate, .cbProcess = entityVikingProcess, .cbDestroy = entityVikingDestroy},
+	[ENTITY_KIND_FANG] = {.eKind = ENTITY_KIND_FANG, .cbReset = 0, .cbProcess = 0, .cbDestroy = 0},
+	[ENTITY_KIND_SCORCH] = {.eKind = ENTITY_KIND_SCORCH, .cbReset = 0, .cbProcess = 0, .cbDestroy = 0},
+	[ENTITY_KIND_PLATFORM] = {.eKind = ENTITY_KIND_PLATFORM, .cbReset = 0, .cbProcess = 0, .cbDestroy = 0},
+	[ENTITY_KIND_BLOCK] = {.eKind = ENTITY_KIND_BLOCK, .cbReset = 0, .cbProcess = 0, .cbDestroy = 0},
+};
+
+static tEntity s_pEntities[ENTITY_INSTANCE_MAX] = {0};
 
 static void entityDestroy(tEntity *pEntity) {
-	switch(pEntity->eType) {
-		case ENTITY_KIND_ERIK:
-			entityErikDestroy((tEntityErik*)pEntity);
-			break;
-		default:
-			break;
+	if(!pEntity->pDef->cbReset) {
+		logWrite("ERR: entity cbDestroy is zero\n");
 	}
+	pEntity->pDef->cbDestroy(pEntity);
 }
 
 void entityManagerReset(void) {
-	for(UBYTE i = ENTITIES_MAX; i--;) {
-		if(s_pEntities[i]) {
-			entityDestroy(s_pEntities[i]);
+	for(UBYTE i = ENTITY_INSTANCE_MAX; i--;) {
+		if(s_pEntities[i].pDef) {
+			entityDestroy(&s_pEntities[i]);
 		}
-		s_pEntities[i] = 0;
+		s_pEntities[i].pDef = 0;
 	}
 }
 
 void entityManagerProcess(void) {
-	for(UBYTE i = ENTITIES_MAX; i--;) {
-		tEntity *pEntity = s_pEntities[i];
-		if(!pEntity) {
+	for(UBYTE i = ENTITY_INSTANCE_MAX; i--;) {
+		tEntity *pEntity = &s_pEntities[i];
+		if(!pEntity->pDef) {
 			continue;
 		}
 		// TODO: check if on screen
-		switch(pEntity->eType) {
-			case ENTITY_KIND_ERIK:
-				entityErikProcess((tEntityErik*)pEntity);
-				break;
-			default:
-				break;
-		}
+		pEntity->pDef->cbProcess(pEntity);
 	}
 }
 
-void entityAdd(tEntity *pEntity) {
-	for(UBYTE i = 0; i < ENTITIES_MAX; ++i) {
-		if(s_pEntities[i] == 0) {
-			s_pEntities[i] = pEntity;
-			return;
+tEntity *entityManagerSpawnEntity(
+	tEntityKind eKind, UWORD uwX, UWORD uwY, UWORD uwCenterX, UWORD uwCenterY
+) {
+	for(UBYTE i = 5; i < ENTITY_INSTANCE_MAX; ++i) {
+		if(s_pEntities[i].pDef == 0) {
+			s_pEntities[i].pDef = &s_pEntityDefs[eKind];
+			// TODO: pass x/y/cx/cy to entity instance, or to the cbReset() call
+			if(!s_pEntities[i].pDef->cbReset) {
+				logWrite("ERR: entity cbReset is zero\n");
+			}
+			s_pEntities[i].pDef->cbReset(&s_pEntities[i], uwX, uwY);
+			return &s_pEntities[i];
 		}
 	}
-	logWrite("ERR: Can't add entity %p - no more space!", pEntity);
-}
-
-void entitySetSteer(tEntity *pEntity, tSteer *pSteer) {
-	switch(pEntity->eType) {
-		case ENTITY_KIND_ERIK:
-		case ENTITY_KIND_BAELOG:
-		case ENTITY_KIND_OLAF:
-		case ENTITY_KIND_FANG:
-		case ENTITY_KIND_SCORCH:
-			((tEntityErik*)pEntity)->pSteer = pSteer;
-			break;
-		default:
-			// shouldn't happen!
-			break;
-	}
+	logWrite("ERR: Can't add entity %d - no more space!", eKind);
+	return 0;
 }

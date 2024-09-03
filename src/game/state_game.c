@@ -154,16 +154,15 @@ void stateGameCreate(void) {
 		s_pBufferMain->pScroll->uwBmAvailHeight
 	);
 
-	// Init entities
-	entityManagerReset();
+
 	for(UBYTE i = 0; i < BOB_COUNT; ++i) {
 		bobInit(&s_pBobs[i], 32, 32, 1, bobCalcFrameAddress(g_pBobBmErik, 0), bobCalcFrameAddress(g_pBobBmErikMask, 0), 32 + 48 * (i + 1), 32);
 	}
 
-	tEntity *pPlayerEntity1 = &entityErikCreate(32, 32)->sBase;
-	entityAdd(pPlayerEntity1);
-	tEntity *pPlayerEntity2 = &entityErikCreate(64, 32)->sBase;
-	entityAdd(pPlayerEntity2);
+	// Init entities
+	entityManagerReset();
+	tEntity *pPlayerEntity1 = entityManagerSpawnEntity(ENTITY_KIND_ERIK, 32, 32, 16, 16);
+	tEntity *pPlayerEntity2 = entityManagerSpawnEntity(ENTITY_KIND_ERIK, 64, 32, 16, 16);
 
 	playerControllerSetVikingEntity(0, pPlayerEntity1);
 	playerControllerSetVikingEntity(1, pPlayerEntity2);

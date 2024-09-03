@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.14.0)
 project(AmiVikigs2)
 
 # Adhere to GNU filesystem layout conventions
@@ -6,7 +6,7 @@ include(GNUInstallDirs)
 
 # C/C++ standards
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 23)
 
 # Build options
 SET(BUILD_GAME ON)
@@ -38,7 +38,7 @@ endif()
 if(AMIGA AND BUILD_GAME)
 	add_subdirectory(deps/ace)
 
-	file(GLOB_RECURSE GAME_src src/game/*.cpp src/game/*.c src/game/*.h)
+	file(GLOB_RECURSE GAME_src src/game/*.cpp src/game/*.c src/game/*.hpp src/game/*.h)
 
 	if(ELF2HUNK)
 		set(LV2_EXECUTABLE AmiVikings2.elf)

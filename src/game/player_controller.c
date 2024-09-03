@@ -1,4 +1,5 @@
 #include "player_controller.h"
+#include "entity/entity_viking.h"
 
 typedef struct tPlayerState {
 	UBYTE ubActiveVikingIndex;
@@ -48,8 +49,8 @@ UBYTE playerControllerGetVikingIndexByPlayer(tPlayerIdx ePlayerIdx) {
 
 void playerControllerSetControlledVikingIndex(tPlayerIdx ePlayerIdx, UBYTE ubNewVikingIndex) {
 	UBYTE ubOldVikingIndex = s_pPlayerStates[ePlayerIdx].ubActiveVikingIndex;
-	entitySetSteer(s_pVikingEntities[ubOldVikingIndex], steerGetNull());
-	entitySetSteer(s_pVikingEntities[ubNewVikingIndex], &s_pPlayerStates[ePlayerIdx].sSteer);
+	entityVikingSetSteer(s_pVikingEntities[ubOldVikingIndex], steerGetNull());
+	entityVikingSetSteer(s_pVikingEntities[ubNewVikingIndex], &s_pPlayerStates[ePlayerIdx].sSteer);
 	s_pPlayerStates[ePlayerIdx].ubActiveVikingIndex = ubNewVikingIndex;
 }
 
@@ -58,8 +59,8 @@ void playerControllerSetDefaultSelection(void)
 	s_pPlayerStates[PLAYER_1].ubActiveVikingIndex = 0;
 	s_pPlayerStates[PLAYER_2].ubActiveVikingIndex = 1;
 
-	entitySetSteer(s_pVikingEntities[s_pPlayerStates[PLAYER_1].ubActiveVikingIndex], &s_pPlayerStates[PLAYER_1].sSteer);
-	entitySetSteer(s_pVikingEntities[s_pPlayerStates[PLAYER_2].ubActiveVikingIndex], &s_pPlayerStates[PLAYER_2].sSteer);
+	entityVikingSetSteer(s_pVikingEntities[s_pPlayerStates[PLAYER_1].ubActiveVikingIndex], &s_pPlayerStates[PLAYER_1].sSteer);
+	entityVikingSetSteer(s_pVikingEntities[s_pPlayerStates[PLAYER_2].ubActiveVikingIndex], &s_pPlayerStates[PLAYER_2].sSteer);
 	// TODO: handle disabled 2nd viking
 }
 

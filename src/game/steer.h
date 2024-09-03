@@ -8,6 +8,10 @@
 #include <ace/types.h>
 #include <ace/macros.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum tSteerKind {
 	STEER_KIND_NULL,
 	STEER_KIND_PRESET1,
@@ -51,5 +55,9 @@ UBYTE steerCheck(tSteer *pSteer, tSteerAction eAction);
 UBYTE steerUse(tSteer *pSteer, tSteerAction eAction);
 
 tSteer *steerGetNull(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _STEER_H_
