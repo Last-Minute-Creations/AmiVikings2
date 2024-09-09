@@ -32,6 +32,10 @@ static tBitMap *s_pTileset;
 static tBob s_pBobs[BOB_COUNT];
 // static tFont *s_pFont;
 // static tTextBitMap *s_pTextTile;
+static tState s_sGameSubstatePlay;
+static tState s_sGameSubstateInventory;
+static tState s_sGameSubstatePause;
+tStateManager *s_pGameSubstateMachine;
 
 // [y][x]
 static UBYTE s_pTilesStrt[][32] = {
@@ -143,6 +147,8 @@ void stateGameCreate(void) {
 		TAG_TILEBUFFER_CALLBACK_TILE_DRAW, onTileDraw,
 	TAG_END);
 
+	s_pGameSubstateMachine = stateManagerCreate();
+
 	assetsGlobalCreate();
 	// s_pFont = fontCreate("data/uni54.fnt");
 	// s_pTextTile = fontCreateTextBitMap(320, 8);
@@ -179,6 +185,7 @@ void stateGameCreate(void) {
 
 	tileBufferRedrawAll(s_pBufferMain);
 	viewLoad(s_pView);
+	stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
 }
 
 void stateGameLoop(void) {
@@ -187,9 +194,41 @@ void stateGameLoop(void) {
 		return;
 	}
 
+	stateProcess(s_pGameSubstateMachine);
+
+	systemIdleBegin();
+	vPortWaitUntilEnd(s_pVpMain);
+	systemIdleEnd();
+}
+
+void stateGameDestroy(void) {
+	viewLoad(0);
+	systemUse();
+	bobManagerDestroy();
+	assetsGlobalDestroy();
+	// fontDestroy(s_pFont);
+	// fontDestroyTextBitMap(s_pTextTile);
+	bitmapDestroy(s_pTileset);
+	hudDestroy();
+	viewDestroy(s_pView);
+}
+
+#pragma region substates
+
+void substatePlayLoop(void) {
 	for(UBYTE ubPlayerIdx = 0; ubPlayerIdx < 2; ++ubPlayerIdx) {
 		tSteer *pSteer = playerControllerGetSteer(ubPlayerIdx);
 		steerUpdate(pSteer);
+
+		if(steerUse(pSteer, STEER_ACTION_INVENTORY)) {
+			stateChange(s_pGameSubstateMachine, &s_sGameSubstateInventory);
+			return;
+		}
+		if(steerUse(pSteer, STEER_ACTION_PAUSE)) {
+			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePause);
+			return;
+		}
+
 		tEntity *pActiveEntity = hudProcessPlayerSteer(ubPlayerIdx, pSteer);
 		if(pActiveEntity) {
 			if(ubPlayerIdx == 0) {
@@ -208,30 +247,48 @@ void stateGameLoop(void) {
 		bobPush(&s_pBobs[i]);
 	}
 	entityManagerProcess();
-
 	bobPushingDone();
-
 	bobEnd();
 
 	viewProcessManagers(s_pView);
 	copProcessBlocks();
-
-	systemIdleBegin();
-	vPortWaitUntilEnd(s_pVpMain);
-	systemIdleEnd();
 }
 
-void stateGameDestroy(void) {
-	viewLoad(0);
-	systemUse();
-	bobManagerDestroy();
-	assetsGlobalDestroy();
-	// fontDestroy(s_pFont);
-	// fontDestroyTextBitMap(s_pTextTile);
-	bitmapDestroy(s_pTileset);
-	hudDestroy();
-	viewDestroy(s_pView);
+void substateInventoryLoop(void) {
+	for(UBYTE ubPlayerIdx = 0; ubPlayerIdx < 2; ++ubPlayerIdx) {
+		tSteer *pSteer = playerControllerGetSteer(ubPlayerIdx);
+		steerUpdate(pSteer);
+
+		if(steerUse(pSteer, STEER_ACTION_INVENTORY)) {
+			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
+			return;
+		}
+	}
 }
+
+void substatePauseLoop(void) {
+	for(UBYTE ubPlayerIdx = 0; ubPlayerIdx < 2; ++ubPlayerIdx) {
+		tSteer *pSteer = playerControllerGetSteer(ubPlayerIdx);
+		steerUpdate(pSteer);
+
+		if(steerUse(pSteer, STEER_ACTION_PAUSE)) {
+			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
+			return;
+		}
+	}
+}
+
+#pragma endregion
+
+static tState s_sGameSubstatePlay = {
+	.cbCreate = 0, .cbLoop = substatePlayLoop, .cbDestroy = 0,
+};
+static tState s_sGameSubstateInventory = {
+	.cbCreate = 0, .cbLoop = substateInventoryLoop, .cbDestroy = 0,
+};
+static tState s_sGameSubstatePause = {
+	.cbCreate = 0, .cbLoop = substatePauseLoop, .cbDestroy = 0,
+};
 
 tState g_sStateGame = {
 	.cbCreate = stateGameCreate, .cbLoop = stateGameLoop,
