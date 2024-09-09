@@ -56,13 +56,44 @@ static const tUbCoordYX s_pItemOffsets[] = {
 // [y][x], using reduced tileset
 // TODO: extract from ROM properly, then remap to reduced tileset
 static const UBYTE s_pHudTilemap[HUD_TILE_HEIGHT][HUD_TILE_WIDTH] = {
-	{0,1,2,3,4,4,4,5,6,7,8,2,3,4,4,4,5,6,7,8,2,3,4,4,4,5,6,7,8,2,9,7,},
-	{10,11,12,13,14,14,14,15,16,17,18,12,13,14,14,14,15,16,17,18,12,13,14,14,14,15,16,17,19,12,20,21,},
-	{22,23,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,27,28,29,21,},
-	{22,23,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,30,31,32,21,},
-	{22,23,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,0,6,33,21,},
-	{34,35,36,36,36,37,25,25,25,25,38,36,36,36,37,25,25,25,25,38,36,36,36,37,25,25,25,25,34,39,40,41,},
+	{ 0,  1,  2,  3,  4,  4,  4,  5,  6,  7,  8,  2,  3,  4,  4,  4,  5,  6,  7,  8,  2,  3,  4,  4,  4,  5,  6,  7,  8,  2,  9,  7},
+	{10, 11, 12, 13, 14, 14, 14, 15, 16, 17, 18, 12, 13, 14, 14, 14, 15, 16, 17, 18, 12, 13, 14, 14, 14, 15, 16, 17, 19, 12, 20, 21},
+	{22, 23, 24, 24, 24, 24, 25, 25, 25, 25, 26, 24, 24, 24, 24, 25, 25, 25, 25, 26, 24, 24, 24, 24, 25, 25, 25, 25, 27, 28, 29, 21},
+	{22, 23, 24, 24, 24, 24, 25, 25, 25, 25, 26, 24, 24, 24, 24, 25, 25, 25, 25, 26, 24, 24, 24, 24, 25, 25, 25, 25, 30, 31, 32, 21},
+	{22, 23, 24, 24, 24, 24, 25, 25, 25, 25, 26, 24, 24, 24, 24, 25, 25, 25, 25, 26, 24, 24, 24, 24, 25, 25, 25, 25,  0,  6, 33, 21},
+	{34, 35, 36, 36, 36, 37, 25, 25, 25, 25, 38, 36, 36, 36, 37, 25, 25, 25, 25, 38, 36, 36, 36, 37, 25, 25, 25, 25, 34, 39, 40, 41},
 };
+
+static void hudDrawItemSlot(UBYTE ubVikingIdx, UBYTE ubSlotIdx, UBYTE isSelected) {
+	const tUbCoordYX *pItemSlotOffs = &s_pItemOffsets[ubSlotIdx];
+
+	tEntity *pEntity = (tEntity*)playerControllerGetVikingByIndex(ubVikingIdx);
+	tItemKind eItem;
+	if(pEntity) {
+		tEntityVikingData *pVikingData = (tEntityVikingData *)pEntity->pData;
+		eItem = pVikingData->pInventory[ubSlotIdx];
+	}
+	else {
+		eItem = ITEM_KIND_NONE;
+	}
+
+	blitCopy( // s_pItems first icon is trashcan, so start with one further
+		s_pItems, 0, (1 + eItem) * HUD_ITEM_SIZE,
+		s_pBufferHud->pBack,
+		s_pPortraitOffsetsX[ubVikingIdx] + pItemSlotOffs->ubX,
+		PORTRAIT_OFFSET_Y + pItemSlotOffs->ubY,
+		HUD_ITEM_SIZE, HUD_ITEM_SIZE, MINTERM_COOKIE
+	);
+
+	if(isSelected) {
+		blitCopyMask(
+			s_pCursor, 0, 0, s_pBufferHud->pBack,
+			s_pPortraitOffsetsX[ubVikingIdx] + pItemSlotOffs->ubX,
+			PORTRAIT_OFFSET_Y + pItemSlotOffs->ubY,
+			HUD_ITEM_SIZE, HUD_ITEM_SIZE / 2, s_pCursorMask->Planes[0]
+		);
+	}
+}
 
 static void hudDrawPortrait(UBYTE ubIdx) {
 	tHudIcon eIcon = HUD_ICON_ERIK_ACTIVE;
@@ -94,21 +125,8 @@ static void hudDrawPortrait(UBYTE ubIdx) {
 	);
 
 	for(UBYTE i = 0; i < 4; ++i) {
-		blitCopy(
-			s_pItems, 0, (ITEM_KIND_W1_EYEBALL + 1 + i) * HUD_ITEM_SIZE,
-			s_pBufferHud->pBack,
-			s_pPortraitOffsetsX[ubIdx] + s_pItemOffsets[i].ubX,
-			PORTRAIT_OFFSET_Y + s_pItemOffsets[i].ubY,
-			HUD_ITEM_SIZE, HUD_ITEM_SIZE, MINTERM_COOKIE
-		);
+		hudDrawItemSlot(ubIdx, i, i == 0);
 	}
-
-	blitCopyMask(
-		s_pCursor, 0, 0, s_pBufferHud->pBack,
-		s_pPortraitOffsetsX[ubIdx] + s_pItemOffsets[0].ubX,
-		PORTRAIT_OFFSET_Y + s_pItemOffsets[0].ubY,
-		HUD_ITEM_SIZE, HUD_ITEM_SIZE / 2, s_pCursorMask->Planes[0]
-	);
 }
 
 // TODO: 4bpp on hud, 6bpp on playfield
@@ -164,6 +182,20 @@ void hudDestroy(void) {
 }
 
 void hudReset(void) {
+	// tEntity *pEntity1 = (tEntity*)playerControllerGetVikingByIndex(0);
+	// tEntityVikingData *pVikingData1 = (tEntityVikingData *)pEntity1->pData;
+	// pVikingData1->pInventory[0] = ITEM_KIND_BANANA;
+	// pVikingData1->pInventory[1] = ITEM_KIND_BEER;
+	// pVikingData1->pInventory[2] = ITEM_KIND_BURGER;
+	// pVikingData1->pInventory[3] = ITEM_KIND_MEATLOAF;
+
+	// tEntity *pEntity2 = (tEntity*)playerControllerGetVikingByIndex(1);
+	// tEntityVikingData *pVikingData2 = (tEntityVikingData *)pEntity2->pData;
+	// pVikingData2->pInventory[0] = ITEM_KIND_BOMB;
+	// pVikingData2->pInventory[1] = ITEM_KIND_GARLIC;
+	// pVikingData2->pInventory[2] = ITEM_KIND_SHIELD;
+	// pVikingData2->pInventory[3] = ITEM_KIND_W1_MUSHROOM;
+
 	for(UBYTE i = 0; i < VIKING_ENTITY_MAX; ++i) {
 		hudDrawPortrait(i);
 	}
