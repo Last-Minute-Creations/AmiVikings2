@@ -18,6 +18,11 @@ void entityVikingCreate(tEntity *pEntity, UWORD uwPosX, UWORD uwPosY) {
 	pData->sPos.uwX = uwPosX;
 	pData->sPos.uwY = uwPosY;
 	pData->ubAnimFrameIdx = 0;
+
+	for(UBYTE i = 0; i < VIKING_INVENTORY_SIZE; ++i) {
+		pData->pInventory[i] = ITEM_KIND_NONE;
+	}
+
 	bobInit(
 		&pEntity->sBob, ERIK_SIZE, ERIK_SIZE, 1,
 		bobCalcFrameAddress(g_pBobBmErik, 0), bobCalcFrameAddress(g_pBobBmErikMask, 0),

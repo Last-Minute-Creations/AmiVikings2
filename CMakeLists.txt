@@ -12,6 +12,7 @@ set(CMAKE_C_STANDARD 23)
 SET(BUILD_GAME ON)
 # SET(BUILD_ASSET_EXTRACT ON)
 
+# TODO: https://github.com/Cons-Cat/libCat/tree/b5290853afe5d26c896ba5a635a18ec86f85ebd3
 if(BUILD_ASSET_EXTRACT)
 	#fmt
 	add_subdirectory(deps/fmt)
@@ -70,7 +71,30 @@ if(AMIGA AND BUILD_GAME)
 	endif()
 
 	set(DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/data)
-	file(MAKE_DIRECTORY ${DATA_DIR} ${DATA_DIR}/hud)
+
+	# Semi-final assets
+	set(HUD_PLT assets/extracted/converted/hud.plt)
+	file(COPY ${HUD_PLT} DESTINATION ${DATA_DIR})
+	convertBitmaps(
+		TARGET ${LV2_EXECUTABLE} PALETTE ${HUD_PLT}
+		SOURCES
+			assets/extracted/converted/hud_items.png
+			assets/extracted/converted/hud_portraits.png
+			assets/extracted/converted/hud_border.png
+		INTERLEAVED EHB DESTINATIONS # TODO: remove EHB flag, store 4bpp bitmaps
+			${DATA_DIR}/hud_items.bm
+			${DATA_DIR}/hud_portraits.bm
+			${DATA_DIR}/hud_border.bm
+	)
+	convertBitmaps(
+		TARGET ${LV2_EXECUTABLE} PALETTE ${HUD_PLT} MASK_COLOR "#000000"
+		SOURCES
+			assets/extracted/converted/hud_cursor.png
+		INTERLEAVED EHB DESTINATIONS # TODO: remove EHB flag, store 4bpp bitmaps
+			${DATA_DIR}/hud_cursor.bm
+		MASKS
+			${DATA_DIR}/hud_cursor_mask.bm
+	)
 
 	# Temporary assets
 	file(COPY tmp/aminer.plt DESTINATION ${DATA_DIR})
@@ -78,13 +102,9 @@ if(AMIGA AND BUILD_GAME)
 	convertBitmaps(
 		TARGET ${LV2_EXECUTABLE} PALETTE ${DATA_DIR}/aminer.plt INTERLEAVED
 		SOURCES
-			tmp/hud/erik.png tmp/hud/baelog.png tmp/hud/olaf.png
-			tmp/hud/scorch.png tmp/hud/fang.png tmp/hud/unk.png
 			tmp/tiles.png
 		DESTINATIONS
-		${DATA_DIR}/hud/erik.bm ${DATA_DIR}/hud/baelog.bm ${DATA_DIR}/hud/olaf.bm
-		${DATA_DIR}/hud/scorch.bm ${DATA_DIR}/hud/fang.bm ${DATA_DIR}/hud/unk.bm
-		${DATA_DIR}/tiles.bm
+			${DATA_DIR}/tiles.bm
 	)
 	convertBitmaps(
 		TARGET ${LV2_EXECUTABLE} PALETTE ${DATA_DIR}/vikings.plt EHB INTERLEAVED

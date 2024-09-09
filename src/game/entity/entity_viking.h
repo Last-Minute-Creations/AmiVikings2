@@ -2,7 +2,10 @@
 #define ENTITY_ENTITY_VIKING_H
 
 #include <entity/entity.h>
+#include <item.h>
 #include <steer.h>
+
+#define VIKING_INVENTORY_SIZE 1
 
 typedef enum tVikingState {
 	VIKING_STATE_LOCKED,
@@ -17,11 +20,17 @@ typedef enum tMoveState {
 } tMoveState;
 
 typedef struct tEntityVikingData {
-	tSteer *pSteer;
-	UBYTE ubAnimFrameIdx;
-	tVikingState eState;
-	tMoveState eMoveState;
-	tUwCoordYX sPos;
+	union {
+		tEntityData sEntityData;
+		struct {
+			tSteer *pSteer;
+			UBYTE ubAnimFrameIdx;
+			tVikingState eState;
+			tMoveState eMoveState;
+			tUwCoordYX sPos;
+			tItemKind pInventory[VIKING_INVENTORY_SIZE];
+		};
+	};
 } tEntityVikingData;
 
 _Static_assert(sizeof(tEntityVikingData) <= sizeof(tEntityData));

@@ -8,16 +8,65 @@
 #include <ace/utils/string.h>
 #include <entity/entity_viking.h>
 
+#define HUD_PORTRAIT_WIDTH 32
+#define HUD_PORTRAIT_HEIGHT 24
+#define HUD_TILE_WIDTH 32
+#define HUD_TILE_HEIGHT 6
+#define HUD_TILE_SIZE 8
+#define HUD_ITEM_SIZE 16
+#define PORTRAIT_OFFSET_Y 16
+
+typedef enum tHudIcon {
+	HUD_ICON_ERIK_ACTIVE,
+	HUD_ICON_BAELOG_ACTIVE,
+	HUD_ICON_OLAF_ACTIVE,
+	HUD_ICON_FANG_ACTIVE,
+	HUD_ICON_SCORCH_ACTIVE,
+
+	HUD_ICON_ERIK_INACTIVE,
+	HUD_ICON_BAELOG_INACTIVE,
+	HUD_ICON_OLAF_INACTIVE,
+	HUD_ICON_FANG_INACTIVE,
+	HUD_ICON_SCORCH_INACTIVE,
+
+	HUD_ICON_ERIK_DEAD,
+	HUD_ICON_BAELOG_DEAD,
+	HUD_ICON_OLAF_DEAD,
+	HUD_ICON_FANG_DEAD,
+	HUD_ICON_SCORCH_DEAD,
+
+	HUD_ICON_LOCKED,
+} tHudIcon;
+
 static tVPort *s_pVpHud;
 static tSimpleBufferManager *s_pBufferHud;
-static tBitMap *s_pPortaits[VIKING_ENTITY_MAX] = {0};
-static tBitMap *s_pPortraitLocked;
+static tBitMap *s_pPortraits;
+static tBitMap *s_pItems;
+static tBitMap *s_pCursor;
+static tBitMap *s_pCursorMask;
+
+static const UBYTE s_pPortraitOffsetsX[VIKING_ENTITY_MAX] = {16, 88, 160};
+static const tUbCoordYX s_pItemOffsets[] = {
+	{.ubX = HUD_PORTRAIT_WIDTH, .ubY = 0},
+	{.ubX = HUD_PORTRAIT_WIDTH + HUD_ITEM_SIZE, .ubY = 0},
+	{.ubX = HUD_PORTRAIT_WIDTH, .ubY = HUD_ITEM_SIZE},
+	{.ubX = HUD_PORTRAIT_WIDTH + HUD_ITEM_SIZE, .ubY = HUD_ITEM_SIZE},
+};
+
+// [y][x], using reduced tileset
+// TODO: extract from ROM properly, then remap to reduced tileset
+static const UBYTE s_pHudTilemap[HUD_TILE_HEIGHT][HUD_TILE_WIDTH] = {
+	{0,1,2,3,4,4,4,5,6,7,8,2,3,4,4,4,5,6,7,8,2,3,4,4,4,5,6,7,8,2,9,7,},
+	{10,11,12,13,14,14,14,15,16,17,18,12,13,14,14,14,15,16,17,18,12,13,14,14,14,15,16,17,19,12,20,21,},
+	{22,23,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,27,28,29,21,},
+	{22,23,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,30,31,32,21,},
+	{22,23,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,26,24,24,24,24,25,25,25,25,0,6,33,21,},
+	{34,35,36,36,36,37,25,25,25,25,38,36,36,36,37,25,25,25,25,38,36,36,36,37,25,25,25,25,34,39,40,41,},
+};
 
 static void hudDrawPortrait(UBYTE ubIdx) {
-	static const UBYTE pOffsets[VIKING_ENTITY_MAX] = {16, 88, 168};
-	UBYTE ubOffsY = 0;
+	tHudIcon eIcon = HUD_ICON_ERIK_ACTIVE;
 	tEntity *pEntity = (tEntity*)playerControllerGetVikingByIndex(ubIdx);
-	tBitMap *pPortrait = s_pPortaits[ubIdx];
 	if(pEntity) {
 		tEntityVikingData *pVikingData = (tEntityVikingData *)pEntity->pData;
 		if(pVikingData->eState == VIKING_STATE_ALIVE) {
@@ -26,34 +75,54 @@ static void hudDrawPortrait(UBYTE ubIdx) {
 				(!playerIsActive(PLAYER_2) || ubIdx != playerControllerGetVikingIndexByPlayer(PLAYER_2))
 			) {
 				// Inactive portrait
-				ubOffsY = 24;
+				eIcon += HUD_ICON_ERIK_INACTIVE;
 			}
 		}
 		else if(pVikingData->eState == VIKING_STATE_DEAD) {
-			ubOffsY = 48;
+			eIcon += HUD_ICON_ERIK_DEAD;
 		}
 		else if(pVikingData->eState == VIKING_STATE_LOCKED) {
-			pPortrait = s_pPortraitLocked;
+			eIcon = HUD_ICON_LOCKED;
 		}
 	}
 	else {
-		pPortrait = s_pPortraitLocked;
+		eIcon = HUD_ICON_LOCKED;
 	}
 	blitCopy(
-		pPortrait, 0, ubOffsY, s_pBufferHud->pBack, pOffsets[ubIdx], 16,
-		32, 24, MINTERM_COOKIE
+		s_pPortraits, 0, eIcon * HUD_PORTRAIT_HEIGHT, s_pBufferHud->pBack, s_pPortraitOffsetsX[ubIdx], PORTRAIT_OFFSET_Y,
+		HUD_PORTRAIT_WIDTH, HUD_PORTRAIT_HEIGHT, MINTERM_COOKIE
+	);
+
+	for(UBYTE i = 0; i < 4; ++i) {
+		blitCopy(
+			s_pItems, 0, (ITEM_KIND_W1_EYEBALL + 1 + i) * HUD_ITEM_SIZE,
+			s_pBufferHud->pBack,
+			s_pPortraitOffsetsX[ubIdx] + s_pItemOffsets[i].ubX,
+			PORTRAIT_OFFSET_Y + s_pItemOffsets[i].ubY,
+			HUD_ITEM_SIZE, HUD_ITEM_SIZE, MINTERM_COOKIE
+		);
+	}
+
+	blitCopyMask(
+		s_pCursor, 0, 0, s_pBufferHud->pBack,
+		s_pPortraitOffsetsX[ubIdx] + s_pItemOffsets[0].ubX,
+		PORTRAIT_OFFSET_Y + s_pItemOffsets[0].ubY,
+		HUD_ITEM_SIZE, HUD_ITEM_SIZE / 2, s_pCursorMask->Planes[0]
 	);
 }
 
+// TODO: 4bpp on hud, 6bpp on playfield
 void hudCreate(tView *pView) {
-	UWORD pPaletteHud[32];
-	paletteLoad("data/aminer.plt", pPaletteHud, 32);
-	paletteLoad("data/vikings.plt", pPaletteHud, 24);
+	UWORD pPaletteMain[32];
+	UWORD pPaletteHud[16];
+	paletteLoad("data/aminer.plt", pPaletteMain, 32);
+	paletteLoad("data/vikings.plt", pPaletteMain, 24);
+	paletteLoad("data/hud.plt", pPaletteMain, 16);
 
 	s_pVpHud = vPortCreate(0,
 		TAG_VPORT_BPP, HUD_BPP,
 		TAG_VPORT_HEIGHT, 48,
-		TAG_VPORT_PALETTE_PTR, pPaletteHud,
+		TAG_VPORT_PALETTE_PTR, pPaletteMain,
 		TAG_VPORT_PALETTE_SIZE, 32,
 		TAG_VPORT_VIEW, pView,
 	TAG_END);
@@ -66,47 +135,35 @@ void hudCreate(tView *pView) {
 		TAG_SIMPLEBUFFER_VPORT, s_pVpHud,
 	TAG_END);
 
-	s_pPortraitLocked = bitmapCreateFromFile("data/hud/unk.bm", 0);
+	tBitMap *pBorderTiles = bitmapCreateFromFile("data/hud_border.bm", 0);
+	for(UBYTE ubY = 0; ubY < HUD_TILE_HEIGHT; ++ubY) {
+		for(UBYTE ubX = 0; ubX < HUD_TILE_WIDTH; ++ubX) {
+			UBYTE ubTileIndex = s_pHudTilemap[ubY][ubX];
+			UBYTE ubTileOffsX = (ubTileIndex & 1) * HUD_TILE_SIZE;
+			UBYTE ubTileOffsY = (ubTileIndex / 2) * HUD_TILE_SIZE;
+			blitCopy(
+				pBorderTiles, ubTileOffsX, ubTileOffsY, s_pBufferHud->pBack,
+				ubX * HUD_TILE_SIZE, ubY * HUD_TILE_SIZE,
+				HUD_TILE_SIZE, HUD_TILE_SIZE, MINTERM_COOKIE
+			);
+		}
+	}
+	bitmapDestroy(pBorderTiles);
+
+	s_pPortraits = bitmapCreateFromFile("data/hud_portraits.bm", 0);
+	s_pItems = bitmapCreateFromFile("data/hud_items.bm", 0);
+	s_pCursor = bitmapCreateFromFile("data/hud_cursor.bm", 0);
+	s_pCursorMask = bitmapCreateFromFile("data/hud_cursor_mask.bm", 0);
 }
 
 void hudDestroy(void) {
 	// vp and simplebuffer are destroyed by viewDestroy() so skip it
 
-	bitmapDestroy(s_pPortraitLocked);
+	bitmapDestroy(s_pPortraits);
+	bitmapDestroy(s_pItems);
 }
 
 void hudReset(void) {
-	for(UBYTE i = 0; i < VIKING_ENTITY_MAX; ++i) {
-		if(s_pPortaits[i] != 0) {
-			bitmapDestroy(s_pPortaits[i]);
-			s_pPortaits[i] = 0;
-		}
-		s_pPortaits[i] = 0;
-		tEntity *pEnity = playerControllerGetVikingByIndex(i);
-		if(pEnity) {
-			char szPath[25];
-			char *pEnd = stringCopy("data/hud/", szPath);
-			switch(pEnity->pDef->eKind) {
-				case ENTITY_KIND_ERIK:
-					pEnd = stringCopy("erik", pEnd);
-					break;
-				case ENTITY_KIND_BAELOG:
-					pEnd = stringCopy("baelog", pEnd);
-					break;
-				case ENTITY_KIND_OLAF:
-					pEnd = stringCopy("olaf", pEnd);
-					break;
-				default:
-					logWrite("ERR: Unsupported entity for HUD: %d", pEnity->pDef->eKind);
-			}
-			pEnd = stringCopy(".bm", pEnd);
-			s_pPortaits[i] = bitmapCreateFromFile(szPath, 0);
-		}
-		else {
-			s_pPortaits[i] = s_pPortraitLocked;
-		}
-	}
-
 	for(UBYTE i = 0; i < VIKING_ENTITY_MAX; ++i) {
 		hudDrawPortrait(i);
 	}

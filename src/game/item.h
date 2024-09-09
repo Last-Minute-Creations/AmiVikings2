@@ -1,0 +1,53 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#ifndef _ITEM_H_
+#define _ITEM_H_
+
+#include <ace/types.h>
+
+// TODO: sized enum
+typedef enum tItemKind {
+	ITEM_KIND_NONE,
+	ITEM_KIND_SHIELD,
+	ITEM_KIND_BOMB,
+	ITEM_KIND_NUKE,
+	ITEM_KIND_W1_RED_KEY,
+	ITEM_KIND_W1_SKELETON_KEY,
+	ITEM_KIND_W1_GOLD_KEY,
+	ITEM_KIND_W5_RED_CARD,
+	ITEM_KIND_W5_CARD_UNK_8, // TODO: investigate
+	ITEM_KIND_W5_YELLOW_CARD,
+	ITEM_KIND_W1_EYEBALL,
+	ITEM_KIND_W1_MUSHROOM,
+	ITEM_KIND_W1_WING,
+	ITEM_KIND_W2_EGG,
+	ITEM_KIND_W2_SCROLL,
+	ITEM_KIND_W2_WAND,
+	ITEM_KIND_W3_DIAMOND,
+	ITEM_KIND_W3_TAROT,
+	ITEM_KIND_W3_CRYSTAL_BALL,
+	ITEM_KIND_W4_SKULL,
+	ITEM_KIND_W4_VOODOO,
+	ITEM_KIND_W4_TUSK,
+	ITEM_KIND_W5_PCB,
+	ITEM_KIND_W5_BATTERY,
+	ITEM_KIND_W5_CD,
+	ITEM_KIND_TIME_GEAR,
+	ITEM_KIND_TIME_BATTERY,
+	ITEM_KIND_TIME_CAPACITOR,
+	ITEM_KIND_TORCH,
+	ITEM_KIND_TOMATOR_BOMB,
+	ITEM_KIND_GARLIC,
+	ITEM_KIND_MEATLOAF,
+	ITEM_KIND_BEER,
+	ITEM_KIND_BANANA,
+	ITEM_KIND_BURGER,
+} tItemKind;
+
+UBYTE itemIsDiscardable(tItemKind eItemKind);
+
+#endif // _ITEM_H_
+
+

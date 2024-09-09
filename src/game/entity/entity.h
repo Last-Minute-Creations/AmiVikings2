@@ -8,7 +8,7 @@
 #include <ace/managers/bob.h>
 #include "steer.h"
 
-#define ENTITY_DATA_MAX_SIZE 20
+#define ENTITY_DATA_MAX_SIZE 50
 
 struct tEntity;
 
