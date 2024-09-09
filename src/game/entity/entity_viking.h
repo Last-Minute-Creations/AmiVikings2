@@ -24,11 +24,12 @@ typedef struct tEntityVikingData {
 		tEntityData sEntityData;
 		struct {
 			tSteer *pSteer;
-			UBYTE ubAnimFrameIdx;
+			tItemKind pInventory[VIKING_INVENTORY_SIZE];
 			tVikingState eState;
 			tMoveState eMoveState;
+			UBYTE ubAnimFrameIdx;
+			UBYTE ubSelectedSlot;
 			tUwCoordYX sPos;
-			tItemKind pInventory[VIKING_INVENTORY_SIZE];
 		};
 	};
 } tEntityVikingData;

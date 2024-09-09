@@ -18,6 +18,8 @@ void hudDestroy(void);
 
 void hudReset(void);
 
-tEntity *hudProcessPlayerSteer(tPlayerIdx ePlayerIdx, tSteer *pSteer);
+tEntity *hudProcessPlay(tPlayerIdx ePlayerIdx, tSteer *pSteer);
+
+void hudProcessInventory(tPlayerIdx ePlayerIdx, tSteer *pSteer);
 
 #endif // _HUD_H_

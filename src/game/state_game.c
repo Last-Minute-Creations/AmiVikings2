@@ -229,7 +229,7 @@ void substatePlayLoop(void) {
 			return;
 		}
 
-		tEntity *pActiveEntity = hudProcessPlayerSteer(ubPlayerIdx, pSteer);
+		tEntity *pActiveEntity = hudProcessPlay(ubPlayerIdx, pSteer);
 		if(pActiveEntity) {
 			if(ubPlayerIdx == 0) {
 				cameraCenterAt(
@@ -263,6 +263,8 @@ void substateInventoryLoop(void) {
 			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
 			return;
 		}
+
+		hudProcessInventory(ubPlayerIdx, pSteer);
 	}
 }
 
