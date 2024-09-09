@@ -2,44 +2,26 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "logging.h"
-#include "fs.h"
-#include "rgb.h"
-#include "bitmap.h"
-#include "rle_table.hpp"
 #include <fstream>
 #include <filesystem>
 #include <map>
 #include <optional>
 
+#include "logging.h"
+#include "fs.h"
+#include "rgb.h"
+#include "bitmap.h"
+#include "rle_table.hpp"
+#include "rom_metadata.hpp"
+
+namespace AmiLostVikings2::AssetExtract {
+
 struct tAssetDef {
 	std::string AssetName;
 	std::optional<bool> isCompressed;
-	std::function<void(
-		const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
-	)> onExtract;
 };
 
-void handleExtractTileset(
-	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
-);
-
-void handleExtractFont(
-	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
-);
-
-void handleExtractFrames(
-	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut,
-	const tPalette &Palette, uint32_t ulFirstFrameIdx
-);
-
-auto handleExtractFramePart(
-	const tPalette &Palette, uint32_t ulFristFrame
-) {
-	return [&Palette, ulFristFrame](const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut) {
-		handleExtractFrames(vDataUnprocessed, PathOut, Palette, ulFristFrame);
-	};
-};
+using tAssetBytes = std::vector<std::uint8_t>;
 
 static const tPalette s_PaletteErik({
 	tRgb(0xff00ff), tRgb(0xf8a870),
@@ -96,344 +78,6 @@ static const tPalette s_PaletteOlaf({
 	tRgb(0x001088), tRgb(0x101010)
 });
 
-// This is mapped by address because it allows extracting stuff not included in packfile
-static const std::map<uint32_t, tAssetDef> s_mOffsToFileName = {
-	{0xE4D50, tAssetDef {.AssetName = "logo_gameover_a", .isCompressed = {}, .onExtract = nullptr}},
-	{0xED14B, tAssetDef {.AssetName = "logo_lv2_a", .isCompressed = {}, .onExtract = nullptr}},
-	{0xEDB38, tAssetDef {.AssetName = "logo_lv2_b", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xC5BF1, tAssetDef {.AssetName = "bomb", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xCA8FC, tAssetDef {.AssetName = "enemy_spikes", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCAD87, tAssetDef {.AssetName = "enemy_poof", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCB35F, tAssetDef {.AssetName = "enemy_jelly", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCBA0E, tAssetDef {.AssetName = "enemy_fish", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCC4D1, tAssetDef {.AssetName = "enemy_skeleton", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCCE03, tAssetDef {.AssetName = "enemy_vamp", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCDBE8, tAssetDef {.AssetName = "enemy_knight", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCEEA8, tAssetDef {.AssetName = "enemy_wizard", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCFB5F, tAssetDef {.AssetName = "enemy_pirate", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD0484, tAssetDef {.AssetName = "enemy_corsair", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD1273, tAssetDef {.AssetName = "enemy_montezuma", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD2328, tAssetDef {.AssetName = "enemy_monkey", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD3582, tAssetDef {.AssetName = "enemy_vine", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD3CBD, tAssetDef {.AssetName = "enemy_robot", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD4780, tAssetDef {.AssetName = "enemy_xeno", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE9F06, tAssetDef {.AssetName = "enemy_tomator", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF1420, tAssetDef {.AssetName = "enemy_roboknight", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xE6E1B, tAssetDef {.AssetName = "npc_witch", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE6FFD, tAssetDef {.AssetName = "npc_mage", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE7479, tAssetDef {.AssetName = "npc_gypsy", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE783B, tAssetDef {.AssetName = "npc_shaman", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE7C0E, tAssetDef {.AssetName = "npc_connor", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE822F, tAssetDef {.AssetName = "npc_kid", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE92F5, tAssetDef {.AssetName = "npc_time_machine", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xC6730, tAssetDef {.AssetName = "obstacle_spike_ball_underwater_3", .isCompressed = {}, .onExtract = nullptr}}, // other palette
-	{0xC681D, tAssetDef {.AssetName = "obstacle_spike_up", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC8143, tAssetDef {.AssetName = "obstacle_drill_up", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC9580, tAssetDef {.AssetName = "obstacle_spear_left", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC95E7, tAssetDef {.AssetName = "obstacle_spear_up", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC9A18, tAssetDef {.AssetName = "obstacle_spike_ball_underwater", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC9E5A, tAssetDef {.AssetName = "obstacle_spike_ball_underwater_2", .isCompressed = {}, .onExtract = nullptr}}, // other palette
-	{0xCA5F5, tAssetDef {.AssetName = "obstacle_zap2", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCA6CD, tAssetDef {.AssetName = "obstacle_zap", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD0F53, tAssetDef {.AssetName = "obstacle_flame", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0x506BF, tAssetDef {.AssetName = "font", .isCompressed = {}, .onExtract = handleExtractFont}},
-	{0xC76D1, tAssetDef {.AssetName = "door_bolted", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC87E6, tAssetDef {.AssetName = "door_skull", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC7D97, tAssetDef {.AssetName = "bounce_bone", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xC63EB, tAssetDef {.AssetName = "dunno_1_magic", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC8431, tAssetDef {.AssetName = "dunno_2", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC8C13, tAssetDef {.AssetName = "dunno_3", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC8D32, tAssetDef {.AssetName = "dunno_4_ball", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC92DC, tAssetDef {.AssetName = "dunno_5", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC9C87, tAssetDef {.AssetName = "dunno_6_ball", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCA894, tAssetDef {.AssetName = "dunno_7", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE9906, tAssetDef {.AssetName = "anim_water_w3", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE9B06, tAssetDef {.AssetName = "anim_water_w2", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE9D06, tAssetDef {.AssetName = "anim_water_w1", .isCompressed = {}, .onExtract = nullptr}},
-	{0xEC965, tAssetDef {.AssetName = "anim_water_w4", .isCompressed = {}, .onExtract = nullptr}},
-	{0xECB65, tAssetDef {.AssetName = "anim_water_w5", .isCompressed = {}, .onExtract = nullptr}},
-	{0xECD65, tAssetDef {.AssetName = "anim_burning_rope_w3", .isCompressed = {}, .onExtract = nullptr}},
-	{0xEE368, tAssetDef {.AssetName = "anim_zap_w5", .isCompressed = {}, .onExtract = nullptr}},
-	{0xEEC71, tAssetDef {.AssetName = "dunno_13_tech_tiles", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xC5711, tAssetDef {.AssetName = "items_keys", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC72AD, tAssetDef {.AssetName = "items_specials_w1", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC7F68, tAssetDef {.AssetName = "items_specials_w2", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC8225, tAssetDef {.AssetName = "items_specials_w3", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC8F07, tAssetDef {.AssetName = "items_specials_w4", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC9B06, tAssetDef {.AssetName = "items_torch", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC9F3C, tAssetDef {.AssetName = "item_keycards", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCA410, tAssetDef {.AssetName = "items_specials_w5", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE6CC1, tAssetDef {.AssetName = "item_machine_parts", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE6D9E, tAssetDef {.AssetName = "item_capacitor", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xEFAEA, tAssetDef {.AssetName = "cutscene_screens", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF02D0, tAssetDef {.AssetName = "cutscene_fist", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF212C, tAssetDef {.AssetName = "cutscene_lolipop", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xC55DF, tAssetDef {.AssetName = "fart", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC7B68, tAssetDef {.AssetName = "gas", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC981D, tAssetDef {.AssetName = "tile_block_crush", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC65E6, tAssetDef {.AssetName = "interact_switch", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC75DE, tAssetDef {.AssetName = "platform_grass", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC90FB, tAssetDef {.AssetName = "platform_wood", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCA0F7, tAssetDef {.AssetName = "platform_future", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC6538, tAssetDef {.AssetName = "interact_button", .isCompressed = {}, .onExtract = nullptr}},
-	{0xEE50E, tAssetDef {.AssetName = "bubbles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC7F04, tAssetDef {.AssetName = "tile_elevator_updown1", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC64C1, tAssetDef {.AssetName = "cursor_hammer", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE4D1C, tAssetDef {.AssetName = "cursor_password", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC85CC, tAssetDef {.AssetName = "tile_corner1", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC951F, tAssetDef {.AssetName = "tile_corner2", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF2368, tAssetDef {.AssetName = "tile_corner3", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCA3A2, tAssetDef {.AssetName = "tile_elevator_updown2", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0x509B9, tAssetDef {.AssetName = "hud_border", .isCompressed = {}, .onExtract = nullptr}},
-	{0x50DAD, tAssetDef {.AssetName = "hud_cursor_up", .isCompressed = {}, .onExtract = nullptr}},
-	{0x50DDB, tAssetDef {.AssetName = "hud_portrait_erik_active", .isCompressed = false, .onExtract = nullptr}},
-	{0x50F5B, tAssetDef {.AssetName = "hud_portrait_baelog_active", .isCompressed = false, .onExtract = nullptr}},
-	{0x510DB, tAssetDef {.AssetName = "hud_portrait_olaf_active", .isCompressed = false, .onExtract = nullptr}},
-	{0x5125B, tAssetDef {.AssetName = "hud_portrait_fang_active", .isCompressed = false, .onExtract = nullptr}},
-	{0x513DB, tAssetDef {.AssetName = "hud_portrait_scorch_active", .isCompressed = false, .onExtract = nullptr}},
-	{0x5155B, tAssetDef {.AssetName = "hud_portrait_erik_inactive", .isCompressed = false, .onExtract = nullptr}},
-	{0x516DB, tAssetDef {.AssetName = "hud_portrait_baelog_inactive", .isCompressed = false, .onExtract = nullptr}},
-	{0x5185B, tAssetDef {.AssetName = "hud_portrait_olaf_inactive", .isCompressed = false, .onExtract = nullptr}},
-	{0x519DB, tAssetDef {.AssetName = "hud_portrait_fang_inactive", .isCompressed = false, .onExtract = nullptr}},
-	{0x51B5B, tAssetDef {.AssetName = "hud_portrait_scorch_inactive", .isCompressed = false, .onExtract = nullptr}},
-	{0x51CDB, tAssetDef {.AssetName = "hud_portrait_erik_dead", .isCompressed = false, .onExtract = nullptr}},
-	{0x51E5B, tAssetDef {.AssetName = "hud_portrait_baelog_dead", .isCompressed = false, .onExtract = nullptr}},
-	{0x51FDB, tAssetDef {.AssetName = "hud_portrait_olaf_dead", .isCompressed = false, .onExtract = nullptr}},
-	{0x5215B, tAssetDef {.AssetName = "hud_portrait_scorch_dead", .isCompressed = false, .onExtract = nullptr}},
-	{0x522DB, tAssetDef {.AssetName = "hud_portrait_fang_dead", .isCompressed = false, .onExtract = nullptr}},
-	{0x5245B, tAssetDef {.AssetName = "hud_portrait_unk1", .isCompressed = false, .onExtract = nullptr}},
-	{0x525DB, tAssetDef {.AssetName = "hud_portrait_unk2", .isCompressed = false, .onExtract = nullptr}},
-	{0x5275B, tAssetDef {.AssetName = "hud_hpbar", .isCompressed = false, .onExtract = nullptr}},
-	{0x5281B, tAssetDef {.AssetName = "hud_items", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC56BB, tAssetDef {.AssetName = "hud_cursor_down", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xC5418, tAssetDef {.AssetName = "baelog_hand", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC6038, tAssetDef {.AssetName = "push_block", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC9D76, tAssetDef {.AssetName = "projectile_banana", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC8E04, tAssetDef {.AssetName = "projectile_rock", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCF971, tAssetDef {.AssetName = "projectile_magic", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC5ABE, tAssetDef {.AssetName = "projectile_fireball", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC6167, tAssetDef {.AssetName = "projectile_fireball_from_top", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCA7B3, tAssetDef {.AssetName = "projectile_dunno1", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC8D9B, tAssetDef {.AssetName = "projectile_dunno2", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC626A, tAssetDef {.AssetName = "interact_key_slots_1", .isCompressed = {}, .onExtract = nullptr}},
-	{0xCA001, tAssetDef {.AssetName = "interact_key_slots_2", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC5BA1, tAssetDef {.AssetName = "tile_pipe", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC66A2, tAssetDef {.AssetName = "interact_help_box", .isCompressed = {}, .onExtract = nullptr}},
-	{0xC7190, tAssetDef {.AssetName = "interact_grapple_anchor", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0x8CA18, tAssetDef {.AssetName = "frames_erik", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteErik, 0)}},
-	{0x94A18, tAssetDef {.AssetName = "frames_erik", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteErik, 64)}},
-	{0x98218, tAssetDef {.AssetName = "frames_baelog", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteBaelog, 0)}},
-	{0xA0018, tAssetDef {.AssetName = "frames_baelog", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteBaelog, 63)}},
-	{0xA3018, tAssetDef {.AssetName = "frames_fang", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteFang, 0)}},
-	{0xAA218, tAssetDef {.AssetName = "frames_fang", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteFang, 57)}},
-	{0xAD418, tAssetDef {.AssetName = "frames_scorch", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteScorch, 0)}},
-	{0xB3818, tAssetDef {.AssetName = "frames_scorch", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteScorch, 50)}},
-	{0xB6818, tAssetDef {.AssetName = "frames_olaf", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteOlaf, 0)}},
-	{0xBE618, tAssetDef {.AssetName = "frames_olaf", .isCompressed = false, .onExtract = handleExtractFramePart(s_PaletteOlaf, 63)}},
-	{0xC1C18, tAssetDef {.AssetName = "frames_special", .isCompressed = false, .onExtract = nullptr}},
-
-	{0xD78E4, tAssetDef {.AssetName = "continue_chars", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE55FD, tAssetDef {.AssetName = "continue_valkyrie", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0x599B1, tAssetDef {.AssetName = "tilemap_bg_w1", .isCompressed = {}, .onExtract = nullptr}},
-	{0x640CD, tAssetDef {.AssetName = "tilemap_bg_w2", .isCompressed = {}, .onExtract = nullptr}},
-	{0x6F34D, tAssetDef {.AssetName = "tilemap_bg_w3", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7B2BF, tAssetDef {.AssetName = "tilemap_bg_w4", .isCompressed = {}, .onExtract = nullptr}},
-	{0x8759E, tAssetDef {.AssetName = "tilemap_bg_w5", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0x53AFF, tAssetDef {.AssetName = "tileset_w1", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
-	{0x58864, tAssetDef {.AssetName = "tiledef_w1", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5CDA7, tAssetDef {.AssetName = "tileset_w2", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
-	{0x62FB3, tAssetDef {.AssetName = "tiledef_w2", .isCompressed = {}, .onExtract = nullptr}},
-	{0x6881E, tAssetDef {.AssetName = "tileset_w3", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
-	{0x6DDB2, tAssetDef {.AssetName = "tiledef_w3", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7480D, tAssetDef {.AssetName = "tileset_w4", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
-	{0x7A235, tAssetDef {.AssetName = "tiledef_w4", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7FD84, tAssetDef {.AssetName = "tileset_w5", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
-	{0x85DA0, tAssetDef {.AssetName = "tiledef_w5", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD5940, tAssetDef {.AssetName = "tiledef_continue_bg", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD61CE, tAssetDef {.AssetName = "tileset_continue_bg", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
-
-	{0xE237A, tAssetDef {.AssetName = "level_logo_interplay_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE241E, tAssetDef {.AssetName = "tiledef_logo_interplay", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE2583, tAssetDef {.AssetName = "tileset_logo_interplay", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
-	{0xE33F4, tAssetDef {.AssetName = "level_logo_interplay_initial_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xEE468, tAssetDef {.AssetName = "level_logo_interplay_alt_defs", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xE34B3, tAssetDef {.AssetName = "level_logo_blizzard_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE35AD, tAssetDef {.AssetName = "tiledef_logo_blizzard", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE3863, tAssetDef {.AssetName = "tileset_logo_blizzard", .isCompressed = {}, .onExtract = nullptr /*handleExtractTileset*/}},
-	{0xE4C93, tAssetDef {.AssetName = "level_logo_blizzard_defs", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xDA515, tAssetDef {.AssetName = "level_menu_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xDAAAA, tAssetDef {.AssetName = "tileset_menu", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE222A, tAssetDef {.AssetName = "level_menu_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xE22A9, tAssetDef {.AssetName = "level_menu_defs_alt", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0x59BF3, tAssetDef {.AssetName = "level_w1_a0_strt_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x59ED9, tAssetDef {.AssetName = "level_w1_a1_st3w_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5A39B, tAssetDef {.AssetName = "level_w1_a2_k3ys_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5AB47, tAssetDef {.AssetName = "level_w1_a3_trsh_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5B328, tAssetDef {.AssetName = "level_w1_a4_sw1m_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5BB81, tAssetDef {.AssetName = "level_w1_a5_tw0!_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5C3B7, tAssetDef {.AssetName = "level_w1_a6_t1m3_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x642A7, tAssetDef {.AssetName = "level_w2_a1_k4rn_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x64BFE, tAssetDef {.AssetName = "level_w2_a2_b0mb_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x657F5, tAssetDef {.AssetName = "level_w2_a3_wzrd_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x663E8, tAssetDef {.AssetName = "level_w2_a4_blks_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x67034, tAssetDef {.AssetName = "level_w2_a5_tlpt_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x67BC7, tAssetDef {.AssetName = "level_w2_a6_gysr_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x6F59A, tAssetDef {.AssetName = "level_w3_a3_drnk_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7037B, tAssetDef {.AssetName = "level_w3_a5_0v4l_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x710CF, tAssetDef {.AssetName = "level_w3_a6_t1n3_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x71FCA, tAssetDef {.AssetName = "level_w3_a4_y0vr_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x72CC0, tAssetDef {.AssetName = "level_w3_a2_r3t0_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x73A48, tAssetDef {.AssetName = "level_w3_a1_b3sv_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7B429, tAssetDef {.AssetName = "level_w4_a1_d4rk_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7C0F0, tAssetDef {.AssetName = "level_w4_a2_h4rd_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7CD94, tAssetDef {.AssetName = "level_w4_a3_hrdr_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7D979, tAssetDef {.AssetName = "level_w4_a4_l0st_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7E5B0, tAssetDef {.AssetName = "level_w4_a5_0b0y_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7F0B2, tAssetDef {.AssetName = "level_w4_a6_h0m3_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x87792, tAssetDef {.AssetName = "level_w5_a1_shck_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x88573, tAssetDef {.AssetName = "level_w5_a3_h3ll_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x89461, tAssetDef {.AssetName = "level_w5_a4_4rgh_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x8A29C, tAssetDef {.AssetName = "level_w5_a2_tnnl_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x8B031, tAssetDef {.AssetName = "level_w5_a5_b4dd_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0x8BC79, tAssetDef {.AssetName = "level_w5_a6_d4dy_defs", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xD577C, tAssetDef {.AssetName = "level_continue_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD58DF, tAssetDef {.AssetName = "level_continue_bg", .isCompressed = {}, .onExtract = nullptr}},
-	{0xD77D8, tAssetDef {.AssetName = "level_continue_defs", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xF0E7D, tAssetDef {.AssetName = "level_cutscene_intro_viking_ship_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF0F39, tAssetDef {.AssetName = "level_cutscene_viking_ship_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF105A, tAssetDef {.AssetName = "level_cutscene_intro_prison_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF1164, tAssetDef {.AssetName = "level_cutscene_intro_prison_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF12DC, tAssetDef {.AssetName = "level_cutscene_viking_outro_ship_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF1845, tAssetDef {.AssetName = "level_cutscene_credits_w1_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF1927, tAssetDef {.AssetName = "level_cutscene_credits_w3_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF19D1, tAssetDef {.AssetName = "level_cutscene_credits_w2_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF1B63, tAssetDef {.AssetName = "level_cutscene_credits_w4_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF1DCC, tAssetDef {.AssetName = "level_cutscene_credits_w5_defs", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xEE7C0, tAssetDef {.AssetName = "level_cutscene_spaceship_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0xEE83C, tAssetDef {.AssetName = "level_cutscene_spaceship_bg", .isCompressed = {}, .onExtract = nullptr}},
-	{0xEFA30, tAssetDef {.AssetName = "level_cutscene_spaceship_post_world_defs", .isCompressed = {}, .onExtract = nullptr}},
-	{0xF20A1, tAssetDef {.AssetName = "level_cutscene_spaceship_end_defs", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0x59D39, tAssetDef {.AssetName = "level_w1_a0_strt_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5A08A, tAssetDef {.AssetName = "level_w1_a1_st3w_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5A5D0, tAssetDef {.AssetName = "level_w1_a2_k3ys_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5ADA4, tAssetDef {.AssetName = "level_w1_a3_trsh_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5B58D, tAssetDef {.AssetName = "level_w1_a4_sw1m_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5BE1A, tAssetDef {.AssetName = "level_w1_a5_tw0!_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x5C664, tAssetDef {.AssetName = "level_w1_a6_t1m3_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x644FB, tAssetDef {.AssetName = "level_w2_a1_k4rn_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x64EBF, tAssetDef {.AssetName = "level_w2_a2_b0mb_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x65B17, tAssetDef {.AssetName = "level_w2_a3_wzrd_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x66714, tAssetDef {.AssetName = "level_w2_a4_blks_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x67340, tAssetDef {.AssetName = "level_w2_a5_tlpt_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x67EA0, tAssetDef {.AssetName = "level_w2_a6_gysr_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x6F8E8, tAssetDef {.AssetName = "level_w3_a3_drnk_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x706C4, tAssetDef {.AssetName = "level_w3_a5_0v4l_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x71453, tAssetDef {.AssetName = "level_w3_a6_t1n3_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x72310, tAssetDef {.AssetName = "level_w3_a4_y0vr_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x72FCB, tAssetDef {.AssetName = "level_w3_a2_r3t0_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x73D93, tAssetDef {.AssetName = "level_w3_a1_b3sv_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7B7CB, tAssetDef {.AssetName = "level_w4_a1_d4rk_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7C45C, tAssetDef {.AssetName = "level_w4_a2_h4rd_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7D13A, tAssetDef {.AssetName = "level_w4_a3_hrdr_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7DCF9, tAssetDef {.AssetName = "level_w4_a4_l0st_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7E8F3, tAssetDef {.AssetName = "level_w4_a5_0b0y_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x7F433, tAssetDef {.AssetName = "level_w4_a6_h0m3_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x87B31, tAssetDef {.AssetName = "level_w5_a1_shck_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x8893F, tAssetDef {.AssetName = "level_w5_a3_h3ll_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x8980A, tAssetDef {.AssetName = "level_w5_a4_4rgh_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x8A60C, tAssetDef {.AssetName = "level_w5_a2_tnnl_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x8B391, tAssetDef {.AssetName = "level_w5_a5_b4dd_tiles", .isCompressed = {}, .onExtract = nullptr}},
-	{0x8C00D, tAssetDef {.AssetName = "level_w5_a6_d4dy_tiles", .isCompressed = {}, .onExtract = nullptr}},
-
-	{0xC56EB, tAssetDef {.AssetName = "palette_dunno_02_w1_w2_w3_w4_w5_outroship", .isCompressed = true, .onExtract = nullptr}},
-	{0xC6CDB, tAssetDef {.AssetName = "palette_dunno_01_w1", .isCompressed = true, .onExtract = nullptr}},
-	{0xC75B8, tAssetDef {.AssetName = "palette_dunno_05_w2", .isCompressed = true, .onExtract = nullptr}},
-	{0xCCDDD, tAssetDef {.AssetName = "palette_dunno_03_st3w_k3ys_trsh", .isCompressed = true, .onExtract = nullptr}},
-	{0xCEE82, tAssetDef {.AssetName = "palette_dunno_06_w2", .isCompressed = true, .onExtract = nullptr}},
-	{0xCFAA3, tAssetDef {.AssetName = "palette_dunno_04_k4rn_gysr", .isCompressed = true, .onExtract = nullptr}},
-	{0xCFAC8, tAssetDef {.AssetName = "palette_dunno_08_wzrd", .isCompressed = true, .onExtract = nullptr}},
-	{0xCFAED, tAssetDef {.AssetName = "palette_dunno_07_b0mb", .isCompressed = true, .onExtract = nullptr}},
-	{0xCFB13, tAssetDef {.AssetName = "palette_dunno_09_blks", .isCompressed = true, .onExtract = nullptr}},
-	{0xCFB39, tAssetDef {.AssetName = "palette_dunno_10_tlpt", .isCompressed = true, .onExtract = nullptr}},
-	{0xD045E, tAssetDef {.AssetName = "palette_dunno_11_drnk_0v4l_y0vr_r3t0_b3sv", .isCompressed = true, .onExtract = nullptr}},
-	{0xD0E1F, tAssetDef {.AssetName = "palette_dunno_12_drnk_0v4l_y0vr_r3t0_b3sv", .isCompressed = true, .onExtract = nullptr}},
-	{0xC8BED, tAssetDef {.AssetName = "palette_dunno_13_0v4l_t1n3_y0vr_r3t0_b3sv", .isCompressed = true, .onExtract = nullptr}},
-	{0xD355C, tAssetDef {.AssetName = "palette_dunno_14_w4", .isCompressed = true, .onExtract = nullptr}},
-	{0xC8DDF, tAssetDef {.AssetName = "palette_dunno_15_w4", .isCompressed = true, .onExtract = nullptr}},
-	{0xD2302, tAssetDef {.AssetName = "palette_dunno_16_w4", .isCompressed = true, .onExtract = nullptr}},
-	{0xCA0D1, tAssetDef {.AssetName = "palette_dunno_17_w5", .isCompressed = true, .onExtract = nullptr}},
-	{0xD475A, tAssetDef {.AssetName = "palette_dunno_18_shck_h3ll_4rgh_tnnl_d4dy", .isCompressed = true, .onExtract = nullptr}},
-	{0xD56E6, tAssetDef {.AssetName = "palette_dunno_19_continue", .isCompressed = true, .onExtract = nullptr}},
-	{0xE65B7, tAssetDef {.AssetName = "palette_dunno_20_continue", .isCompressed = true, .onExtract = nullptr}},
-	{0xED125, tAssetDef {.AssetName = "palette_dunno_21_continue", .isCompressed = true, .onExtract = nullptr}},
-	{0xE55D7, tAssetDef {.AssetName = "palette_dunno_22_continue", .isCompressed = true, .onExtract = nullptr}},
-	{0xD78BE, tAssetDef {.AssetName = "palette_dunno_23_continue", .isCompressed = true, .onExtract = nullptr}},
-	{0xF23D3, tAssetDef {.AssetName = "palette_dunno_24_continue", .isCompressed = true, .onExtract = nullptr}},
-	{0xF23F9, tAssetDef {.AssetName = "palette_dunno_25_continue", .isCompressed = true, .onExtract = nullptr}},
-	{0xF241F, tAssetDef {.AssetName = "palette_dunno_26_continue", .isCompressed = true, .onExtract = nullptr}},
-	{0xF2445, tAssetDef {.AssetName = "palette_dunno_27_continue", .isCompressed = true, .onExtract = nullptr}},
-	{0xF246B, tAssetDef {.AssetName = "palette_dunno_28_continue", .isCompressed = true, .onExtract = nullptr}},
-	{0xF13D4, tAssetDef {.AssetName = "palette_dunno_29_introship_prison", .isCompressed = true, .onExtract = nullptr}},
-	{0xF13FA, tAssetDef {.AssetName = "palette_dunno_30_introship_prison", .isCompressed = true, .onExtract = nullptr}},
-	{0xCF94B, tAssetDef {.AssetName = "palette_dunno_31", .isCompressed = true, .onExtract = nullptr}},
-	{0xE2325, tAssetDef {.AssetName = "palette_dunno_32", .isCompressed = true, .onExtract = nullptr}},
-	{0xEE4E8, tAssetDef {.AssetName = "palette_dunno_33", .isCompressed = true, .onExtract = nullptr}},
-	{0xF0DEC, tAssetDef {.AssetName = "palette_dunno_34_cutscene_spaceship", .isCompressed = true, .onExtract = nullptr}},
-	{0xF2342, tAssetDef {.AssetName = "palette_dunno_35", .isCompressed = true, .onExtract = nullptr}},
-	{0xEE70C, tAssetDef {.AssetName = "palette_dunno_36_cutscene_spaceship", .isCompressed = true, .onExtract = nullptr}},
-	{0xF0E12, tAssetDef {.AssetName = "palette_dunno_37_cutscene_spaceship", .isCompressed = true, .onExtract = nullptr}},
-	{0xDA45F, tAssetDef {.AssetName = "palette_dunno_38_menu", .isCompressed = true, .onExtract = nullptr}},
-
-	{0xE234B, tAssetDef {.AssetName = "palette_logo_interplay", .isCompressed = true, .onExtract = nullptr}},
-	{0xE347D, tAssetDef {.AssetName = "palette_logo_blizzard", .isCompressed = true, .onExtract = nullptr}},
-
-	{0x50995, tAssetDef {.AssetName = "palette_hud", .isCompressed = true, .onExtract = nullptr}},
-	{0x8C95C, tAssetDef {.AssetName = "palette_sprite_erik", .isCompressed = true, .onExtract = nullptr}},
-	{0x8C982, tAssetDef {.AssetName = "palette_sprite_fang", .isCompressed = true, .onExtract = nullptr}},
-	{0x8C9A7, tAssetDef {.AssetName = "palette_sprite_scorch", .isCompressed = true, .onExtract = nullptr}},
-	{0x8C9CC, tAssetDef {.AssetName = "palette_sprite_baelog", .isCompressed = true, .onExtract = nullptr}},
-	{0x8C9F2, tAssetDef {.AssetName = "palette_sprite_olaf", .isCompressed = true, .onExtract = nullptr}},
-	{0xCDBC2, tAssetDef {.AssetName = "palette_sprite_w1_enemy", .isCompressed = true, .onExtract = nullptr}},
-	{0xD56C1, tAssetDef {.AssetName = "palette_sprite_w5_xeno", .isCompressed = true, .onExtract = nullptr}},
-	{0xEC93F, tAssetDef {.AssetName = "palette_sprite_tomator", .isCompressed = true, .onExtract = nullptr}},
-	{0xE8B68, tAssetDef {.AssetName = "palette_level_w1_strt_t1m3", .isCompressed = true, .onExtract = nullptr}},
-	{0xE8C63, tAssetDef {.AssetName = "palette_level_w1_st3w_tw0!", .isCompressed = true, .onExtract = nullptr}},
-	{0xE8D55, tAssetDef {.AssetName = "palette_level_w1_k3ys_sw1m", .isCompressed = true, .onExtract = nullptr}},
-	{0xE8E3F, tAssetDef {.AssetName = "palette_level_w1_trsh", .isCompressed = true, .onExtract = nullptr}},
-	{0x5CCA3, tAssetDef {.AssetName = "palette_level_w2_k4rn_gysr", .isCompressed = true, .onExtract = nullptr}},
-	{0xE6991, tAssetDef {.AssetName = "palette_level_w2_b0mb", .isCompressed = true, .onExtract = nullptr}},
-	{0x63FBD, tAssetDef {.AssetName = "palette_level_w2_wzrd", .isCompressed = true, .onExtract = nullptr}},
-	{0xE6AA4, tAssetDef {.AssetName = "palette_level_w2_blks_tlpt", .isCompressed = true, .onExtract = nullptr}},
-	{0x6872B, tAssetDef {.AssetName = "palette_level_w3_introship_outroship", .isCompressed = true, .onExtract = nullptr}},
-	{0x74739, tAssetDef {.AssetName = "palette_level_w4", .isCompressed = true, .onExtract = nullptr}},
-	{0xE91FF, tAssetDef {.AssetName = "palette_level_shck", .isCompressed = true, .onExtract = nullptr}},
-	{0xE8F29, tAssetDef {.AssetName = "palette_level_h3ll", .isCompressed = true, .onExtract = nullptr}},
-	{0xE901B, tAssetDef {.AssetName = "palette_level_4rgh", .isCompressed = true, .onExtract = nullptr}},
-	{0xE910D, tAssetDef {.AssetName = "palette_level_tnnl", .isCompressed = true, .onExtract = nullptr}},
-	{0x7FC94, tAssetDef {.AssetName = "palette_level_b4dd_d4dy_prison", .isCompressed = true, .onExtract = nullptr}},
-};
-
 struct tMergeRule {
 	uint8_t m_ubTileWidth;
 	uint8_t m_ubTileHeight;
@@ -463,28 +107,15 @@ struct tMergeRule {
 	}
 };
 
-struct tRawTile {
-	tChunkyBitmap m_Tile;
-	bool m_isUsed;
-	tRawTile(tChunkyBitmap Tile):
-		m_Tile(Tile),
-		m_isUsed(false)
-	{
-
-	}
-};
-
 //-------------------------------------------------------------- TILE EXTRACTING
 
-void extractGfxTiles(
-	std::vector<uint8_t> vDataRaw, uint8_t ubBpp,
-	const std::vector<tMergeRule> &vMergeRules, const tPalette &Palette,
-	const std::string &Path
+std::vector<std::shared_ptr<tChunkyBitmap>> extractTiles(
+	tAssetBytes vDataRaw, uint8_t ubBpp, const tPalette &Palette
 )
 {
 	// Read every tile
 	uint32_t ulTileCnt = uint32_t(vDataRaw.size()) / (8 * ubBpp); // number of SNES 8x8 tiles
-	std::map<uint32_t, std::shared_ptr<tRawTile>> mTiles;
+	std::vector<std::shared_ptr<tChunkyBitmap>> vTiles;
 	uint32_t ulRawPos = 0;
 	for(uint32_t i = 0; i < ulTileCnt; ++i) {
 		// tPlanarBitmap supports only width being multiple of 16 - fill only 8x8
@@ -501,202 +132,51 @@ void extractGfxTiles(
 				TilePlanar.m_pPlanes[ubPlane][ubRow] = ubRaw << 8;
 			}
 		}
-		auto pTileChunky = std::make_shared<tRawTile>(tChunkyBitmap(TilePlanar, Palette));
-		mTiles.emplace(i, pTileChunky);
-		// TileChunky.toPng(fmt::format("{}/{}.png", szOutDir, i));
+		auto pTileChunky = std::make_shared<tChunkyBitmap>(TilePlanar, Palette);
+		vTiles.push_back(pTileChunky);
 	}
-
-	// Merge tiles accorging to rules
-	for(const auto &Rule: vMergeRules) {
-		tChunkyBitmap Merged(Rule.m_ubTileWidth * 8, Rule.m_ubTileHeight * 8);
-		uint8_t ubMergeListPos = 0;
-		for(uint8_t ubY = 0; ubY < Rule.m_ubTileHeight; ++ubY) {
-			for(uint8_t ubX = 0; ubX < Rule.m_ubTileWidth; ++ubX) {
-				auto TileIdx = Rule.m_vTileIndices[ubMergeListPos];
-				mTiles.at(TileIdx)->m_Tile.copyRect(0, 0, Merged, ubX * 8, ubY * 8, 8, 8);
-				mTiles.at(TileIdx)->m_isUsed = true;
-				++ubMergeListPos;
-			}
-		}
-		Merged.toPng(fmt::format("{}/{}.png", Path, Rule.m_Name));
-	}
-
-	// Dump all unmerged
-	for(const auto &[TileIdx, RawTile]: mTiles) {
-		if(!RawTile->m_isUsed) {
-			RawTile->m_Tile.toPng(fmt::format("{}/unused-{}.png", Path, TileIdx));
-		}
-	}
-}
-
-void extractGfxTiles(
-	std::ifstream &FileRom, uint32_t ulOffsStart, uint32_t ulOffsEnd, uint8_t ubBpp,
-	const std::vector<tMergeRule> &vMergeRules, const tPalette &Palette,
-	const std::string &Path
-)
-{
-	// Read the asset contents
-	FileRom.seekg(ulOffsStart, std::ios::beg);
-	auto Size = ulOffsEnd - ulOffsStart;
-	std::vector<uint8_t> vDataRaw(Size, 0);
-	FileRom.read(reinterpret_cast<char*>(vDataRaw.data()), Size);
-
-	// Pass them for processing
-	extractGfxTiles(vDataRaw, ubBpp, vMergeRules, Palette, Path);
-}
-
-void extractGfxTiles(
-	std::ifstream &FileRom, uint32_t ulOffsStart, uint32_t ulOffsEnd, uint8_t ubBpp,
-	uint8_t ubTileWidth, uint8_t ubTileHeight, const tPalette &Palette,
-	const std::string &DirName
-)
-{
-	uint16_t uwTilesPerFrame = ubTileHeight * ubTileWidth;
-	uint32_t ulTileCnt = ((ulOffsEnd - ulOffsStart) / (8 * ubBpp)) / uwTilesPerFrame;
-	std::vector<tMergeRule> vRules;
-	for(uint32_t i = 0; i < ulTileCnt; ++i) {
-		vRules.push_back(tMergeRule(ubTileWidth, ubTileHeight, fmt::format("{}", i), i * uwTilesPerFrame));
-	}
-	extractGfxTiles(FileRom, ulOffsStart, ulOffsEnd, ubBpp, vRules, Palette, DirName);
+	return vTiles;
 }
 
 //------------------------------------------------------ ASSET PROCESS CALLBACKS
 
-void handleExtractTileset(
-	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
-)
-{
-	const std::uint8_t ubBpp = 4;
-	std::vector<tRgb> vColors;
-	for(std::uint16_t i = 0; i < (1 << ubBpp); ++i) {
-		std::uint8_t ubComponent = 0xFF * i / ((1 << ubBpp) - 1);
-		vColors.push_back(tRgb(ubComponent, ubComponent, ubComponent));
-	}
-	tPalette Palette(vColors);
+// void handleExtractTileset(
+// 	const tAssetBytes &vDataUnprocessed, const std::string &PathOut
+// )
+// {
+// 	const std::uint8_t ubBpp = 4;
+// 	std::vector<tRgb> vColors;
+// 	for(std::uint16_t i = 0; i < (1 << ubBpp); ++i) {
+// 		std::uint8_t ubComponent = 0xFF * i / ((1 << ubBpp) - 1);
+// 		vColors.push_back(tRgb(ubComponent, ubComponent, ubComponent));
+// 	}
+// 	tPalette Palette(vColors);
 
-	std::filesystem::create_directories(PathOut);
-	uint32_t ulFrameByteSize = (8 * 8 * ubBpp) / 8; // w * h * bpp / bitsInByte
-	uint32_t ulFrameCount = uint32_t(vDataUnprocessed.size()) / ulFrameByteSize;
+// 	std::filesystem::create_directories(PathOut);
+// 	uint32_t ulFrameByteSize = (8 * 8 * ubBpp) / 8; // w * h * bpp / bitsInByte
+// 	uint32_t ulFrameCount = uint32_t(vDataUnprocessed.size()) / ulFrameByteSize;
 
-	std::vector<tMergeRule> vMergeRules;
-	for(uint32_t i = 0; i < ulFrameCount; ++i) {
-		vMergeRules.push_back(tMergeRule(
-			1, 1, fmt::format(FMT_STRING("{}"), i), i
-		));
-	}
-	extractGfxTiles(vDataUnprocessed, ubBpp, vMergeRules, Palette, PathOut);
-}
+// 	std::vector<tMergeRule> vMergeRules;
+// 	for(uint32_t i = 0; i < ulFrameCount; ++i) {
+// 		vMergeRules.push_back(tMergeRule(
+// 			1, 1, fmt::format(FMT_STRING("{}"), i), i
+// 		));
+// 	}
+// 	extractTiles(vDataUnprocessed, ubBpp, vMergeRules, Palette, PathOut);
+// }
 
-void handleExtractFont(
-	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut
-) {
-	std::filesystem::create_directories(PathOut);
+// void handleExtractFont(
+// 	const tAssetBytes &vDataUnprocessed, const std::string &PathOut
+// ) {
+// 	std::filesystem::create_directories(PathOut);
 
-	tPalette Palette(std::vector<tRgb> {tRgb(0x000000), tRgb(0x555555), tRgb(0xAAAAAA), tRgb(0xFFFFFF)});
-	std::vector<tMergeRule> vMergeRules;
-	for(uint8_t i = 0; i < 80; ++i) {
-		vMergeRules.push_back(tMergeRule(1, 1, fmt::format(FMT_STRING("{}"), i), i));
-	}
-	extractGfxTiles(vDataUnprocessed, 2, vMergeRules, Palette, PathOut);
-}
-
-void handleExtractFrames(
-	const std::vector<uint8_t> &vDataUnprocessed, const std::string &PathOut,
-	const tPalette &Palette, uint32_t ulFirstFrameIdx
-) {
-	std::filesystem::create_directories(PathOut);
-	uint32_t ulFrameByteSize = (32 * 32 * 4) / 8; // w * h * bpp / bitsInByte
-	uint32_t ulFrameCount = uint32_t(vDataUnprocessed.size()) / ulFrameByteSize;
-
-	std::vector<tMergeRule> vMergeRules;
-	for(uint8_t i = 0; i < ulFrameCount; ++i) {
-		vMergeRules.push_back(tMergeRule(
-			4, 4, fmt::format(FMT_STRING("{}"), ulFirstFrameIdx + i), i * 16
-		));
-	}
-	extractGfxTiles(vDataUnprocessed, 4, vMergeRules, Palette, PathOut);
-}
-
-//----------------------------------------------------------------- EXTRACT: HUD
-static const uint32_t s_ulOffsHudStart = 0x50DDB;
-static const uint32_t s_ulOffsHudEnd = 0x53A1B;
-static const tPalette s_PaletteHud({
-	tRgb(0x00, 0x00, 0x01), tRgb(0x00, 0x00, 0x01),
-	tRgb(0xf0, 0xf0, 0xf0), tRgb(0x50, 0x50, 0x50),
-	tRgb(0x90, 0x90, 0x90), tRgb(0x58, 0x58, 0x58),
-	tRgb(0x30, 0x30, 0x30), tRgb(0x00, 0x00, 0xf8),
-	tRgb(0x00, 0x68, 0x10), tRgb(0x28, 0xc0, 0x28),
-	tRgb(0xf8, 0xf0, 0x00), tRgb(0xf8, 0xa8, 0x40),
-	tRgb(0xd8, 0x80, 0x18), tRgb(0xb8, 0x58, 0x00),
-	tRgb(0x80, 0x00, 0x00), tRgb(0xf8, 0x40, 0x10)
-});
-static const std::vector<tMergeRule> s_vMergeRulesHud = {
-	tMergeRule(4, 3, "erik", 0),
-	tMergeRule(4, 3, "baleog", 12),
-	tMergeRule(4, 3, "olaf", 24),
-	tMergeRule(4, 3, "fang", 36),
-	tMergeRule(4, 3, "scorch", 48),
-	tMergeRule(4, 3, "erik_inactive", 60 + 0),
-	tMergeRule(4, 3, "baleog_inactive", 60 + 12),
-	tMergeRule(4, 3, "olaf_inactive", 60 + 24),
-	tMergeRule(4, 3, "fang_inactive", 60 + 36),
-	tMergeRule(4, 3, "scorch_inactive", 60 + 48),
-	tMergeRule(4, 3, "erik_dead", 120 + 0),
-	tMergeRule(4, 3, "baleog_dead", 120 + 12),
-	tMergeRule(4, 3, "olaf_dead", 120 + 24),
-	tMergeRule(4, 3, "fang_dead", 120 + 36),
-	tMergeRule(4, 3, "scorch_dead", 120 + 48),
-	tMergeRule(4, 3, "unk1", 180),
-	tMergeRule(4, 3, "unk2", 192),
-	tMergeRule(6, 1, "hp_icons", 204),
-	tMergeRule(2, 2, "item_trash", 210),
-	tMergeRule(2, 2, "item_none", 214),
-	tMergeRule(2, 2, "item_shield", 218),
-	tMergeRule(2, 2, "item_bomb", 222),
-	tMergeRule(2, 2, "item_nuke", 226),
-	tMergeRule(2, 2, "item_key_red", 230),
-	tMergeRule(2, 2, "item_key_skull", 234),
-	tMergeRule(2, 2, "item_key_gold", 238),
-	tMergeRule(2, 2, "item_card_red", 242),
-	tMergeRule(2, 2, "item_card_blue", 246),
-	tMergeRule(2, 2, "item_card_yellow", 250),
-	tMergeRule(2, 2, "item_witch_eye", 254),
-	tMergeRule(2, 2, "item_witch_shroom", 258),
-	tMergeRule(2, 2, "item_witch_wing", 262),
-	tMergeRule(2, 2, "item_mage_egg", 266),
-	tMergeRule(2, 2, "item_mage_scroll", 270),
-	tMergeRule(2, 2, "item_mage_staff", 274),
-	tMergeRule(2, 2, "item_unk1_diamond", 278),
-	tMergeRule(2, 2, "item_unk1_card", 282),
-	tMergeRule(2, 2, "item_unk1_ball", 286),
-	tMergeRule(2, 2, "item_unk2_skull", 290),
-	tMergeRule(2, 2, "item_unk2_doll", 294),
-	tMergeRule(2, 2, "item_unk2_horn", 298),
-	tMergeRule(2, 2, "item_unk3_pcb", 302),
-	tMergeRule(2, 2, "item_unk3_battery", 306),
-	tMergeRule(2, 2, "item_unk3_cd", 310),
-	tMergeRule(2, 2, "item_time_gear", 314),
-	tMergeRule(2, 2, "item_time_lamp", 318),
-	tMergeRule(2, 2, "item_time_cap", 322),
-	tMergeRule(2, 2, "item_torch", 326),
-	tMergeRule(2, 2, "item_ball", 330),
-	tMergeRule(2, 2, "item_food_garlic", 334),
-	tMergeRule(2, 2, "item_food_meat", 338),
-	tMergeRule(2, 2, "item_food_beer", 342),
-	tMergeRule(2, 2, "item_food_banana", 346),
-	tMergeRule(2, 2, "item_food_burger", 350),
-};
-
-//--------------------------------------------------------- EXTRACT: LV1 VIKINGS
-
-static const uint32_t s_ulOffsErikOldStart = 0xC4818;
-static const uint32_t s_ulOffsErikOldEnd = 0xC4C18;
-
-static const uint32_t s_ulOffsBaelogOldStart = 0xC4C18;
-static const uint32_t s_ulOffsBaelogOldEnd = 0xC5018;
-
-static const uint32_t s_ulOffsOlafOldStart = 0xC5018;
-static const uint32_t s_ulOffsOlafOldEnd = 0xC5218;
+// 	tPalette Palette(std::vector<tRgb> {tRgb(0x000000), tRgb(0x555555), tRgb(0xAAAAAA), tRgb(0xFFFFFF)});
+// 	std::vector<tMergeRule> vMergeRules;
+// 	for(uint8_t i = 0; i < 80; ++i) {
+// 		vMergeRules.push_back(tMergeRule(1, 1, fmt::format(FMT_STRING("{}"), i), i));
+// 	}
+// 	extractTiles(vDataUnprocessed, 2, vMergeRules, Palette, PathOut);
+// }
 
 //-------------------------------------------------------------- EXTRACT: EFFECT
 static const uint32_t s_ulOffsEffectStart = 0xC2418;
@@ -723,40 +203,48 @@ void printUsage(const std::string &szAppName)
 }
 
 [[nodiscard]]
-static std::vector<uint8_t> extractUncompressedAsset(std::ifstream &FileRom, uint32_t ulOffsStart, uint32_t ulSize) {
-	std::vector<uint8_t> vContents(ulSize, 0x00);
+static tAssetBytes extractAsset(std::ifstream &FileRom, uint32_t ulOffsStart, uint32_t ulSize) {
+	tAssetBytes vContents(ulSize, 0x00);
 	FileRom.seekg(ulOffsStart, std::ios::beg);
 	FileRom.read(reinterpret_cast<char*>(vContents.data()), ulSize);
 	return vContents;
 }
 
 [[nodiscard]]
-static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint32_t ulOffsStart) {
-	uint16_t uwDecompressedSize;
+static tAssetBytes decompressAsset(tAssetBytes vAssetData) {
+	uint16_t uwReadPos = 0;
+
+	auto readU8 = [&uwReadPos, &vAssetData]() -> std::uint16_t {
+		std::uint8_t ubValue = vAssetData[uwReadPos++];
+		return ubValue;
+	};
+
+	auto readU16 = [&uwReadPos, &vAssetData]() -> std::uint16_t {
+		std::uint16_t uwValue = 0;
+		uwValue |= vAssetData[uwReadPos++];
+		uwValue |= vAssetData[uwReadPos++] << 8;
+		return uwValue;
+	};
+
+	uint16_t uwDecompressedSize = readU16();
 	uint8_t ubRepeatBits;
-	FileRom.seekg(ulOffsStart, std::ios::beg);
-	FileRom.read(reinterpret_cast<char*>(&uwDecompressedSize), sizeof(uwDecompressedSize));
 	if(uwDecompressedSize == 0) {
-		throw std::runtime_error(fmt::format(FMT_STRING("Decompressed size = %hu", uwDecompressedSize)));
+		throw std::runtime_error(fmt::format(FMT_STRING("Decompressed size = %hu"), uwDecompressedSize));
 	}
 
 	// Decompression algorithm depends on the first 4096 bytes being set to zero.
 	tRleTable RleTable;
-	std::vector<uint8_t> vDecoded;
+	tAssetBytes vDecoded;
 	vDecoded.reserve(uwDecompressedSize);
 
-	fmt::print(FMT_STRING("Decompressing asset at {:08X}, size: {}\n"), ulOffsStart, uwDecompressedSize);
 	bool wasCopy = false;
 	do {
 		if(wasCopy) {
 			fmt::print("\n");
 		}
 		wasCopy = false;
-		FileRom.read(reinterpret_cast<char*>(&ubRepeatBits), sizeof(ubRepeatBits));
-		fmt::print(
-			FMT_STRING("ROM pos: {:06X}, repeat bits: {:08b}\n"),
-			size_t(FileRom.tellg()) - 1, ubRepeatBits
-		);
+		ubRepeatBits = readU8();
+
 		for(uint8_t ubBit = 0; ubBit < 8 && vDecoded.size() < uwDecompressedSize; ++ubBit) {
 			bool isCopy = ((ubRepeatBits & 1) == 1);
 			ubRepeatBits >>= 1;
@@ -767,7 +255,7 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 				}
 
 				std::uint8_t ubReadValue;
-				FileRom.read(reinterpret_cast<char*>(&ubReadValue), sizeof(ubReadValue));
+				ubReadValue = readU8();
 				vDecoded.push_back(ubReadValue);
 				RleTable.writeValue(ubReadValue);
 
@@ -781,7 +269,7 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 			else {
 				// Decompress stuff
 				uint16_t uwDecompressControl;
-				FileRom.read(reinterpret_cast<char*>(&uwDecompressControl), sizeof(uwDecompressControl));
+				uwDecompressControl = readU16();
 				uint16_t uwRlePos = uwDecompressControl & 0xFFF;
 				uint16_t uwRlePosEnd = ((uwDecompressControl >> 12) + 3 + uwRlePos) & 0x0FFF;
 
@@ -807,12 +295,7 @@ static std::vector<uint8_t> extractCompressedAsset(std::ifstream &FileRom, uint3
 		}
 	} while(vDecoded.size() < uwDecompressedSize);
 
-	uint32_t ulEndPos = uint32_t(FileRom.tellg());
 	vDecoded.resize(uwDecompressedSize);
-	fmt::print(
-		FMT_STRING("Compressed size: {}, decompressed: {}\n"),
-		ulEndPos - ulOffsStart, vDecoded.size()
-	);
 	return vDecoded;
 }
 
@@ -840,10 +323,257 @@ static uint32_t snesAddressToRomOffset(uint32_t ulBaseAddress) {
 struct tAssetTocEntry {
 	uint32_t ulOffs;
 	uint32_t ulSizeInRom;
-	bool isUncompressed;
 };
 
-// asset_extract "c:/gry/snes9x/Roms/Lost Vikings II, The - Norse by Norsewest (Europe) (En,Fr,De).sfc" ../assets/dec
+void readPakFileToc(std::ifstream &FileRom, std::vector<tAssetTocEntry> &vToc)
+{
+	// Read asset TOC
+	auto PackFileAddr = g_PalRomMetadata.m_ulPakAddress;
+	auto PackFileAddrRom = snesAddressToRomOffset(PackFileAddr);
+	FileRom.seekg(PackFileAddrRom, std::ios::beg);
+	uint32_t ulFirstOffs;
+	FileRom.read(reinterpret_cast<char *>(&ulFirstOffs), sizeof(ulFirstOffs));
+	auto AssetCount = ulFirstOffs / sizeof(ulFirstOffs);
+	FileRom.seekg(PackFileAddrRom, std::ios::beg);
+	fmt::print("Found {} assets at 0x{:06X}, rom offs 0x{:06X}:\n", AssetCount, PackFileAddr, PackFileAddrRom);
+
+	for (uint32_t i = 0; i < AssetCount; ++i)
+	{
+		// Read file offset
+		uint32_t ulFileOffset;
+		FileRom.read(reinterpret_cast<char *>(&ulFileOffset), sizeof(ulFileOffset));
+		uint32_t ulOffsEntryNext = uint32_t(FileRom.tellg());
+		auto OffsCpu = ulFileOffset + PackFileAddr;
+		auto OffsRom = snesAddressToRomOffset(OffsCpu);
+
+		if (i > 0)
+		{
+			// Update deduced size on previous entry
+			uint32_t ulSizeInRom = OffsRom - vToc[i - 1].ulOffs;
+			vToc[i - 1].ulSizeInRom = ulSizeInRom;
+		}
+		vToc.push_back({.ulOffs = OffsRom, .ulSizeInRom = 0});
+		FileRom.seekg(ulOffsEntryNext, std::ios::beg);
+	}
+	// Last entry size
+	vToc.back().ulSizeInRom = g_PalRomMetadata.m_uwLastPakFileSize;
+}
+
+std::string getAssetPath(const std::string &BasePath, std::uint16_t uwAssetIndex) {
+	auto szAssetName = g_PalRomMetadata.m_PakFileEntries[uwAssetIndex];
+	auto OutPath = fmt::format(
+		FMT_STRING("{}/{:03d}_{}.dat"),
+		BasePath, uwAssetIndex,
+		(szAssetName == nullptr) ? "unk" : szAssetName
+	);
+	return OutPath;
+}
+
+std::vector<tAssetBytes> extractRawAssets(
+	std::ifstream &FileRom,
+	const std::string &OutDirPath,
+	bool isDump = false
+) {
+
+	std::vector<tAssetTocEntry> vRomPakToc;
+	readPakFileToc(FileRom, vRomPakToc);
+
+	std::vector<tAssetBytes> vAssets;
+	vAssets.reserve(vRomPakToc.size());
+	for(std::uint16_t i = 0; i < vRomPakToc.size(); ++i) {
+		auto &TocEntry = vRomPakToc[i];
+
+		tAssetBytes vAssetContents = extractAsset(
+			FileRom,
+			TocEntry.ulOffs,
+			TocEntry.ulSizeInRom
+		);
+		vAssets.push_back(vAssetContents);
+
+		if(isDump && vAssetContents.size() != 0) {
+			std::string OutPath = getAssetPath(OutDirPath, i);
+			fmt::print(FMT_STRING("Writing asset {}...\n"), OutPath);
+
+			std::ofstream FileOut;
+			FileOut.open(OutPath,	std::ios::binary);
+			FileOut.write(reinterpret_cast<char*>(vAssetContents.data()), vAssetContents.size());
+			FileOut.close();
+		}
+	}
+
+	return vAssets;
+}
+
+void writeTiles(
+	const std::vector<std::shared_ptr<tChunkyBitmap>> &vTiles, std::string OutPath,
+	std::uint8_t uwFirstOutTileIndex
+) {
+	nFs::dirCreate(OutPath);
+
+	for(auto i = 0; i < vTiles.size(); ++i) {
+		vTiles[i]->toPng(fmt::format("{}/{}.png", OutPath, uwFirstOutTileIndex + i));
+	}
+}
+
+void writeTilesToPng(
+	const std::vector<std::shared_ptr<tChunkyBitmap>> &vTiles, std::string OutPath
+) {
+	std::uint16_t uwTotalHeight = 0;
+	for(auto i = 0; i < vTiles.size(); ++i) {
+		uwTotalHeight += vTiles[i]->m_uwHeight;
+	}
+
+	tChunkyBitmap Merged(vTiles[0]->m_uwWidth, uwTotalHeight);
+	std::uint16_t uwDstY = 0;
+	for(auto i = 0; i < vTiles.size(); ++i) {
+		vTiles[i]->copyRect(0, 0, Merged, 0, uwDstY, vTiles[i]->m_uwWidth, vTiles[i]->m_uwHeight);
+		uwDstY += vTiles[i]->m_uwHeight;
+	}
+
+	Merged.toPng(OutPath);
+}
+
+std::vector<std::shared_ptr<tChunkyBitmap>> composeTiles(
+	const std::vector<std::shared_ptr<tChunkyBitmap>> &vTiles,
+	std::uint8_t ubTileWidth, std::uint8_t ubTileHeight
+) {
+	auto MiniTilesPerTile = ubTileWidth * ubTileHeight;
+	auto TileCount = vTiles.size() / (MiniTilesPerTile);
+
+	std::vector<std::shared_ptr<tChunkyBitmap>> vMerged;
+	vMerged.reserve(TileCount);
+
+	for(auto i = 0; i < TileCount; ++i) {
+		auto Merged = std::make_shared<tChunkyBitmap>(ubTileWidth * 8, ubTileHeight * 8);
+		vMerged.push_back(Merged);
+
+		uint8_t ubMergeListPos = 0;
+		auto MiniTileIndex = i * MiniTilesPerTile;
+		for(uint8_t ubY = 0; ubY < ubTileHeight; ++ubY) {
+			for(uint8_t ubX = 0; ubX < ubTileWidth; ++ubX) {
+				vTiles.at(MiniTileIndex)->copyRect(0, 0, *Merged, ubX * 8, ubY * 8, 8, 8);
+				++MiniTileIndex;
+				++ubMergeListPos;
+			}
+		}
+	}
+
+	return vMerged;
+}
+
+std::vector<std::shared_ptr<tChunkyBitmap>> remapTiles(
+	const std::vector<std::shared_ptr<tChunkyBitmap>> &vTiles,
+	std::span<const std::uint16_t> RemapIndices
+) {
+	std::vector<std::shared_ptr<tChunkyBitmap>> vRemapped;
+	vRemapped.reserve(RemapIndices.size());
+	for(auto index: RemapIndices) {
+		vRemapped.push_back(vTiles[index]);
+	}
+
+	return vRemapped;
+}
+
+tPalette loadPalette(const tAssetBytes &AssetBytes) {
+	std::uint16_t uwReadPos = 0;
+	auto readU16 = [&uwReadPos, &AssetBytes]() -> std::uint16_t {
+		std::uint16_t uwValue = 0;
+		uwValue |= AssetBytes[uwReadPos++];
+		uwValue |= AssetBytes[uwReadPos++] << 8;
+		return uwValue;
+	};
+
+	tPalette Palette;
+	auto ColorCount = AssetBytes.size() / 2;
+	for(auto i = 0; i < ColorCount; ++i) {
+		std::uint16_t uwSnesColor = readU16();
+    std::uint8_t ubR = (((uwSnesColor >> 0) & 0b11111) * 255 / 0b11111);
+    std::uint8_t ubG = (((uwSnesColor >> 5) & 0b11111) * 255 / 0b11111);
+    std::uint8_t ubB = (((uwSnesColor >> 10) & 0b11111) * 255 / 0b11111);
+		Palette.m_vColors.push_back(tRgb(ubR, ubG, ubB));
+	}
+
+	return Palette;
+}
+
+tPalette amigafyPalette(const tPalette &PaletteIn) {
+	tPalette PaletteOut;
+	for(const auto &Color: PaletteIn.m_vColors) {
+		std::uint8_t ubR = ((Color.ubR + 8) / 17) * 17;
+		std::uint8_t ubG = ((Color.ubG + 8) / 17) * 17;
+		std::uint8_t ubB = ((Color.ubB + 8) / 17) * 17;
+		PaletteOut.m_vColors.push_back(tRgb(ubR, ubG, ubB));
+	}
+	return PaletteOut;
+}
+
+void convertAssets(
+	const std::vector<tAssetBytes> &vRawAssets,
+	const std::string &ConvertedAssetPath
+) {
+	auto PaletteHud = amigafyPalette(loadPalette(decompressAsset(
+		vRawAssets[g_PalRomMetadata.getAssetIndexByName("palette_hud")]
+	)));
+
+	writeTilesToPng(composeTiles(
+		extractTiles(vRawAssets[g_PalRomMetadata.getAssetIndexByName("hud_items")], 4, PaletteHud),
+		2, 2
+	), ConvertedAssetPath +"/hud_items.png");
+
+	static const auto Portraits = std::to_array({
+		"hud_portrait_erik_active",
+		"hud_portrait_baelog_active",
+		"hud_portrait_olaf_active",
+		"hud_portrait_fang_active",
+		"hud_portrait_scorch_active",
+		"hud_portrait_erik_inactive",
+		"hud_portrait_baelog_inactive",
+		"hud_portrait_olaf_inactive",
+		"hud_portrait_fang_inactive",
+		"hud_portrait_scorch_inactive",
+		"hud_portrait_erik_dead",
+		"hud_portrait_baelog_dead",
+		"hud_portrait_olaf_dead",
+		"hud_portrait_scorch_dead",
+		"hud_portrait_fang_dead",
+		"hud_portrait_unk1",
+	});
+
+	std::vector<std::shared_ptr<tChunkyBitmap>> vPortraits;
+	for(std::uint8_t i = 0; i < Portraits.size(); ++i) {
+		auto Portrait = composeTiles(
+			extractTiles(vRawAssets[g_PalRomMetadata.getAssetIndexByName(Portraits[i])], 4, PaletteHud),
+			4, 3
+		).front();
+		vPortraits.push_back(Portrait);
+	}
+	writeTilesToPng(vPortraits, ConvertedAssetPath + "/hud_portraits.png");
+
+	static const auto HudBorderRemap = std::to_array<std::uint16_t>({
+		129, 130, 133, 134, 137, 139, 141, 142, 145, 148,
+		131, 132, 135, 136, 138, 140, 143, 144, 146, 147,
+		149, 150, 0, 1, 2, 9, 10, 28, 29, 30,
+		60, 61, 62, 94, 96, 97, 98, 101, 106, 125,
+		126, 127,
+	});
+
+	composeTiles(remapTiles(extractTiles(
+		decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("hud_border")]),
+		4, PaletteHud
+	), HudBorderRemap), 2, HudBorderRemap.size() / 2).front()->toPng(ConvertedAssetPath +"/hud_border.png");
+
+	composeTiles(extractTiles(
+		decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("hud_cursor_up")]),
+		4, PaletteHud
+	), 2, 1).front()->toPng(ConvertedAssetPath + "/hud_cursor.png");
+
+	PaletteHud.toPlt(ConvertedAssetPath + "/hud.plt");
+}
+
+}
+
+using namespace AmiLostVikings2::AssetExtract;
+
 int main(int lArgCount, const char *pArgs[])
 {
 	const uint8_t ubMandatoryArgCnt = 2;
@@ -853,166 +583,28 @@ int main(int lArgCount, const char *pArgs[])
 		return EXIT_FAILURE;
 	}
 
-	std::string szInput = pArgs[1], szOutDir = pArgs[2];
-
-	// TODO: create dir
+	std::string RomPath = pArgs[1], OutDirPath = pArgs[2];
+	std::string RawAssetPath = OutDirPath + "/raw";
+	std::string ConvertedAssetPath = OutDirPath + "/converted";
+	nFs::dirCreate(OutDirPath);
+	nFs::dirCreate(RawAssetPath);
+	nFs::dirCreate(ConvertedAssetPath);
 
 	std::ifstream FileRom;
-	FileRom.open(szInput.c_str(), std::ifstream::binary);
+	FileRom.open(RomPath.c_str(), std::ifstream::binary);
 	if(!FileRom.good()) {
-		nLog::error("Couldn't open ROM file at '{}'", szInput);
+		nLog::error("Couldn't open ROM file at '{}'", RomPath);
 		return EXIT_FAILURE;
 	}
 
 	// TODO: verify ROM size/checksum/header
 
-	// extractGfxTiles(FileRom, s_ulOffsHudStart, s_ulOffsHudEnd, s_vMergeRulesHud, s_PaletteHud, fmt::format("{}/{}", szOutDir, "hud"));
-	// extractGfxTiles(FileRom, s_ulOffsEffectStart, s_ulOffsEffectEnd, 4, 4, s_PaletteEffect, fmt::format("{}/{}", szOutDir, "effect"));
-	// extractGfxTiles(FileRom, s_ulOffsErikOldStart, s_ulOffsErikOldEnd, 4, 4, s_PaletteErik, fmt::format("{}/{}", szOutDir, "erik_old"));
-	// extractGfxTiles(FileRom, s_ulOffsBaelogOldStart, s_ulOffsBaelogOldEnd, 4, 4, s_PaletteBaelog, fmt::format("{}/{}", szOutDir, "baelog_old"));
-	// extractGfxTiles(FileRom, s_ulOffsOlafOldStart, s_ulOffsOlafOldEnd, 4, 4, s_PaletteOlaf, fmt::format("{}/{}", szOutDir, "olaf_old"));
-
-	// Read asset TOC
-	auto PackFileAddr = 0x8A8000;
-	auto PackFileAddrRom = snesAddressToRomOffset(PackFileAddr);
-	FileRom.seekg(PackFileAddrRom, std::ios::beg);
-	uint32_t ulFirstOffs;
-	FileRom.read(reinterpret_cast<char*>(&ulFirstOffs), sizeof(ulFirstOffs));
-	auto AssetCount = ulFirstOffs / sizeof(ulFirstOffs);
-	FileRom.seekg(PackFileAddrRom, std::ios::beg);
-	fmt::print("Found {} assets at 0x{:06X}, rom offs 0x{:06X}:\n", AssetCount, PackFileAddr, PackFileAddrRom);
-
-	std::vector<tAssetTocEntry> vAssetToc;
-	for(uint32_t i = 0; i < 0x155; ++i) {
-		// Read offset
-		uint32_t ulOffs;
-		FileRom.read(reinterpret_cast<char*>(&ulOffs), sizeof(ulOffs));
-		uint32_t ulOffsEntryNext = uint32_t(FileRom.tellg());
-		auto OffsCpu = ulOffs + PackFileAddr;
-		auto OffsRom = snesAddressToRomOffset(OffsCpu);
-
-		if(i > 0) {
-			// Update deduced size on previous entry
-			uint32_t ulSizeInRom = OffsRom - vAssetToc[i - 1].ulOffs;
-			fmt::print(FMT_STRING(", size: {:5d}"), ulSizeInRom);
-			vAssetToc[i - 1].ulSizeInRom = ulSizeInRom;
-
-			bool isCompressionKnown = false;
-			auto AssetPair = s_mOffsToFileName.find(vAssetToc[i - 1].ulOffs);
-			if(AssetPair != s_mOffsToFileName.end()) {
-				if(AssetPair->second.isCompressed.has_value()) {
-					isCompressionKnown = true;
-					if(AssetPair->second.isCompressed.value()) {
-						fmt::print(FMT_STRING(", C "));
-					}
-					else {
-						fmt::print(FMT_STRING(", U "));
-					}
-				}
-			}
-
-			if(!isCompressionKnown) {
-				// Check if decompression would make any sense
-				uint16_t uwSizeDecompressed;
-				FileRom.seekg(vAssetToc[i - 1].ulOffs, std::ios::beg);
-				FileRom.read(
-					reinterpret_cast<char*>(&uwSizeDecompressed),
-					sizeof(uwSizeDecompressed)
-				);
-				if(uwSizeDecompressed < ulSizeInRom) {
-					fmt::print(FMT_STRING(", U?"));
-					vAssetToc[i - 1].isUncompressed = false;
-				}
-				else {
-					fmt::print(FMT_STRING(", C?"));
-				}
-			}
-
-			if(s_mOffsToFileName.contains(vAssetToc[i - 1].ulOffs)) {
-				fmt::print(FMT_STRING(" -- {}"), s_mOffsToFileName.at(vAssetToc[i - 1].ulOffs).AssetName);
-			}
-			fmt::print("\n");
-		}
-		vAssetToc.push_back({
-			.ulOffs = OffsRom, .ulSizeInRom = 0,
-			.isUncompressed = false
-		});
-
-		FileRom.seekg(ulOffsEntryNext, std::ios::beg);
-
-		fmt::print(FMT_STRING("idx: {:3d} ({:04X}), raw: 0x{:06X}, cpu: 0x{:08X}, rom: 0x{:08X}"), i, i, ulOffs, OffsCpu, OffsRom);
-	}
-	fmt::print("\n");
-
-	// Extract assets
 	try {
-		for(std::uint16_t i = 0; i < vAssetToc.size(); ++i) {
-			auto &TocEntry = vAssetToc[i];
-			auto AssetPair = s_mOffsToFileName.find(TocEntry.ulOffs);
-			if(AssetPair != s_mOffsToFileName.end()) {
-				if(AssetPair->second.isCompressed.has_value()) {
-					TocEntry.isUncompressed = !AssetPair->second.isCompressed.value();
-				}
-			}
-
-			decltype(tAssetDef::onExtract) onExtract = nullptr;
-			std::string szAssetName = fmt::format(FMT_STRING("compressed_{:08X}"), TocEntry.ulOffs);
-			std::vector<uint8_t> vAssetContents;
-			if(!TocEntry.isUncompressed) {
-				try {
-					vAssetContents = extractCompressedAsset(FileRom, TocEntry.ulOffs);
-				}
-				catch(const std::exception &Exc) {
-					fmt::print("ERR: Exception while decoding asset at {:08X}: '{}'. Assuming no compression.\n", TocEntry.ulOffs, Exc.what());
-					TocEntry.isUncompressed = true;
-					szAssetName = fmt::format(FMT_STRING("faildec_{:08X}"), TocEntry.ulOffs);
-				}
-			}
-			else {
-				szAssetName = fmt::format(FMT_STRING("uncompressed_{:08X}"), TocEntry.ulOffs);
-			}
-			if(TocEntry.isUncompressed) {
-					if(TocEntry.ulSizeInRom) {
-						vAssetContents = extractUncompressedAsset(FileRom, TocEntry.ulOffs, TocEntry.ulSizeInRom);
-					}
-			}
-
-			if(vAssetContents.size() != 0) {
-				std::ofstream FileOut;
-				std::string szOutPath;
-				std::string szExtension = "dat";
-				bool isWrittenByCallback = false;
-				if(
-					vAssetContents[0] == 0x00 && vAssetContents[1] == 0x01 &&
-					vAssetContents[2] == 0xF8 && vAssetContents[3] == 0x00
-				) {
-					szExtension = "1F8";
-				}
-				else if(
-					vAssetContents[0] == 0x20 && vAssetContents[1] == 0x00 &&
-					vAssetContents[2] == 0xFF
-				) {
-					szExtension = "2000FF";
-				}
-				auto AssetPair = s_mOffsToFileName.find(TocEntry.ulOffs);
-				if(AssetPair != s_mOffsToFileName.end()) {
-					szAssetName = AssetPair->second.AssetName;
-					if(AssetPair->second.onExtract != nullptr) {
-						AssetPair->second.onExtract(vAssetContents, fmt::format(FMT_STRING("{}/{:03d}_{}"), szOutDir, i, szAssetName));
-						isWrittenByCallback = true;
-					}
-				}
-				if(!isWrittenByCallback) {
-					szOutPath = fmt::format(FMT_STRING("{}/{:03d}_{}.{}"), szOutDir, i, szAssetName, szExtension);
-					FileOut.open(szOutPath,	std::ios::binary);
-					FileOut.write(reinterpret_cast<char*>(vAssetContents.data()), vAssetContents.size());
-					FileOut.close();
-				}
-			}
-		}
+		auto Assets = extractRawAssets(FileRom, RawAssetPath);
+		convertAssets(Assets, ConvertedAssetPath);
 	}
 	catch(const std::exception &Exc) {
-		fmt::print("Super failure: '{}'!\n", Exc.what());
+		fmt::print("Unhandled exception: '{}'!\n", Exc.what());
 		return EXIT_FAILURE;
 	}
 
