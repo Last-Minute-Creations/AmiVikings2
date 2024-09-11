@@ -68,10 +68,10 @@ static const UBYTE s_pHudTilemap[HUD_TILE_HEIGHT][HUD_TILE_WIDTH] = {
 static void hudDrawItemSlot(UBYTE ubVikingIdx, UBYTE ubSlotIdx, UBYTE isSelected) {
 	const tUbCoordYX *pItemSlotOffs = &s_pItemOffsets[ubSlotIdx];
 
-	tEntity *pEntity = (tEntity*)playerControllerGetVikingByIndex(ubVikingIdx);
+	const tEntity *pEntity = (tEntity*)playerControllerGetVikingByIndex(ubVikingIdx);
 	tItemKind eItem;
 	if(pEntity) {
-		tEntityVikingData *pVikingData = (tEntityVikingData *)pEntity->pData;
+		const tEntityVikingData *pVikingData = (tEntityVikingData *)pEntity->pData;
 		eItem = pVikingData->pInventory[ubSlotIdx];
 	}
 	else {
@@ -101,7 +101,7 @@ static void hudDrawPortrait(UBYTE ubIdx) {
 	tEntity *pEntity = (tEntity*)playerControllerGetVikingByIndex(ubIdx);
 	UBYTE ubSelectedSlot = HUD_SELECTED_SLOT_NONE;
 	if(pEntity) {
-		tEntityVikingData *pVikingData = (tEntityVikingData *)pEntity->pData;
+		const tEntityVikingData *pVikingData = (tEntityVikingData *)pEntity->pData;
 		if(pVikingData->eState == VIKING_STATE_ALIVE) {
 			if(
 				pEntity != playerControllerGetVikingByPlayer(PLAYER_1) &&
@@ -188,16 +188,12 @@ void hudReset(void) {
 	// tEntity *pEntity1 = (tEntity*)playerControllerGetVikingByIndex(0);
 	// tEntityVikingData *pVikingData1 = (tEntityVikingData *)pEntity1->pData;
 	// pVikingData1->pInventory[0] = ITEM_KIND_BANANA;
-	// pVikingData1->pInventory[1] = ITEM_KIND_BEER;
-	// pVikingData1->pInventory[2] = ITEM_KIND_BURGER;
 	// pVikingData1->pInventory[3] = ITEM_KIND_MEATLOAF;
 
 	// tEntity *pEntity2 = (tEntity*)playerControllerGetVikingByIndex(1);
 	// tEntityVikingData *pVikingData2 = (tEntityVikingData *)pEntity2->pData;
 	// pVikingData2->pInventory[0] = ITEM_KIND_BOMB;
 	// pVikingData2->pInventory[1] = ITEM_KIND_GARLIC;
-	// pVikingData2->pInventory[2] = ITEM_KIND_SHIELD;
-	// pVikingData2->pInventory[3] = ITEM_KIND_W1_MUSHROOM;
 
 	for(UBYTE i = 0; i < VIKING_ENTITY_MAX; ++i) {
 		hudDrawPortrait(i);
@@ -255,22 +251,22 @@ void hudProcessInventory(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 	else {
 		UBYTE ubPrevActiveSlot = pVikingData->ubSelectedSlot;
 		if(steerUse(pSteer, STEER_ACTION_RIGHT)) {
-			if((pVikingData->ubSelectedSlot & 1) == 0) {
+			if(!(pVikingData->ubSelectedSlot & 1)) {
 				++pVikingData->ubSelectedSlot;
 			}
 		}
 		else if(steerUse(pSteer, STEER_ACTION_LEFT)) {
-			if((pVikingData->ubSelectedSlot & 1) == 1) {
+			if((pVikingData->ubSelectedSlot & 1)) {
 				--pVikingData->ubSelectedSlot;
 			}
 		}
 		else if(steerUse(pSteer, STEER_ACTION_DOWN)) {
-			if((pVikingData->ubSelectedSlot & 2) == 0) {
+			if(!(pVikingData->ubSelectedSlot & 2)) {
 				pVikingData->ubSelectedSlot += 2;
 			}
 		}
 		else if(steerUse(pSteer, STEER_ACTION_UP)) {
-			if((pVikingData->ubSelectedSlot & 2) == 1) {
+			if((pVikingData->ubSelectedSlot & 2)) {
 				pVikingData->ubSelectedSlot -= 2;
 			}
 		}
@@ -278,7 +274,7 @@ void hudProcessInventory(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 		if(ubPrevActiveSlot != pVikingData->ubSelectedSlot) {
 			UBYTE ubVikingIndex = playerControllerGetVikingIndexByPlayer(ePlayerIdx);
 			hudDrawItemSlot(ubVikingIndex, ubPrevActiveSlot, 0);
-			hudDrawItemSlot(ubVikingIndex, ubPrevActiveSlot, 1);
+			hudDrawItemSlot(ubVikingIndex, pVikingData->ubSelectedSlot, 1);
 		}
 	}
 }

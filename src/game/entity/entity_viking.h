@@ -5,7 +5,7 @@
 #include <item.h>
 #include <steer.h>
 
-#define VIKING_INVENTORY_SIZE 1
+#define VIKING_INVENTORY_SIZE 4
 
 typedef enum tVikingState {
 	VIKING_STATE_LOCKED,
