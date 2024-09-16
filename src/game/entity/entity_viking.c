@@ -238,3 +238,18 @@ void entityVikingProcess(tEntity *pEntity) {
 void entityVikingDestroy(tEntity *pEntity) {
 
 }
+
+tVikingState entityVikingGetState(tEntity *pEntityViking) {
+	const tEntityVikingData *pVikingData = (tEntityVikingData *)pEntityViking->pData;
+	return pVikingData->eState;
+}
+
+BYTE entityVikingGetFreeItemSlot(tEntity *pEntityViking) {
+	const tEntityVikingData *pVikingData = (tEntityVikingData *)pEntityViking->pData;
+	for(UBYTE i = 0; i < 4; ++i) {
+		if(pVikingData->pInventory[i] == ITEM_KIND_NONE) {
+			return i;
+		}
+	}
+	return -1;
+}

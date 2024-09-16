@@ -36,6 +36,7 @@ static tState s_sGameSubstatePlay;
 static tState s_sGameSubstateInventory;
 static tState s_sGameSubstatePause;
 tStateManager *s_pGameSubstateMachine;
+static tPlayerIdx s_eControllingPlayer;
 
 // [y][x]
 static UBYTE s_pTilesStrt[][32] = {
@@ -166,6 +167,7 @@ void stateGameCreate(void) {
 	}
 
 	// Init entities
+	s_eControllingPlayer = PLAYER_1;
 	entityManagerReset();
 	tEntity *pPlayerEntity1 = entityManagerSpawnEntity(ENTITY_KIND_ERIK, 32, 32, 16, 16);
 	tEntity *pPlayerEntity2 = entityManagerSpawnEntity(ENTITY_KIND_ERIK, 64, 32, 16, 16);
@@ -216,22 +218,24 @@ void stateGameDestroy(void) {
 #pragma region substates
 
 void substatePlayLoop(void) {
-	for(UBYTE ubPlayerIdx = 0; ubPlayerIdx < 2; ++ubPlayerIdx) {
-		tSteer *pSteer = playerControllerGetSteer(ubPlayerIdx);
+	for(tPlayerIdx ePlayerIdx = 0; ePlayerIdx < PLAYER_COUNT; ++ePlayerIdx) {
+		tSteer *pSteer = playerControllerGetSteer(ePlayerIdx);
 		steerUpdate(pSteer);
 
 		if(steerUse(pSteer, STEER_ACTION_INVENTORY)) {
+			s_eControllingPlayer = ePlayerIdx;
 			stateChange(s_pGameSubstateMachine, &s_sGameSubstateInventory);
 			return;
 		}
 		if(steerUse(pSteer, STEER_ACTION_PAUSE)) {
+			s_eControllingPlayer = ePlayerIdx;
 			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePause);
 			return;
 		}
 
-		tEntity *pActiveEntity = hudProcessPlay(ubPlayerIdx, pSteer);
+		tEntity *pActiveEntity = hudProcessPlay(ePlayerIdx, pSteer);
 		if(pActiveEntity) {
-			if(ubPlayerIdx == 0) {
+			if(ePlayerIdx == PLAYER_1) {
 				cameraCenterAt(
 					s_pBufferMain->pCamera,
 					pActiveEntity->sBob.sPos.uwX, pActiveEntity->sBob.sPos.uwY
@@ -255,28 +259,24 @@ void substatePlayLoop(void) {
 }
 
 void substateInventoryLoop(void) {
-	for(UBYTE ubPlayerIdx = 0; ubPlayerIdx < 2; ++ubPlayerIdx) {
-		tSteer *pSteer = playerControllerGetSteer(ubPlayerIdx);
-		steerUpdate(pSteer);
+	tSteer *pSteer = playerControllerGetSteer(s_eControllingPlayer);
+	steerUpdate(pSteer);
 
-		if(steerUse(pSteer, STEER_ACTION_INVENTORY)) {
-			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
-			return;
-		}
-
-		hudProcessInventory(ubPlayerIdx, pSteer);
+	if(steerUse(pSteer, STEER_ACTION_INVENTORY)) {
+		stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
+		return;
 	}
+
+	hudProcessInventory(s_eControllingPlayer, pSteer);
 }
 
 void substatePauseLoop(void) {
-	for(UBYTE ubPlayerIdx = 0; ubPlayerIdx < 2; ++ubPlayerIdx) {
-		tSteer *pSteer = playerControllerGetSteer(ubPlayerIdx);
-		steerUpdate(pSteer);
+	tSteer *pSteer = playerControllerGetSteer(s_eControllingPlayer);
+	steerUpdate(pSteer);
 
-		if(steerUse(pSteer, STEER_ACTION_PAUSE)) {
-			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
-			return;
-		}
+	if(steerUse(pSteer, STEER_ACTION_PAUSE)) {
+		stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
+		return;
 	}
 }
 

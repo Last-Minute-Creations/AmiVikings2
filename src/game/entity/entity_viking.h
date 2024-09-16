@@ -38,6 +38,10 @@ _Static_assert(sizeof(tEntityVikingData) <= sizeof(tEntityData));
 
 void entityVikingSetSteer(tEntity *pEntityViking, tSteer *pSteer);
 
+tVikingState entityVikingGetState(tEntity *pEntityViking);
+
+BYTE entityVikingGetFreeItemSlot(tEntity *pEntityViking);
+
 void entityVikingCreate(tEntity *pEntity, UWORD uwPosX, UWORD uwPosY);
 
 void entityVikingProcess(tEntity *pEntity);
