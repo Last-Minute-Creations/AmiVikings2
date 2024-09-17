@@ -164,76 +164,7 @@ static void hudDrawPortrait(UBYTE ubIdx) {
 	}
 }
 
-// TODO: 4bpp on hud, 6bpp on playfield
-void hudCreate(tView *pView) {
-	UWORD pPaletteMain[32];
-	UWORD pPaletteHud[16];
-	paletteLoad("data/aminer.plt", pPaletteMain, 32);
-	paletteLoad("data/vikings.plt", pPaletteMain, 24);
-	paletteLoad("data/hud.plt", pPaletteMain, 16);
-
-	s_pVpHud = vPortCreate(0,
-		TAG_VPORT_BPP, HUD_BPP,
-		TAG_VPORT_HEIGHT, 48,
-		TAG_VPORT_PALETTE_PTR, pPaletteMain,
-		TAG_VPORT_PALETTE_SIZE, 32,
-		TAG_VPORT_VIEW, pView,
-	TAG_END);
-
-	s_pBufferHud = simpleBufferCreate(0,
-		TAG_SIMPLEBUFFER_BITMAP_FLAGS, BMF_CLEAR | BMF_INTERLEAVED,
-		TAG_SIMPLEBUFFER_IS_DBLBUF, 0,
-		TAG_SIMPLEBUFFER_USE_X_SCROLLING, 0,
-		TAG_SIMPLEBUFFER_COPLIST_OFFSET, 0,
-		TAG_SIMPLEBUFFER_VPORT, s_pVpHud,
-	TAG_END);
-
-	tBitMap *pBorderTiles = bitmapCreateFromFile("data/hud_border.bm", 0);
-	for(UBYTE ubY = 0; ubY < HUD_TILE_HEIGHT; ++ubY) {
-		for(UBYTE ubX = 0; ubX < HUD_TILE_WIDTH; ++ubX) {
-			UBYTE ubTileIndex = s_pHudTilemap[ubY][ubX];
-			UBYTE ubTileOffsX = (ubTileIndex & 1) * HUD_TILE_SIZE;
-			UBYTE ubTileOffsY = (ubTileIndex / 2) * HUD_TILE_SIZE;
-			blitCopy(
-				pBorderTiles, ubTileOffsX, ubTileOffsY, s_pBufferHud->pBack,
-				ubX * HUD_TILE_SIZE, ubY * HUD_TILE_SIZE,
-				HUD_TILE_SIZE, HUD_TILE_SIZE, MINTERM_COOKIE
-			);
-		}
-	}
-	bitmapDestroy(pBorderTiles);
-
-	s_pPortraits = bitmapCreateFromFile("data/hud_portraits.bm", 0);
-	s_pItems = bitmapCreateFromFile("data/hud_items.bm", 0);
-	s_pCursor = bitmapCreateFromFile("data/hud_cursor.bm", 0);
-	s_pCursorMask = bitmapCreateFromFile("data/hud_cursor_mask.bm", 0);
-}
-
-void hudDestroy(void) {
-	// vp and simplebuffer are destroyed by viewDestroy() so skip it
-
-	bitmapDestroy(s_pPortraits);
-	bitmapDestroy(s_pItems);
-}
-
-void hudReset(void) {
-	tEntity *pEntity1 = (tEntity*)playerControllerGetVikingByIndex(0);
-	tEntityVikingData *pVikingData1 = (tEntityVikingData *)pEntity1->pData;
-	pVikingData1->pInventory[0] = ITEM_KIND_BANANA;
-	pVikingData1->pInventory[3] = ITEM_KIND_MEATLOAF;
-
-	tEntity *pEntity2 = (tEntity*)playerControllerGetVikingByIndex(1);
-	tEntityVikingData *pVikingData2 = (tEntityVikingData *)pEntity2->pData;
-	pVikingData2->pInventory[0] = ITEM_KIND_BOMB;
-	pVikingData2->pInventory[1] = ITEM_KIND_GARLIC;
-
-	s_eHeldItem = ITEM_KIND_NONE;
-	for(UBYTE i = 0; i < VIKING_ENTITY_MAX; ++i) {
-		hudDrawPortrait(i);
-	}
-}
-
-tEntity *hudProcessPlay(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
+static tEntity *hudProcessVikingCycling(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 	UBYTE ubOldIndex = playerControllerGetVikingIndexByPlayer(ePlayerIdx);
 	BYTE bNewIndex = ubOldIndex;
 	tEntity *pNewViking = playerControllerGetVikingByIndex(bNewIndex);
@@ -315,6 +246,79 @@ static void dragItemToNextViking(BYTE bDelta) {
 	s_ubIsBlinkShow = 1;
 }
 
+// TODO: 4bpp on hud, 6bpp on playfield
+void hudCreate(tView *pView) {
+	UWORD pPaletteMain[32];
+	UWORD pPaletteHud[16];
+	paletteLoad("data/aminer.plt", pPaletteMain, 32);
+	paletteLoad("data/vikings.plt", pPaletteMain, 24);
+	paletteLoad("data/hud.plt", pPaletteMain, 16);
+
+	s_pVpHud = vPortCreate(0,
+		TAG_VPORT_BPP, HUD_BPP,
+		TAG_VPORT_HEIGHT, 48,
+		TAG_VPORT_PALETTE_PTR, pPaletteMain,
+		TAG_VPORT_PALETTE_SIZE, 32,
+		TAG_VPORT_VIEW, pView,
+	TAG_END);
+
+	s_pBufferHud = simpleBufferCreate(0,
+		TAG_SIMPLEBUFFER_BITMAP_FLAGS, BMF_CLEAR | BMF_INTERLEAVED,
+		TAG_SIMPLEBUFFER_IS_DBLBUF, 0,
+		TAG_SIMPLEBUFFER_USE_X_SCROLLING, 0,
+		TAG_SIMPLEBUFFER_COPLIST_OFFSET, 0,
+		TAG_SIMPLEBUFFER_VPORT, s_pVpHud,
+	TAG_END);
+
+	tBitMap *pBorderTiles = bitmapCreateFromFile("data/hud_border.bm", 0);
+	for(UBYTE ubY = 0; ubY < HUD_TILE_HEIGHT; ++ubY) {
+		for(UBYTE ubX = 0; ubX < HUD_TILE_WIDTH; ++ubX) {
+			UBYTE ubTileIndex = s_pHudTilemap[ubY][ubX];
+			UBYTE ubTileOffsX = (ubTileIndex & 1) * HUD_TILE_SIZE;
+			UBYTE ubTileOffsY = (ubTileIndex / 2) * HUD_TILE_SIZE;
+			blitCopy(
+				pBorderTiles, ubTileOffsX, ubTileOffsY, s_pBufferHud->pBack,
+				ubX * HUD_TILE_SIZE, ubY * HUD_TILE_SIZE,
+				HUD_TILE_SIZE, HUD_TILE_SIZE, MINTERM_COOKIE
+			);
+		}
+	}
+	bitmapDestroy(pBorderTiles);
+
+	s_pPortraits = bitmapCreateFromFile("data/hud_portraits.bm", 0);
+	s_pItems = bitmapCreateFromFile("data/hud_items.bm", 0);
+	s_pCursor = bitmapCreateFromFile("data/hud_cursor.bm", 0);
+	s_pCursorMask = bitmapCreateFromFile("data/hud_cursor_mask.bm", 0);
+}
+
+void hudDestroy(void) {
+	// vp and simplebuffer are destroyed by viewDestroy() so skip it
+
+	bitmapDestroy(s_pPortraits);
+	bitmapDestroy(s_pItems);
+}
+
+void hudReset(void) {
+	tEntity *pEntity1 = (tEntity*)playerControllerGetVikingByIndex(0);
+	tEntityVikingData *pVikingData1 = (tEntityVikingData *)pEntity1->pData;
+	pVikingData1->pInventory[0] = ITEM_KIND_BANANA;
+	pVikingData1->pInventory[3] = ITEM_KIND_MEATLOAF;
+
+	tEntity *pEntity2 = (tEntity*)playerControllerGetVikingByIndex(1);
+	tEntityVikingData *pVikingData2 = (tEntityVikingData *)pEntity2->pData;
+	pVikingData2->pInventory[0] = ITEM_KIND_BOMB;
+	pVikingData2->pInventory[1] = ITEM_KIND_GARLIC;
+
+	s_eHeldItem = ITEM_KIND_NONE;
+	for(UBYTE i = 0; i < VIKING_ENTITY_MAX; ++i) {
+		hudDrawPortrait(i);
+	}
+}
+
+tEntity *hudProcessPlay(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
+	return hudProcessVikingCycling(ePlayerIdx, pSteer);
+}
+
 void hudProcessInventory(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 	if(s_eHeldItem != ITEM_KIND_NONE) {
 		if(steerUse(pSteer, STEER_ACTION_LEFT)) {
@@ -352,7 +356,7 @@ void hudProcessInventory(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 		}
 	}
 	else {
-		tEntity *pViking = playerControllerGetVikingByPlayer(ePlayerIdx);
+		tEntity *pViking = hudProcessVikingCycling(ePlayerIdx, pSteer);
 		tEntityVikingData *pVikingData = (tEntityVikingData *)pViking->pData;
 		UBYTE ubVikingIndex = playerControllerGetVikingIndexByPlayer(ePlayerIdx);
 

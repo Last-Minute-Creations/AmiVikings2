@@ -123,6 +123,7 @@ void stateGameCreate(void) {
 		TAG_VIEW_GLOBAL_PALETTE, 1,
 		TAG_VIEW_COPLIST_MODE, COPPER_MODE_RAW,
 		TAG_VIEW_COPLIST_RAW_COUNT, uwCopListSize,
+		TAG_VIEW_WINDOW_HEIGHT, 224,
 	TAG_END);
 
 	s_pTileset = bitmapCreateFromFile("data/tiles.bm", 0);
