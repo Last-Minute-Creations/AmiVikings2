@@ -38,6 +38,9 @@ static tState s_sGameSubstatePause;
 tStateManager *s_pGameSubstateMachine;
 static tPlayerIdx s_eControllingPlayer;
 
+static tBitMap *s_pFont;
+static tBitMap *s_pFontMask;
+
 // [y][x]
 static UBYTE s_pTilesStrt[][32] = {
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -55,7 +58,7 @@ static UBYTE s_pTilesStrt[][32] = {
 	{93, 49, 48, 94, 89, 50, 49, 48, 76, 77, 50, 68, 81, 53, 49, 48, 50, 49, 49, 50, 49, 69, 81, 70, 53, 50, 95, 96, 97, 50, 49, 50},
 };
 
-void loadMap(void) {
+static void loadMap(void) {
 	tileReset();
 
 	for(UBYTE y = 0; y < 13; ++y) {
@@ -95,7 +98,7 @@ void loadMap(void) {
 	cameraReset(s_pBufferMain->pCamera, 0, 0, 32*16, 13 * 16, 1);
 }
 
-void onTileDraw(
+static void onTileDraw(
 	UWORD uwTileX, UWORD uwTileY,
 	tBitMap *pBitMap, UWORD uwBitMapX, UWORD uwBitMapY
 ) {
@@ -114,6 +117,51 @@ void onTileDraw(
 	// }
 }
 
+static void drawGlyphAt(UBYTE ubGlyphIndex, UWORD uwPosX, UWORD uwPosY) {
+	UWORD uwGlyphX = (ubGlyphIndex & 1) * 8;
+	UWORD uwGlyphY = (ubGlyphIndex / 2) * 8;
+	blitCopyMask(s_pFont, uwGlyphX, uwGlyphY, s_pBufferMain->pScroll->pBack, uwPosX, uwPosY, 8, 8, s_pFontMask->Planes[0]);
+}
+
+static void drawTextFrameAt(UBYTE ubBgColor, UWORD uwPosX, UWORD uwPosY, UBYTE ubTextWidth, UBYTE ubTextHeight, const char** pText) {
+	// TODO: character indicator: 10, 11
+	// 234
+	// 5 6
+	// 789
+	blitRect(s_pBufferMain->pScroll->pBack, uwPosX + 4, uwPosY + 6, (ubTextWidth + 2) * 8 - 4 - 3, (ubTextHeight + 2) * 8 - 6 - 5, ubBgColor);
+	drawGlyphAt(2, uwPosX, uwPosY);
+	drawGlyphAt(7, uwPosX, uwPosY + (ubTextHeight + 1) * 8);
+	for(UBYTE i = 1; i < ubTextWidth + 1; ++i) {
+		drawGlyphAt(3, uwPosX + i * 8, uwPosY);
+		drawGlyphAt(8, uwPosX + i * 8, uwPosY + (ubTextHeight + 1) * 8);
+	}
+	for(UBYTE i = 1; i < ubTextHeight + 1; ++i) {
+		drawGlyphAt(5, uwPosX, uwPosY + i * 8);
+		drawGlyphAt(6, uwPosX + (ubTextWidth + 1) * 8, uwPosY + i * 8);
+	}
+	drawGlyphAt(4, uwPosX + (ubTextWidth + 1) * 8, uwPosY);
+	drawGlyphAt(9, uwPosX + (ubTextWidth + 1) * 8, uwPosY + (ubTextHeight + 1) * 8);
+
+	static const UBYTE pCharToGlyph[] = {
+		['\x00'] =  0, ['\x01'] =  1, ['\x02'] =  2, ['\x03'] =  3, ['\x04'] =  4, ['\x05'] =  5, ['\x06'] =  6, ['\x07'] =  7,
+		['\x08'] =  8, ['\x09'] =  9, ['\x0A'] = 10, ['\x0B'] = 11, ['\x0C'] = 12, //[   ' '] = 13, [   ' '] = 14, [   ' '] = 15,
+		[   ' '] = 16, [   '!'] = 17, [   '"'] = 18, ['\x0D'] = 19, ['\x0E'] = 20, ['\x0F'] = 21, ['\x10'] = 22, [  '\''] = 23,
+		[   '('] = 24, [   ')'] = 25, ['\x11'] = 26, [   '+'] = 27, [   ','] = 28, [   '-'] = 29, [   '.'] = 30, [   '/'] = 31,
+		[   '0'] = 32, [   '1'] = 33, [   '2'] = 34, [   '3'] = 35, [   '4'] = 36, [   '5'] = 37, [   '6'] = 38, [   '7'] = 39,
+		[   '8'] = 40, [   '9'] = 41, [   ':'] = 42, [   ';'] = 43, ['\x12'] = 44, ['\x13'] = 45, ['\x14'] = 46, [   '?'] = 47,
+		['\x15'] = 48, [   'A'] = 49, [   'B'] = 50, [   'C'] = 51, [   'D'] = 52, [   'E'] = 53, [   'F'] = 54, [   'G'] = 55,
+		[   'H'] = 56, [   'I'] = 57, [   'J'] = 58, [   'K'] = 59, [   'L'] = 60, [   'M'] = 61, [   'N'] = 62, [   'O'] = 63,
+		[   'P'] = 64, [   'Q'] = 65, [   'R'] = 66, [   'S'] = 67, [   'T'] = 68, [   'U'] = 69, [   'V'] = 70, [   'W'] = 71,
+		[   'X'] = 72, [   'Y'] = 73, [   'Z'] = 74, ['\x16'] = 75, ['\x17'] = 76, ['\x18'] = 77, ['\x19'] = 78, ['\x1A'] = 79,
+	};
+
+	for(UBYTE ubY = 0; ubY < ubTextHeight; ++ubY) {
+		for(UBYTE ubX = 0; ubX < ubTextWidth; ++ubX) {
+			drawGlyphAt(pCharToGlyph[(UBYTE)pText[ubY][ubX]], uwPosX + (ubX + 1) * 8, uwPosY + (ubY + 1) * 8);
+		}
+	}
+}
+
 void stateGameCreate(void) {
 	UWORD uwCopHudSize = simpleBufferGetRawCopperlistInstructionCount(HUD_BPP);
 	UWORD uwCopMainStartSize = tileBufferGetRawCopperlistInstructionCountStart(MAIN_BPP);
@@ -127,6 +175,8 @@ void stateGameCreate(void) {
 	TAG_END);
 
 	s_pTileset = bitmapCreateFromFile("data/tiles.bm", 0);
+	s_pFont = bitmapCreateFromFile("data/font.bm", 0);
+	s_pFontMask = bitmapCreateFromFile("data/font_mask.bm", 0);
 
 	hudCreate(s_pView);
 
@@ -212,6 +262,8 @@ void stateGameDestroy(void) {
 	// fontDestroy(s_pFont);
 	// fontDestroyTextBitMap(s_pTextTile);
 	bitmapDestroy(s_pTileset);
+	bitmapDestroy(s_pFont);
+	bitmapDestroy(s_pFontMask);
 	hudDestroy();
 	viewDestroy(s_pView);
 }
@@ -225,6 +277,13 @@ void substatePlayLoop(void) {
 
 		if(steerUse(pSteer, STEER_ACTION_INVENTORY)) {
 			s_eControllingPlayer = ePlayerIdx;
+				static const char* pText[] = {
+				"CAN YOU TAKE US ",
+				"TO THE BIG SHINY",
+				"METAL THING THAT",
+				"BROUGHT US HERE?",
+			};
+			drawTextFrameAt(3, 10, 10, 16, 4, pText);
 			stateChange(s_pGameSubstateMachine, &s_sGameSubstateInventory);
 			return;
 		}
@@ -248,9 +307,9 @@ void substatePlayLoop(void) {
 	bobBegin(s_pBufferMain->pScroll->pBack);
 	tileBufferQueueProcess(s_pBufferMain);
 
-	for(UBYTE i = 0; i < BOB_COUNT; ++i) {
-		bobPush(&s_pBobs[i]);
-	}
+	// for(UBYTE i = 0; i < BOB_COUNT; ++i) {
+	// 	bobPush(&s_pBobs[i]);
+	// }
 	entityManagerProcess();
 	bobPushingDone();
 	bobEnd();

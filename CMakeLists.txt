@@ -95,6 +95,15 @@ if(AMIGA AND BUILD_GAME)
 		MASKS
 			${DATA_DIR}/hud_cursor_mask.bm
 	)
+	convertBitmaps(
+		TARGET ${LV2_EXECUTABLE} PALETTE ${HUD_PLT} MASK_COLOR "#FF00FF"
+		SOURCES
+			assets/extracted/converted/font.png
+		INTERLEAVED EHB DESTINATIONS
+			${DATA_DIR}/font.bm
+		MASKS
+			${DATA_DIR}/font_mask.bm
+	)
 
 	# Temporary assets
 	file(COPY tmp/aminer.plt DESTINATION ${DATA_DIR})
