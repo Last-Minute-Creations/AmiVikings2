@@ -1,25 +1,25 @@
 #ifndef ENTITY_ENTITY_VIKING_H
 #define ENTITY_ENTITY_VIKING_H
 
-#include <entity/entity.h>
-#include <item.h>
-#include <steer.h>
+#include <entity/entity.hpp>
+#include <item.hpp>
+#include <steer.hpp>
 
 #define VIKING_INVENTORY_SIZE 4
 
-typedef enum tVikingState {
-	VIKING_STATE_LOCKED,
-	VIKING_STATE_ALIVE,
-	VIKING_STATE_DEAD,
-} tVikingState;
+enum class tVikingState: UBYTE {
+	Locked,
+	Alive,
+	Dead,
+};
 
-typedef enum tMoveState {
-	MOVE_STATE_WALKING,
-	MOVE_STATE_FALLING,
-	MOVE_STATE_CLIMBING,
-} tMoveState;
+enum class tMoveState: UBYTE {
+	Walking,
+	Falling,
+	Climbing,
+};
 
-typedef struct tEntityVikingData {
+struct tEntityVikingData {
 	union {
 		tEntityData sEntityData;
 		struct {
@@ -32,9 +32,9 @@ typedef struct tEntityVikingData {
 			tUwCoordYX sPos;
 		};
 	};
-} tEntityVikingData;
+};
 
-_Static_assert(sizeof(tEntityVikingData) <= sizeof(tEntityData));
+static_assert(sizeof(tEntityVikingData) <= sizeof(tEntityData));
 
 void entityVikingSetSteer(tEntity *pEntityViking, tSteer *pSteer);
 
@@ -47,5 +47,8 @@ void entityVikingCreate(tEntity *pEntity, UWORD uwPosX, UWORD uwPosY);
 void entityVikingProcess(tEntity *pEntity);
 
 void entityVikingDestroy(tEntity *pEntity);
+
+template<>
+struct tEntityLookup<tEntityVikingData> { static constexpr auto getKind() {return tEntityKind::Erik;} };
 
 #endif // ENTITY_ENTITY_VIKING_H

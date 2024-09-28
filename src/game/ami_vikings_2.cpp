@@ -6,7 +6,7 @@
 #include <ace/managers/state.h>
 #include <ace/managers/key.h>
 #include <ace/managers/joy.h>
-#include "state_game.h"
+#include "state_game.hpp"
 
 tStateManager *s_pGameStateManager;
 

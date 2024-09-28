@@ -9,16 +9,16 @@
 
 #define TILE_SHIFT 4
 
-typedef enum tTile {
-	TILE_EMPTY,
-	TILE_FLOOR_FLAT,
-	TILE_FLOOR_RAMP22_DOWN_A,
-	TILE_FLOOR_RAMP22_DOWN_B,
-	TILE_FLOOR_RAMP45_DOWN,
-	TILE_FLOOR_RAMP45_UP,
-	TILE_FLOOR_RAMP22_UP_A,
-	TILE_FLOOR_RAMP22_UP_B,
-} tTile;
+enum class tTile: UBYTE {
+	Empty,
+	FloorFlat,
+	FloorRamp22DownA,
+	FloorRamp22DownB,
+	FloorRamp45Down,
+	FloorRamp45Up,
+	FloorRamp22UpA,
+	FloorRamp22UpB,
+};
 
 
 void tileReset(void);

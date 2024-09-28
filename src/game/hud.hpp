@@ -7,8 +7,8 @@
 
 #include <ace/types.h>
 #include <ace/utils/extview.h>
-#include <entity/entity.h>
-#include "player_controller.h"
+#include <entity/entity.hpp>
+#include "player_controller.hpp"
 
 #define HUD_BPP 5
 

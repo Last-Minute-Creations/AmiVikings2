@@ -2,19 +2,28 @@
 #define _PLAYER_CONTROLLER_H_
 
 #include <ace/types.h>
-#include "steer.h"
-#include <entity/entity.h>
+#include "steer.hpp"
+#include <entity/entity.hpp>
 
 #define VIKING_ENTITY_MAX 3
 
-typedef enum tPlayerIdx {
-	PLAYER_1,
-	PLAYER_2,
-	PLAYER_COUNT,
-	PLAYER_NONE = PLAYER_COUNT,
-} tPlayerIdx;
+enum class tPlayerIdx: UBYTE {
+	First,
+	Second,
+	Count,
+	None = Count,
+};
 
-UBYTE playerIsActive(UBYTE ubPlayerIndex);
+constexpr tPlayerIdx playerGetOther(tPlayerIdx eIdx) {
+	if(eIdx == tPlayerIdx::First) {
+		return tPlayerIdx::Second;
+	}
+	else {
+		return tPlayerIdx::First;
+	}
+}
+
+UBYTE playerIsActive(tPlayerIdx ePlayerIdx);
 
 void playerControllerReset(void);
 

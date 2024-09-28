@@ -7,43 +7,44 @@
 
 #include <ace/types.h>
 #include <ace/macros.h>
+#include <lmc/enum_value.hpp>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef enum tSteerKind {
-	STEER_KIND_NULL,
-	STEER_KIND_PRESET1,
-	STEER_KIND_PRESET2,
+enum class tSteerKind: UBYTE {
+	Null,
+	Preset1,
+	Preset2,
 	// TODO: playback from array
-} tSteerKind;
+};
 
-typedef enum tSteerAction {
-	STEER_ACTION_UP,
-	STEER_ACTION_DOWN,
-	STEER_ACTION_LEFT,
-	STEER_ACTION_RIGHT,
-	STEER_ACTION_ABILITY_1,
-	STEER_ACTION_ABILITY_2,
-	STEER_ACTION_USE_ITEM,
-	STEER_ACTION_INTERACT,
-	STEER_ACTION_PAUSE,
-	STEER_ACTION_INVENTORY,
-	STEER_ACTION_PREV_VIKING,
-	STEER_ACTION_NEXT_VIKING,
-	STEER_ACTION_COUNT
-} tSteerAction;
+enum class tSteerAction: UBYTE {
+	Up,
+	Down,
+	Left,
+	Right,
+	Ability1,
+	Ability2,
+	UseItem,
+	Interact,
+	Pause,
+	Inventory,
+	PrevViking,
+	NextViking,
+	Count
+};
 
-typedef enum tSteerState {
-	STEER_STATE_INACTIVE,
-	STEER_STATE_ACTIVE,
-	STEER_STATE_USED,
-} tSteerState;
+enum class tSteerState: UBYTE {
+	Inactive,
+	Active,
+	Used,
+};
 
 typedef struct tSteer {
 	tSteerKind eKind;
-	tSteerState pActions[STEER_ACTION_COUNT];
+	tSteerState pActions[Lmc::enumValue(tSteerAction::Count)];
 } tSteer;
 
 void steerReset(tSteer *pSteer, tSteerKind eKind);

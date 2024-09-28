@@ -38,6 +38,7 @@ endif()
 # game
 if(AMIGA AND BUILD_GAME)
 	add_subdirectory(deps/ace)
+	add_subdirectory(deps/lmc)
 
 	file(GLOB_RECURSE GAME_src src/game/*.cpp src/game/*.c src/game/*.hpp src/game/*.h)
 
@@ -62,7 +63,7 @@ if(AMIGA AND BUILD_GAME)
 
 	target_compile_options(${LV2_EXECUTABLE} PUBLIC -Wall -Wextra)
 	target_include_directories(${LV2_EXECUTABLE} PRIVATE ${PROJECT_SOURCE_DIR}/src/game)
-	target_link_libraries(${LV2_EXECUTABLE} ace)
+	target_link_libraries(${LV2_EXECUTABLE} ace lmc)
 
 	if(GAME_DEBUG)
 		target_compile_definitions(${LV2_EXECUTABLE} PRIVATE GAME_DEBUG)

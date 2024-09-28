@@ -2,32 +2,37 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef ENTITY_ENTITY_H
-#define ENTITY_ENTITY_H
+#ifndef ENTITY_ENTITY_HPP
+#define ENTITY_ENTITY_HPP
 
 #include <ace/managers/bob.h>
-#include "steer.h"
+#include "steer.hpp"
 
 #define ENTITY_DATA_MAX_SIZE 50
 
 struct tEntity;
 
-typedef enum tEntityKind {
-	ENTITY_KIND_INVALID = 0,
-	ENTITY_KIND_ERIK,
-	ENTITY_KIND_OLAF,
-	ENTITY_KIND_BAELOG,
-	ENTITY_KIND_FANG,
-	ENTITY_KIND_SCORCH,
-	ENTITY_KIND_PLATFORM,
-	ENTITY_KIND_BLOCK,
-} tEntityKind;
+enum class tEntityKind: UBYTE {
+	Invalid = 0,
+	Erik,
+	Olaf,
+	Baelog,
+	Fang,
+	Scorch,
+	Platform,
+	Block,
+};
 
-typedef void (*tCbEntityReset)(struct tEntity *pEntity, UWORD uwPosX, UWORD uwPosY);
-typedef void (*tCbEntityProcess)(struct tEntity *pEntity);
-typedef void (*tCbEntityDestroy)(struct tEntity *pEntity);
+using tCbEntityReset = void (*)(struct tEntity *pEntity, UWORD uwPosX, UWORD uwPosY);
+using tCbEntityProcess = void (*)(struct tEntity *pEntity);
+using tCbEntityDestroy = void (*)(struct tEntity *pEntity);
 
-typedef UBYTE tEntityData[ENTITY_DATA_MAX_SIZE];
+template <typename T>
+struct tEntityLookup { };
+
+struct tEntityData {
+	UBYTE pData[ENTITY_DATA_MAX_SIZE];
+};
 
 typedef struct tEntityDef {
 	tEntityKind eKind; // for cast safety checks
@@ -40,6 +45,17 @@ typedef struct tEntity {
 	const tEntityDef *pDef; // set to 0 if entity is free on s_pEntities
 	tBob sBob;
 	tEntityData pData;
+
+	template<typename T>
+	constexpr T *dataAs() {
+// #if defined(GAME_DEBUG)
+		if(tEntityLookup<T>::getKind() != pDef->eKind) {
+			logWrite("Invalid entity cast, should be %d", (int)eKind);
+		}
+// #endif
+
+		return reinterpret_cast<T*>(&this->pData);
+	}
 } tEntity;
 
 
@@ -47,4 +63,4 @@ void entityManagerReset(void);
 void entityManagerProcess(void);
 tEntity *entityManagerSpawnEntity(tEntityKind eKind, UWORD uwX, UWORD uwY, UWORD uwCenterX, UWORD uwCenterY);
 
-#endif // ENTITY_ENTITY_H
+#endif // ENTITY_ENTITY_HPP
