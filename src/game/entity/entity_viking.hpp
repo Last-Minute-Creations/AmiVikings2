@@ -43,7 +43,8 @@ tVikingState entityVikingGetState(tEntity *pEntityViking);
 BYTE entityVikingGetFreeItemSlot(tEntity *pEntityViking);
 
 void entityVikingCreate(
-	tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwParam1, UWORD uwParam2
+	tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwCenterX, UWORD uwCenterY,
+	UWORD uwParam1, UWORD uwParam2
 );
 
 void entityVikingProcess(tEntity &Entity);

@@ -12,7 +12,8 @@ void entityVikingSetSteer(tEntity *pEntity, tSteer *pSteer) {
 #define ERIK_OFFS_LEFT 10
 
 void entityVikingCreate(
-	tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwParam1, UWORD uwParam2
+	tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwCenterX, UWORD uwCenterY,
+	UWORD uwParam1, UWORD uwParam2
 )
 {
 	auto &Data = Entity.dataAs<tEntityVikingData>();

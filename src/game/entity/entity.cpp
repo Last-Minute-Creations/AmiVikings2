@@ -117,7 +117,7 @@ tEntity *entityManagerSpawnEntity(
 			if(!s_pEntities[i].pDef->cbCreate) {
 				logWrite("ERR: entity cbCreate is zero\n");
 			}
-			s_pEntities[i].pDef->cbCreate(s_pEntities[i], uwX, uwY, uwParam1, uwParam2);
+			s_pEntities[i].pDef->cbCreate(s_pEntities[i], uwX, uwY, uwCenterX, uwCenterY, uwParam1, uwParam2);
 			return &s_pEntities[i];
 		}
 	}

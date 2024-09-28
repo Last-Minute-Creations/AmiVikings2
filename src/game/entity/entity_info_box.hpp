@@ -18,7 +18,7 @@ struct tEntityInfoBoxData {
 };
 
 void entityInfoBoxCreate(
-	tEntity &Entity, UWORD uwPosX, UWORD uwPosY,
+	tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwCenterX, UWORD uwCenterY,
 	UWORD uwParam1, UWORD uwMessageIndex
 );
 

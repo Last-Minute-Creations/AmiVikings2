@@ -24,7 +24,10 @@ enum class tEntityKind: UBYTE {
 };
 
 struct tEntityDef {
-	using tCbCreate = void (*)(tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwParam1, UWORD uwParam2);
+	using tCbCreate = void (*)(
+		tEntity &Entity, UWORD uwPosX, UWORD uwPosY,
+		UWORD uwCenterX, UWORD uwCenterY, UWORD uwParam1, UWORD uwParam2
+	);
 	using tCbProcess = void (*)(tEntity &Entity);
 	using tCbDestroy = void (*)(tEntity &Entity);
 	using tCbCollided = bool(*)(tEntity &Entity, tEntity &Collided);

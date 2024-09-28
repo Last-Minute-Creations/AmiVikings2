@@ -3,7 +3,7 @@
 #include "entity_info_box.hpp"
 
 void entityInfoBoxCreate(
-	tEntity &Entity, UWORD uwPosX, UWORD uwPosY,
+	tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwCenterX, UWORD uwCenterY,
 	UWORD uwParam1, UWORD uwMessageIndex
 )
 {
@@ -11,7 +11,7 @@ void entityInfoBoxCreate(
 		&Entity.sBob, 16, 16, true,
 		bobCalcFrameAddress(g_pBobBmHelpBox, 0),
 		bobCalcFrameAddress(g_pBobBmMaskFull16, 0),
-		uwPosX, uwPosY
+		uwPosX - uwCenterX, uwPosY - uwCenterY
 	);
 
 	auto &Data = Entity.dataAs<tEntityInfoBoxData>();
