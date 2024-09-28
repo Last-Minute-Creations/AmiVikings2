@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef ASSETS_HPP
-#define ASSETS_HPP
+#ifndef INC_GAME_ASSETS_HPP
+#define INC_GAME_ASSETS_HPP
 
 #include <ace/utils/bitmap.h>
 
@@ -14,4 +14,4 @@ void assetsGlobalDestroy(void);
 // Global assets
 extern tBitMap *g_pBobBmErik, *g_pBobBmErikMask;
 
-#endif // ASSETS_HPP
+#endif // INC_GAME_ASSETS_HPP

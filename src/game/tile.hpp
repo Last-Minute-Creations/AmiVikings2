@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef _TILE_H_
-#define _TILE_H_
+#ifndef INC_GAME_TILE_HPP
+#define INC_GAME_TILE_HPP
 
 #include <ace/types.h>
 
@@ -31,4 +31,4 @@ UBYTE tileIsEmpty(UWORD uwTileX, UWORD uwTileY);
 
 const UBYTE *tileGetHeightmap(UWORD uwTileX, UWORD uwTileY);
 
-#endif // _TILE_H_
+#endif // INC_GAME_TILE_HPP

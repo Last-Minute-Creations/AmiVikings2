@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef _STEER_H_
-#define _STEER_H_
+#ifndef INC_GAME_STEER_HPP
+#define INC_GAME_STEER_HPP
 
 #include <ace/types.h>
 #include <ace/macros.h>
@@ -61,4 +61,4 @@ tSteer *steerGetNull(void);
 }
 #endif
 
-#endif // _STEER_H_
+#endif // INC_GAME_STEER_HPP

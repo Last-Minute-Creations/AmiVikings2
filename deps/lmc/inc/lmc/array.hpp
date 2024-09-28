@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef LMC_ARRAY_HPP
-#define LMC_ARRAY_HPP
+#ifndef INC_LMC_ARRAY_HPP
+#define INC_LMC_ARRAY_HPP
 
 #include <stdint.h>
 
@@ -17,4 +17,4 @@ struct tArray {
 
 } // namespace lmc
 
-#endif // LMC_ARRAY_HPP
+#endif // INC_LMC_ARRAY_HPP

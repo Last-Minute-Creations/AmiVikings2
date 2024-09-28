@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef LMC_ENUM_VALUE_HPP
-#define LMC_ENUM_VALUE_HPP
+#ifndef INC_LMC_ENUM_VALUE_HPP
+#define INC_LMC_ENUM_VALUE_HPP
 
 namespace Lmc {
 
@@ -15,4 +15,4 @@ constexpr auto enumValue(t_tEnum eEnum) {
 
 } // namespace lmc
 
-#endif // LMC_ENUM_VALUE_HPP
+#endif // INC_LMC_ENUM_VALUE_HPP

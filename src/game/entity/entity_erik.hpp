@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef _ENTITY_ENTITY_ERIK_H_
-#define _ENTITY_ENTITY_ERIK_H_
+#ifndef INC_GAME_ENTITY_ENTITY_ERIK_HPP
+#define INC_GAME_ENTITY_ENTITY_ERIK_HPP
 
-#endif // _ENTITY_ENTITY_ERIK_H_
+#endif // INC_GAME_ENTITY_ENTITY_ERIK_HPP

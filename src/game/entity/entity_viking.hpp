@@ -1,5 +1,5 @@
-#ifndef ENTITY_ENTITY_VIKING_H
-#define ENTITY_ENTITY_VIKING_H
+#ifndef INC_GAME_ENTITY_ENTITY_VIKING_HPP
+#define INC_GAME_ENTITY_ENTITY_VIKING_HPP
 
 #include <entity/entity.hpp>
 #include <item.hpp>
@@ -51,4 +51,4 @@ void entityVikingDestroy(tEntity *pEntity);
 template<>
 struct tEntityLookup<tEntityVikingData> { static constexpr auto getKind() {return tEntityKind::Erik;} };
 
-#endif // ENTITY_ENTITY_VIKING_H
+#endif // INC_GAME_ENTITY_ENTITY_VIKING_HPP

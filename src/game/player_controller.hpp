@@ -1,5 +1,5 @@
-#ifndef _PLAYER_CONTROLLER_H_
-#define _PLAYER_CONTROLLER_H_
+#ifndef INC_GAME_PLAYER_CONTROLLER_HPP
+#define INC_GAME_PLAYER_CONTROLLER_HPP
 
 #include <ace/types.h>
 #include "steer.hpp"
@@ -43,5 +43,5 @@ void playerControllerSetDefaultSelection(void);
 
 tSteer *playerControllerGetSteer(tPlayerIdx ePlayerIdx);
 
-#endif // _PLAYER_CONTROLLER_H_
+#endif // INC_GAME_PLAYER_CONTROLLER_HPP
 

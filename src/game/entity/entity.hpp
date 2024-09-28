@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef ENTITY_ENTITY_HPP
-#define ENTITY_ENTITY_HPP
+#ifndef INC_GAME_ENTITY_ENTITY_HPP
+#define INC_GAME_ENTITY_ENTITY_HPP
 
 #include <ace/managers/bob.h>
 #include "steer.hpp"
@@ -63,4 +63,4 @@ void entityManagerReset(void);
 void entityManagerProcess(void);
 tEntity *entityManagerSpawnEntity(tEntityKind eKind, UWORD uwX, UWORD uwY, UWORD uwCenterX, UWORD uwCenterY);
 
-#endif // ENTITY_ENTITY_HPP
+#endif // INC_GAME_ENTITY_ENTITY_HPP
