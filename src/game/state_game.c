@@ -120,28 +120,10 @@ static void onTileDraw(
 static void drawGlyphAt(UBYTE ubGlyphIndex, UWORD uwPosX, UWORD uwPosY) {
 	UWORD uwGlyphX = (ubGlyphIndex & 1) * 8;
 	UWORD uwGlyphY = (ubGlyphIndex / 2) * 8;
-	blitCopyMask(s_pFont, uwGlyphX, uwGlyphY, s_pBufferMain->pScroll->pBack, uwPosX, uwPosY, 8, 8, s_pFontMask->Planes[0]);
+	blitCopyMask(s_pFont, uwGlyphX, uwGlyphY, s_pBufferMain->pScroll->pFront, uwPosX, uwPosY, 8, 8, s_pFontMask->Planes[0]);
 }
 
-static void drawTextFrameAt(UBYTE ubBgColor, UWORD uwPosX, UWORD uwPosY, UBYTE ubTextWidth, UBYTE ubTextHeight, const char** pText) {
-	// TODO: character indicator: 10, 11
-	// 234
-	// 5 6
-	// 789
-	blitRect(s_pBufferMain->pScroll->pBack, uwPosX + 4, uwPosY + 6, (ubTextWidth + 2) * 8 - 4 - 3, (ubTextHeight + 2) * 8 - 6 - 5, ubBgColor);
-	drawGlyphAt(2, uwPosX, uwPosY);
-	drawGlyphAt(7, uwPosX, uwPosY + (ubTextHeight + 1) * 8);
-	for(UBYTE i = 1; i < ubTextWidth + 1; ++i) {
-		drawGlyphAt(3, uwPosX + i * 8, uwPosY);
-		drawGlyphAt(8, uwPosX + i * 8, uwPosY + (ubTextHeight + 1) * 8);
-	}
-	for(UBYTE i = 1; i < ubTextHeight + 1; ++i) {
-		drawGlyphAt(5, uwPosX, uwPosY + i * 8);
-		drawGlyphAt(6, uwPosX + (ubTextWidth + 1) * 8, uwPosY + i * 8);
-	}
-	drawGlyphAt(4, uwPosX + (ubTextWidth + 1) * 8, uwPosY);
-	drawGlyphAt(9, uwPosX + (ubTextWidth + 1) * 8, uwPosY + (ubTextHeight + 1) * 8);
-
+static void drawTextLineAt(const char *szText, UWORD uwPosX, UWORD uwPosY) {
 	static const UBYTE pCharToGlyph[] = {
 		['\x00'] =  0, ['\x01'] =  1, ['\x02'] =  2, ['\x03'] =  3, ['\x04'] =  4, ['\x05'] =  5, ['\x06'] =  6, ['\x07'] =  7,
 		['\x08'] =  8, ['\x09'] =  9, ['\x0A'] = 10, ['\x0B'] = 11, ['\x0C'] = 12, //[   ' '] = 13, [   ' '] = 14, [   ' '] = 15,
@@ -155,14 +137,40 @@ static void drawTextFrameAt(UBYTE ubBgColor, UWORD uwPosX, UWORD uwPosY, UBYTE u
 		[   'X'] = 72, [   'Y'] = 73, [   'Z'] = 74, ['\x16'] = 75, ['\x17'] = 76, ['\x18'] = 77, ['\x19'] = 78, ['\x1A'] = 79,
 	};
 
-	for(UBYTE ubY = 0; ubY < ubTextHeight; ++ubY) {
-		for(UBYTE ubX = 0; ubX < ubTextWidth; ++ubX) {
-			drawGlyphAt(pCharToGlyph[(UBYTE)pText[ubY][ubX]], uwPosX + (ubX + 1) * 8, uwPosY + (ubY + 1) * 8);
-		}
+	UBYTE ubTextLength = strlen(szText);
+	for(UBYTE ubX = 0; ubX < ubTextLength; ++ubX) {
+		drawGlyphAt(pCharToGlyph[(UBYTE)szText[ubX]], uwPosX + ubX * 8, uwPosY);
 	}
 }
 
-void stateGameCreate(void) {
+static void drawMessageFrameAt(UBYTE ubBgColor, UBYTE ubBlockPosX, UBYTE ubBlockPosY, UBYTE ubLineCount, const char** pText) {
+	// TODO: character indicator: 10, 11
+	// 234
+	// 5 6
+	// 789
+	UWORD uwPosX = ubBlockPosX * 8;
+	UWORD uwPosY = ubBlockPosY * 8;
+	UBYTE ubTextWidth = strlen(pText[0]);
+	blitRect(s_pBufferMain->pScroll->pFront, uwPosX + 4, uwPosY + 6, (ubTextWidth + 2) * 8 - 4 - 3, (ubLineCount + 2) * 8 - 6 - 5, ubBgColor);
+	drawGlyphAt(2, uwPosX, uwPosY);
+	drawGlyphAt(7, uwPosX, uwPosY + (ubLineCount + 1) * 8);
+	for(UBYTE i = 1; i < ubTextWidth + 1; ++i) {
+		drawGlyphAt(3, uwPosX + i * 8, uwPosY);
+		drawGlyphAt(8, uwPosX + i * 8, uwPosY + (ubLineCount + 1) * 8);
+	}
+	for(UBYTE i = 1; i < ubLineCount + 1; ++i) {
+		drawGlyphAt(5, uwPosX, uwPosY + i * 8);
+		drawGlyphAt(6, uwPosX + (ubTextWidth + 1) * 8, uwPosY + i * 8);
+	}
+	drawGlyphAt(4, uwPosX + (ubTextWidth + 1) * 8, uwPosY);
+	drawGlyphAt(9, uwPosX + (ubTextWidth + 1) * 8, uwPosY + (ubLineCount + 1) * 8);
+
+	for(UBYTE ubY = 0; ubY < ubLineCount; ++ubY) {
+		drawTextLineAt(pText[ubY], uwPosX + 1 * 8, uwPosY + (ubY + 1) * 8);
+	}
+}
+
+static void stateGameCreate(void) {
 	UWORD uwCopHudSize = simpleBufferGetRawCopperlistInstructionCount(HUD_BPP);
 	UWORD uwCopMainStartSize = tileBufferGetRawCopperlistInstructionCountStart(MAIN_BPP);
 	UWORD uwCopMainBreakSize = tileBufferGetRawCopperlistInstructionCountBreak(MAIN_BPP);
@@ -241,12 +249,7 @@ void stateGameCreate(void) {
 	stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
 }
 
-void stateGameLoop(void) {
-	if(keyUse(KEY_ESCAPE)) {
-		gameExit();
-		return;
-	}
-
+static void stateGameLoop(void) {
 	stateProcess(s_pGameSubstateMachine);
 
 	systemIdleBegin();
@@ -254,7 +257,7 @@ void stateGameLoop(void) {
 	systemIdleEnd();
 }
 
-void stateGameDestroy(void) {
+static void stateGameDestroy(void) {
 	viewLoad(0);
 	systemUse();
 	bobManagerDestroy();
@@ -270,20 +273,13 @@ void stateGameDestroy(void) {
 
 #pragma region substates
 
-void substatePlayLoop(void) {
+static void substatePlayLoop(void) {
 	for(tPlayerIdx ePlayerIdx = 0; ePlayerIdx < PLAYER_COUNT; ++ePlayerIdx) {
 		tSteer *pSteer = playerControllerGetSteer(ePlayerIdx);
 		steerUpdate(pSteer);
 
 		if(steerUse(pSteer, STEER_ACTION_INVENTORY)) {
 			s_eControllingPlayer = ePlayerIdx;
-				static const char* pText[] = {
-				"CAN YOU TAKE US ",
-				"TO THE BIG SHINY",
-				"METAL THING THAT",
-				"BROUGHT US HERE?",
-			};
-			drawTextFrameAt(3, 10, 10, 16, 4, pText);
 			stateChange(s_pGameSubstateMachine, &s_sGameSubstateInventory);
 			return;
 		}
@@ -318,7 +314,7 @@ void substatePlayLoop(void) {
 	copProcessBlocks();
 }
 
-void substateInventoryLoop(void) {
+static void substateInventoryLoop(void) {
 	tSteer *pSteer = playerControllerGetSteer(s_eControllingPlayer);
 	steerUpdate(pSteer);
 
@@ -330,13 +326,106 @@ void substateInventoryLoop(void) {
 	hudProcessInventory(s_eControllingPlayer, pSteer);
 }
 
-void substatePauseLoop(void) {
+static UBYTE s_ubPauseBlinkCooldown;
+static UBYTE s_isPauseBlinkDraw;
+static UBYTE s_isPauseYesSelected;
+
+#define GIVE_UP_X ((256/8 - 8)/2)
+#define GIVE_UP_Y (4)
+#define GIVE_UP_YES_OFFS_X 1
+#define GIVE_UP_YES_OFFS_Y 3
+#define GIVE_UP_NO_OFFS_X (GIVE_UP_YES_OFFS_X + 6)
+#define GIVE_UP_NO_OFFS_Y GIVE_UP_YES_OFFS_Y
+
+static void substatePauseCreate(void) {
+	// static const char* pText[] = {
+	// 	"TRY AGAIN?",
+	// 	"          ",
+	// 	" YES   NO ",
+	// };
+	static const char* pText[] = {
+		"GIVE UP?",
+		"        ",
+		"YES   NO",
+	};
+	drawMessageFrameAt(0, GIVE_UP_X, GIVE_UP_Y, 3, pText);
+	s_ubPauseBlinkCooldown = 25;
+	s_isPauseBlinkDraw = 0;
+	s_isPauseYesSelected = 1;
+}
+
+static void updateYesNoBlink(UBYTE isYes, UBYTE isDraw) {
+	if(isDraw) {
+		if(isYes) {
+			drawTextLineAt(
+				"YES",
+				(GIVE_UP_X + GIVE_UP_YES_OFFS_X) * 8,
+				(GIVE_UP_Y + GIVE_UP_YES_OFFS_Y) * 8
+			);
+		}
+		else {
+			drawTextLineAt(
+				"NO",
+				(GIVE_UP_X + GIVE_UP_NO_OFFS_X) * 8,
+				(GIVE_UP_Y + GIVE_UP_NO_OFFS_Y) * 8
+			);
+		}
+	}
+	else {
+		if(isYes) {
+			blitRect(
+				s_pBufferMain->pScroll->pFront,
+				(GIVE_UP_X + GIVE_UP_YES_OFFS_X) * 8,
+				(GIVE_UP_Y + GIVE_UP_YES_OFFS_Y) * 8,
+				strlen("YES") * 8, 8, 0
+			);
+		}
+		else {
+			blitRect(
+				s_pBufferMain->pScroll->pFront,
+				(GIVE_UP_X + GIVE_UP_NO_OFFS_X) * 8,
+				(GIVE_UP_Y + GIVE_UP_NO_OFFS_Y) * 8,
+				strlen("NO") * 8, 8, 0
+			);
+		}
+	}
+}
+
+static void substatePauseLoop(void) {
 	tSteer *pSteer = playerControllerGetSteer(s_eControllingPlayer);
 	steerUpdate(pSteer);
 
 	if(steerUse(pSteer, STEER_ACTION_PAUSE)) {
 		stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
 		return;
+	}
+	if(steerUse(pSteer, STEER_ACTION_LEFT)) {
+		updateYesNoBlink(s_isPauseYesSelected, 1);
+		s_isPauseYesSelected = 1;
+		s_ubPauseBlinkCooldown = 1;
+		s_isPauseBlinkDraw = 0;
+	}
+	else if(steerUse(pSteer, STEER_ACTION_RIGHT)) {
+		updateYesNoBlink(s_isPauseYesSelected, 1);
+		s_isPauseYesSelected = 0;
+		s_ubPauseBlinkCooldown = 1;
+		s_isPauseBlinkDraw = 0;
+	}
+	else if(steerUse(pSteer, STEER_ACTION_ABILITY_1)) {
+		if(s_isPauseYesSelected) {
+			gameExit();
+			return;
+		}
+		else {
+			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
+			return;
+		}
+	}
+
+	if(--s_ubPauseBlinkCooldown == 0) {
+		s_ubPauseBlinkCooldown = 25;
+		updateYesNoBlink(s_isPauseYesSelected, s_isPauseBlinkDraw);
+		s_isPauseBlinkDraw = !s_isPauseBlinkDraw;
 	}
 }
 
@@ -349,7 +438,7 @@ static tState s_sGameSubstateInventory = {
 	.cbCreate = 0, .cbLoop = substateInventoryLoop, .cbDestroy = 0,
 };
 static tState s_sGameSubstatePause = {
-	.cbCreate = 0, .cbLoop = substatePauseLoop, .cbDestroy = 0,
+	.cbCreate = substatePauseCreate, .cbLoop = substatePauseLoop, .cbDestroy = 0,
 };
 
 tState g_sStateGame = {
