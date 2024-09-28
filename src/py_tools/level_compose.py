@@ -1,3 +1,4 @@
+from common.find_path import find_path
 from PIL import Image, ImageFont, ImageDraw
 from glob import glob
 import struct
@@ -35,7 +36,7 @@ object_classes = {
     26: "Key hole red", # k3ys: 0024/0002
     27: "Key hole silver", # k3ys: 0024/0001
     28: "Key hole gold", # k3ys: 0024/0004
-    29: "Key item", # unk1 0020, unk2:
+    29: "Item", # unk1 0020, unk2:
         # 0001: shield, 0002: bomb, 0003: nuke,
         # 0004: W1 red key, 0005: W1 skeleton key, 0006: W1 gold key,
         # 0007: W5 red card, 0009: W5 yellow card
@@ -255,9 +256,6 @@ def read_mini_tiles(mini_tiles_path: str, is_8bpp: bool):
                     for x in range(8):
                         mini_tiles[i][x][y] |= chunky_row[x] << 4
     return mini_tiles
-
-def find_path(index: int) -> str:
-    return glob("../../assets/dec/{:03d}*".format(index))[0]
 
 def compose_minitile(tile_image: Image, mini_tiles, palette, tiledef, pos) -> bool:
     index = tiledef & minitile_index_mask

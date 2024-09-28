@@ -91,10 +91,13 @@ if(AMIGA AND BUILD_GAME)
 		TARGET ${LV2_EXECUTABLE} PALETTE ${HUD_PLT} MASK_COLOR "#000000"
 		SOURCES
 			assets/extracted/converted/hud_cursor.png
+			assets/extracted/converted/help_box.png
 		INTERLEAVED EHB DESTINATIONS # TODO: remove EHB flag, store 4bpp bitmaps
 			${DATA_DIR}/hud_cursor.bm
+			${DATA_DIR}/help_box.bm
 		MASKS
 			${DATA_DIR}/hud_cursor_mask.bm
+			${DATA_DIR}/mask_full_16.bm
 	)
 	convertBitmaps(
 		TARGET ${LV2_EXECUTABLE} PALETTE ${HUD_PLT} MASK_COLOR "#FF00FF"

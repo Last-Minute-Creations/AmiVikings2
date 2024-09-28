@@ -6,9 +6,8 @@
 #define INC_GAME_ENTITY_ENTITY_HPP
 
 #include <ace/managers/bob.h>
+#include <lmc/array.hpp>
 #include "steer.hpp"
-
-#define ENTITY_DATA_MAX_SIZE 50
 
 struct tEntity;
 
@@ -21,46 +20,52 @@ enum class tEntityKind: UBYTE {
 	Scorch,
 	Platform,
 	Block,
+	InfoBox,
 };
 
-using tCbEntityReset = void (*)(struct tEntity *pEntity, UWORD uwPosX, UWORD uwPosY);
-using tCbEntityProcess = void (*)(struct tEntity *pEntity);
-using tCbEntityDestroy = void (*)(struct tEntity *pEntity);
+struct tEntityDef {
+	using tCbCreate = void (*)(tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwParam1, UWORD uwParam2);
+	using tCbProcess = void (*)(tEntity &Entity);
+	using tCbDestroy = void (*)(tEntity &Entity);
+	using tCbCollided = bool(*)(tEntity &Entity, tEntity &Collided);
+
+	tEntityKind eKind; // for cast safety checks
+	tCbCreate cbCreate;
+	tCbProcess cbProcess;
+	tCbDestroy cbDestroy;
+	tCbCollided cbCollided;
+};
 
 template <typename T>
 struct tEntityLookup { };
 
-struct tEntityData {
-	UBYTE pData[ENTITY_DATA_MAX_SIZE];
-};
+struct tEntity {
+	using tData = Lmc::tArray<UBYTE, 50>;
 
-typedef struct tEntityDef {
-	tEntityKind eKind; // for cast safety checks
-	tCbEntityReset cbReset;
-	tCbEntityProcess cbProcess;
-	tCbEntityDestroy cbDestroy;
-} tEntityDef;
-
-typedef struct tEntity {
 	const tEntityDef *pDef; // set to 0 if entity is free on s_pEntities
 	tBob sBob;
-	tEntityData pData;
+	tData Data;
+
+	constexpr bool isValid() const { return pDef != nullptr; }
 
 	template<typename T>
-	constexpr T *dataAs() {
-// #if defined(GAME_DEBUG)
+	constexpr T &dataAs() {
+#if defined(GAME_DEBUG)
 		if(tEntityLookup<T>::getKind() != pDef->eKind) {
-			logWrite("Invalid entity cast, should be %d", (int)eKind);
+			logWrite("Invalid entity cast, should be %d", Lmc::enumValue(pDef->eKind));
 		}
-// #endif
+#endif
 
-		return reinterpret_cast<T*>(&this->pData);
+		return *reinterpret_cast<T*>(this->Data.Data);
 	}
-} tEntity;
-
+};
 
 void entityManagerReset(void);
 void entityManagerProcess(void);
-tEntity *entityManagerSpawnEntity(tEntityKind eKind, UWORD uwX, UWORD uwY, UWORD uwCenterX, UWORD uwCenterY);
+tEntity *entityManagerSpawnEntity(
+	tEntityKind eKind, UWORD uwX, UWORD uwY, UWORD uwCenterX, UWORD uwCenterY,
+	UWORD uwParam1, UWORD uwParam2
+);
+bool entityCheckForCollisionsWith(tEntity &Entity);
 
 #endif // INC_GAME_ENTITY_ENTITY_HPP

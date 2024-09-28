@@ -21,7 +21,7 @@ enum class tMoveState: UBYTE {
 
 struct tEntityVikingData {
 	union {
-		tEntityData sEntityData;
+		tEntity::tData sEntityData;
 		struct {
 			tSteer *pSteer;
 			tItemKind pInventory[VIKING_INVENTORY_SIZE];
@@ -34,7 +34,7 @@ struct tEntityVikingData {
 	};
 };
 
-static_assert(sizeof(tEntityVikingData) <= sizeof(tEntityData));
+static_assert(sizeof(tEntityVikingData) <= tEntity::tData::uwSize);
 
 void entityVikingSetSteer(tEntity *pEntityViking, tSteer *pSteer);
 
@@ -42,11 +42,13 @@ tVikingState entityVikingGetState(tEntity *pEntityViking);
 
 BYTE entityVikingGetFreeItemSlot(tEntity *pEntityViking);
 
-void entityVikingCreate(tEntity *pEntity, UWORD uwPosX, UWORD uwPosY);
+void entityVikingCreate(
+	tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwParam1, UWORD uwParam2
+);
 
-void entityVikingProcess(tEntity *pEntity);
+void entityVikingProcess(tEntity &Entity);
 
-void entityVikingDestroy(tEntity *pEntity);
+void entityVikingDestroy(tEntity &Entity);
 
 template<>
 struct tEntityLookup<tEntityVikingData> { static constexpr auto getKind() {return tEntityKind::Erik;} };

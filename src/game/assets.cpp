@@ -7,12 +7,18 @@
 void assetsGlobalCreate(void) {
 	g_pBobBmErik = bitmapCreateFromFile("data/erik.bm", 0);
 	g_pBobBmErikMask = bitmapCreateFromFile("data/erik_mask.bm", 0);
+	g_pBobBmHelpBox = bitmapCreateFromFile("data/help_box.bm", 0);
+	g_pBobBmMaskFull16 = bitmapCreateFromFile("data/mask_full_16.bm", 0);
 }
 
 void assetsGlobalDestroy(void) {
 	bitmapDestroy(g_pBobBmErik);
 	bitmapDestroy(g_pBobBmErikMask);
+
+	bitmapDestroy(g_pBobBmHelpBox);
+	bitmapDestroy(g_pBobBmMaskFull16);
 }
 
 // Global assets
 tBitMap *g_pBobBmErik, *g_pBobBmErikMask;
+tBitMap *g_pBobBmHelpBox, *g_pBobBmMaskFull16;

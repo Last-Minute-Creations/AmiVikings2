@@ -3,47 +3,50 @@
 #include <assets.hpp>
 
 void entityVikingSetSteer(tEntity *pEntity, tSteer *pSteer) {
-	auto *pData = pEntity->dataAs<tEntityVikingData>();
-	pData->pSteer = pSteer;
+	auto &Data = pEntity->dataAs<tEntityVikingData>();
+	Data.pSteer = pSteer;
 }
 
 #define ERIK_SIZE 32
 #define ERIK_OFFS_RIGHT 9
 #define ERIK_OFFS_LEFT 10
 
-void entityVikingCreate(tEntity *pEntity, UWORD uwPosX, UWORD uwPosY) {
-	auto *pData = pEntity->dataAs<tEntityVikingData>();
+void entityVikingCreate(
+	tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwParam1, UWORD uwParam2
+)
+{
+	auto &Data = Entity.dataAs<tEntityVikingData>();
 
-	pData->sPos.uwX = uwPosX;
-	pData->sPos.uwY = uwPosY;
-	pData->ubAnimFrameIdx = 0;
-	pData->ubSelectedSlot = 0;
+	Data.sPos.uwX = uwPosX;
+	Data.sPos.uwY = uwPosY;
+	Data.ubAnimFrameIdx = 0;
+	Data.ubSelectedSlot = 0;
 
 	for(UBYTE i = 0; i < VIKING_INVENTORY_SIZE; ++i) {
-		pData->pInventory[i] = tItemKind::None;
+		Data.pInventory[i] = tItemKind::None;
 	}
 
 	bobInit(
-		&pEntity->sBob, ERIK_SIZE, ERIK_SIZE, 1,
+		&Entity.sBob, ERIK_SIZE, ERIK_SIZE, 1,
 		bobCalcFrameAddress(g_pBobBmErik, 0), bobCalcFrameAddress(g_pBobBmErikMask, 0),
 		uwPosX, uwPosY
 	);
-	pData->eState = tVikingState::Alive;
-	pData->eMoveState = tMoveState::Falling;
+	Data.eState = tVikingState::Alive;
+	Data.eMoveState = tMoveState::Falling;
 }
 
-void entityVikingProcess(tEntity *pEntity) {
-	auto *pData = pEntity->dataAs<tEntityVikingData>();
+void entityVikingProcess(tEntity &Entity) {
+	auto &Data = Entity.dataAs<tEntityVikingData>();
 
-	tUwCoordYX sNewPos = {.ulYX = pData->sPos.ulYX};
+	tUwCoordYX sNewPos = {.ulYX = Data.sPos.ulYX};
 	BYTE bMovingX = 0;
 
-	if(pData->eMoveState == tMoveState::Falling) {
-		if(pData->pSteer) {
-			if(steerCheck(pData->pSteer, tSteerAction::Left)) {
+	if(Data.eMoveState == tMoveState::Falling) {
+		if(Data.pSteer) {
+			if(steerCheck(Data.pSteer, tSteerAction::Left)) {
 				bMovingX = -1;
 			}
-			if(steerCheck(pData->pSteer, tSteerAction::Right)) {
+			if(steerCheck(Data.pSteer, tSteerAction::Right)) {
 				bMovingX = 1;
 			}
 		}
@@ -58,21 +61,21 @@ void entityVikingProcess(tEntity *pEntity) {
 		else {
 			// Fell to the ground
 			sNewPos.uwY = uwMidTerrainPos - ERIK_SIZE;
-			pData->eMoveState = tMoveState::Walking;
-			pData->ubAnimFrameIdx = 0;
+			Data.eMoveState = tMoveState::Walking;
+			Data.ubAnimFrameIdx = 0;
 		}
 	}
-	else if(pData->eMoveState == tMoveState::Climbing) {
+	else if(Data.eMoveState == tMoveState::Climbing) {
 
 	}
-	else if(pData->eMoveState == tMoveState::Walking) {
+	else if(Data.eMoveState == tMoveState::Walking) {
 		// Check if it's possible to move left/right
 		UBYTE ubSpeedX = 4;
-		if(pData->pSteer) {
-			if(steerCheck(pData->pSteer, tSteerAction::Left)) {
+		if(Data.pSteer) {
+			if(steerCheck(Data.pSteer, tSteerAction::Left)) {
 				bMovingX = -ubSpeedX;
 			}
-			if(steerCheck(pData->pSteer, tSteerAction::Right)) {
+			if(steerCheck(Data.pSteer, tSteerAction::Right)) {
 				bMovingX = ubSpeedX;
 			}
 		}
@@ -95,9 +98,9 @@ void entityVikingProcess(tEntity *pEntity) {
 			sNewPos.uwY = uwMidTerrainPos - ERIK_SIZE;
 			uwBottomY = uwMidTerrainPos - 1;
 			if(bMovingX == 0) {
-				pData->ubAnimFrameIdx = 0;
+				Data.ubAnimFrameIdx = 0;
 				bobSetFrame(
-					&pEntity->sBob,
+					&Entity.sBob,
 					bobCalcFrameAddress(g_pBobBmErik, 17 * ERIK_SIZE),
 					bobCalcFrameAddress(g_pBobBmErikMask, 17 * ERIK_SIZE)
 				);
@@ -140,16 +143,16 @@ void entityVikingProcess(tEntity *pEntity) {
 			}
 			else {
 				bobSetFrame(
-					&pEntity->sBob,
-					bobCalcFrameAddress(g_pBobBmErik, pData->ubAnimFrameIdx * ERIK_SIZE),
-					bobCalcFrameAddress(g_pBobBmErikMask, pData->ubAnimFrameIdx * ERIK_SIZE)
+					&Entity.sBob,
+					bobCalcFrameAddress(g_pBobBmErik, Data.ubAnimFrameIdx * ERIK_SIZE),
+					bobCalcFrameAddress(g_pBobBmErikMask, Data.ubAnimFrameIdx * ERIK_SIZE)
 				);
-				pData->ubAnimFrameIdx = (pData->ubAnimFrameIdx + 1) & 7;
+				Data.ubAnimFrameIdx = (Data.ubAnimFrameIdx + 1) & 7;
 			}
 		}
 		else {
 			// Fall only if there's at least 1px gap between ground and char
-			pData->eMoveState = tMoveState::Falling;
+			Data.eMoveState = tMoveState::Falling;
 		}
 	}
 
@@ -227,26 +230,27 @@ void entityVikingProcess(tEntity *pEntity) {
 	// 	}
 	// }
 
-	pData->sPos.ulYX = sNewPos.ulYX;
+	entityCheckForCollisionsWith(Entity);
+	Data.sPos.ulYX = sNewPos.ulYX;
 	BYTE bFrameOffsX = -6;
-	pEntity->sBob.sPos.uwX = pData->sPos.uwX -10 + bFrameOffsX;
-	pEntity->sBob.sPos.uwY = pData->sPos.uwY;
-	bobPush(&pEntity->sBob);
+	Entity.sBob.sPos.uwX = Data.sPos.uwX -10 + bFrameOffsX;
+	Entity.sBob.sPos.uwY = Data.sPos.uwY;
+	bobPush(&Entity.sBob);
 }
 
-void entityVikingDestroy(tEntity *pEntity) {
+void entityVikingDestroy(tEntity &Entity) {
 
 }
 
 tVikingState entityVikingGetState(tEntity *pEntityViking) {
-	const auto *pVikingData = pEntityViking->dataAs<tEntityVikingData>();
-	return pVikingData->eState;
+	const auto &VikingData = pEntityViking->dataAs<tEntityVikingData>();
+	return VikingData.eState;
 }
 
 BYTE entityVikingGetFreeItemSlot(tEntity *pEntityViking) {
-	const auto *pVikingData = pEntityViking->dataAs<tEntityVikingData>();
+	const auto &VikingData = pEntityViking->dataAs<tEntityVikingData>();
 	for(UBYTE i = 0; i < 4; ++i) {
-		if(pVikingData->pInventory[i] == tItemKind::None) {
+		if(VikingData.pInventory[i] == tItemKind::None) {
 			return i;
 		}
 	}

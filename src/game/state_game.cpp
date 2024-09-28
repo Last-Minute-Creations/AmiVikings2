@@ -95,7 +95,7 @@ consteval auto generateCharToGlyph() {
 		CharToGlyphIndex.Data[i] = 0;
 	}
 	for(UBYTE i = 0; i < sizeof(GlyphIndexToChar); ++i) {
-		CharToGlyphIndex.Data[GlyphIndexToChar[i]] = i;
+		CharToGlyphIndex.Data[static_cast<UBYTE>(GlyphIndexToChar[i])] = i;
 	}
 
 	return CharToGlyphIndex;
@@ -260,8 +260,9 @@ static void stateGameCreate(void) {
 	// Init entities
 	s_eControllingPlayer = tPlayerIdx::First;
 	entityManagerReset();
-	tEntity *pPlayerEntity1 = entityManagerSpawnEntity(tEntityKind::Erik, 32, 32, 16, 16);
-	tEntity *pPlayerEntity2 = entityManagerSpawnEntity(tEntityKind::Erik, 64, 32, 16, 16);
+	tEntity *pPlayerEntity1 = entityManagerSpawnEntity(tEntityKind::Erik, 32, 32, 16, 16, 0, 0);
+	tEntity *pPlayerEntity2 = entityManagerSpawnEntity(tEntityKind::Erik, 64, 32, 16, 16, 0, 0);
+	entityManagerSpawnEntity(tEntityKind::InfoBox, 128, 104, 8, 8, 0x0024, 0x0106);
 
 	playerControllerSetVikingEntity(0, pPlayerEntity1);
 	playerControllerSetVikingEntity(1, pPlayerEntity2);

@@ -13,5 +13,6 @@ void assetsGlobalDestroy(void);
 
 // Global assets
 extern tBitMap *g_pBobBmErik, *g_pBobBmErikMask;
+extern tBitMap *g_pBobBmHelpBox, *g_pBobBmMaskFull16;
 
 #endif // INC_GAME_ASSETS_HPP

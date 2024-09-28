@@ -148,9 +148,9 @@ static void hudDrawItemSlot(UBYTE ubVikingIdx, UBYTE ubSlotIdx) {
 	tItemKind eItem;
 	UBYTE isSelected = 0;
 	if(pViking) {
-		const auto *pVikingData = pViking->dataAs<tEntityVikingData>();
-		eItem = pVikingData->pInventory[ubSlotIdx];
-		isSelected = pVikingData->ubSelectedSlot == ubSlotIdx;
+		const auto &VikingData = pViking->dataAs<tEntityVikingData>();
+		eItem = VikingData.pInventory[ubSlotIdx];
+		isSelected = VikingData.ubSelectedSlot == ubSlotIdx;
 	}
 	else {
 		eItem = tItemKind::None;
@@ -163,8 +163,8 @@ static void hudDrawPortrait(UBYTE ubIdx) {
 	tHudIcon eIcon = tHudIcon::ErikActive;
 	tEntity *pEntity = (tEntity*)playerControllerGetVikingByIndex(ubIdx);
 	if(pEntity) {
-		const auto *pVikingData = pEntity->dataAs<tEntityVikingData>();
-		if(pVikingData->eState == tVikingState::Alive) {
+		const auto &VikingData = pEntity->dataAs<tEntityVikingData>();
+		if(VikingData.eState == tVikingState::Alive) {
 			if(
 				pEntity != playerControllerGetVikingByPlayer(tPlayerIdx::First) &&
 				(!playerIsActive(tPlayerIdx::Second) || ubIdx != playerControllerGetVikingIndexByPlayer(tPlayerIdx::Second))
@@ -173,10 +173,10 @@ static void hudDrawPortrait(UBYTE ubIdx) {
 				eIcon = static_cast<tHudIcon>(enumValue(eIcon) + enumValue(tHudIcon::ErikInactive));
 			}
 		}
-		else if(pVikingData->eState == tVikingState::Dead) {
+		else if(VikingData.eState == tVikingState::Dead) {
 			eIcon = static_cast<tHudIcon>(enumValue(eIcon) + enumValue(tHudIcon::ErikDead));
 		}
-		else if(pVikingData->eState == tVikingState::Locked) {
+		else if(VikingData.eState == tVikingState::Locked) {
 			eIcon = tHudIcon::Locked;
 		}
 	}
@@ -208,7 +208,7 @@ static tEntity *hudProcessVikingCycling(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 		} while(
 			pNewViking == 0 ||
 			(playerIsActive(playerGetOther(ePlayerIdx)) && pNewViking == playerControllerGetVikingByPlayer(playerGetOther(ePlayerIdx))) ||
-			(pNewViking->dataAs<tEntityVikingData>())->eState != tVikingState::Alive
+			(pNewViking->dataAs<tEntityVikingData>()).eState != tVikingState::Alive
 		);
 	}
 
@@ -221,7 +221,7 @@ static tEntity *hudProcessVikingCycling(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 		} while(
 			pNewViking == 0 ||
 			(playerIsActive(playerGetOther(ePlayerIdx)) && pNewViking == playerControllerGetVikingByPlayer(playerGetOther(ePlayerIdx))) ||
-			(pNewViking->dataAs<tEntityVikingData>())->eState != tVikingState::Alive
+			(pNewViking->dataAs<tEntityVikingData>()).eState != tVikingState::Alive
 		);
 	}
 
@@ -329,14 +329,14 @@ void hudDestroy(void) {
 
 void hudReset(void) {
 	tEntity *pEntity1 = (tEntity*)playerControllerGetVikingByIndex(0);
-	auto *pVikingData1 = pEntity1->dataAs<tEntityVikingData>();
-	pVikingData1->pInventory[0] = tItemKind::Banana;
-	pVikingData1->pInventory[3] = tItemKind::Meatloaf;
+	auto &VikingData1 = pEntity1->dataAs<tEntityVikingData>();
+	VikingData1.pInventory[0] = tItemKind::Banana;
+	VikingData1.pInventory[3] = tItemKind::Meatloaf;
 
 	tEntity *pEntity2 = (tEntity*)playerControllerGetVikingByIndex(1);
-	auto *pVikingData2 = pEntity2->dataAs<tEntityVikingData>();
-	pVikingData2->pInventory[0] = tItemKind::Bomb;
-	pVikingData2->pInventory[1] = tItemKind::Garlic;
+	auto &VikingData2 = pEntity2->dataAs<tEntityVikingData>();
+	VikingData2.pInventory[0] = tItemKind::Bomb;
+	VikingData2.pInventory[1] = tItemKind::Garlic;
 
 	s_eHeldItem = tItemKind::None;
 	for(UBYTE i = 0; i < VIKING_ENTITY_MAX; ++i) {
@@ -363,8 +363,8 @@ void hudProcessInventory(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 			}
 			else {
 				tEntity *pTargetViking = playerControllerGetVikingByIndex(s_ubHeldItemOwner);
-				auto *pTargetVikingData = pTargetViking->dataAs<tEntityVikingData>();
-				pTargetVikingData->pInventory[s_ubHeldItemSlot] = s_eHeldItem;
+				auto &pTargetVikingData = pTargetViking->dataAs<tEntityVikingData>();
+				pTargetVikingData.pInventory[s_ubHeldItemSlot] = s_eHeldItem;
 				hudDrawItemSlot(s_ubHeldItemOwner, s_ubHeldItemSlot);
 			}
 			s_eHeldItem = tItemKind::None;
@@ -372,12 +372,12 @@ void hudProcessInventory(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 		else {
 			if(--s_ubBlinkCooldown == 0) {
 				tEntity *pViking = playerControllerGetVikingByPlayer(ePlayerIdx);
-				auto *pVikingData = pViking->dataAs<tEntityVikingData>();
+				auto &VikingData = pViking->dataAs<tEntityVikingData>();
 
 				tUbCoordYX sPos = s_pItemOffsets[s_ubHeldItemOwner][s_ubHeldItemSlot];
 				hudDrawItemAtPos(
 					s_ubIsBlinkShow ? s_eHeldItem : tItemKind::None,
-					sPos.ubX, sPos.ubY, pVikingData->ubSelectedSlot == s_ubHeldItemSlot
+					sPos.ubX, sPos.ubY, VikingData.ubSelectedSlot == s_ubHeldItemSlot
 				);
 				s_ubBlinkCooldown = HUD_ITEM_BLINK_COOLDOWN;
 				s_ubIsBlinkShow = !s_ubIsBlinkShow;
@@ -386,44 +386,44 @@ void hudProcessInventory(tPlayerIdx ePlayerIdx, tSteer *pSteer) {
 	}
 	else {
 		tEntity *pViking = hudProcessVikingCycling(ePlayerIdx, pSteer);
-		auto *pVikingData = pViking->dataAs<tEntityVikingData>();
+		auto &VikingData = pViking->dataAs<tEntityVikingData>();
 		UBYTE ubVikingIndex = playerControllerGetVikingIndexByPlayer(ePlayerIdx);
 
-		UBYTE ubPrevActiveSlot = pVikingData->ubSelectedSlot;
+		UBYTE ubPrevActiveSlot = VikingData.ubSelectedSlot;
 		if(steerUse(pSteer, tSteerAction::Right)) {
-			if(!(pVikingData->ubSelectedSlot & 1)) {
-				++pVikingData->ubSelectedSlot;
+			if(!(VikingData.ubSelectedSlot & 1)) {
+				++VikingData.ubSelectedSlot;
 			}
 		}
 		else if(steerUse(pSteer, tSteerAction::Left)) {
-			if((pVikingData->ubSelectedSlot & 1)) {
-				--pVikingData->ubSelectedSlot;
+			if((VikingData.ubSelectedSlot & 1)) {
+				--VikingData.ubSelectedSlot;
 			}
 		}
 		else if(steerUse(pSteer, tSteerAction::Down)) {
-			if(!(pVikingData->ubSelectedSlot & 2)) {
-				pVikingData->ubSelectedSlot += 2;
+			if(!(VikingData.ubSelectedSlot & 2)) {
+				VikingData.ubSelectedSlot += 2;
 			}
 		}
 		else if(steerUse(pSteer, tSteerAction::Up)) {
-			if((pVikingData->ubSelectedSlot & 2)) {
-				pVikingData->ubSelectedSlot -= 2;
+			if((VikingData.ubSelectedSlot & 2)) {
+				VikingData.ubSelectedSlot -= 2;
 			}
 		}
 
-		if(ubPrevActiveSlot != pVikingData->ubSelectedSlot) {
+		if(ubPrevActiveSlot != VikingData.ubSelectedSlot) {
 			hudDrawItemSlot(ubVikingIndex, ubPrevActiveSlot);
-			hudDrawItemSlot(ubVikingIndex, pVikingData->ubSelectedSlot);
+			hudDrawItemSlot(ubVikingIndex, VikingData.ubSelectedSlot);
 		}
 
 		if(steerUse(pSteer, tSteerAction::Ability1)) {
-			tItemKind eSelectedItem = pVikingData->pInventory[pVikingData->ubSelectedSlot];
+			tItemKind eSelectedItem = VikingData.pInventory[VikingData.ubSelectedSlot];
 			if(eSelectedItem != tItemKind::None) {
 				s_eHeldItem = eSelectedItem;
 				s_ubHeldItemOwner = ubVikingIndex;
-				s_ubHeldItemSlot = pVikingData->ubSelectedSlot;
-				pVikingData->pInventory[pVikingData->ubSelectedSlot] = tItemKind::None;
-				hudDrawItemSlot(ubVikingIndex, pVikingData->ubSelectedSlot);
+				s_ubHeldItemSlot = VikingData.ubSelectedSlot;
+				VikingData.pInventory[VikingData.ubSelectedSlot] = tItemKind::None;
+				hudDrawItemSlot(ubVikingIndex, VikingData.ubSelectedSlot);
 				s_ubBlinkCooldown = HUD_ITEM_BLINK_COOLDOWN;
 				s_ubIsBlinkShow = 1;
 			}
