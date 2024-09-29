@@ -22,11 +22,11 @@ void entityInfoBoxCreate(
 	UWORD uwParam1, UWORD uwMessageIndex
 );
 
-void entityInfoBoxProcess(tEntity &Entity);
+void entityInfoBoxProcess(tEntity &Self);
 
-void entityInfoBoxDestroy(tEntity &Entity);
+bool entityInfoBoxCollided(tEntity &Self, tEntity &Collider);
 
-bool entityInfoBoxCollided(tEntity &Entity, tEntity &Collider);
+void entityInfoBoxInteracted(tEntity &Self);
 
 template<>
 struct tEntityLookup<tEntityInfoBoxData> { static constexpr auto getKind() {return tEntityKind::InfoBox;} };

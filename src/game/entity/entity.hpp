@@ -8,6 +8,7 @@
 #include <ace/managers/bob.h>
 #include <lmc/array.hpp>
 #include "steer.hpp"
+#include "item.hpp"
 
 struct tEntity;
 
@@ -28,15 +29,19 @@ struct tEntityDef {
 		tEntity &Entity, UWORD uwPosX, UWORD uwPosY,
 		UWORD uwCenterX, UWORD uwCenterY, UWORD uwParam1, UWORD uwParam2
 	);
-	using tCbProcess = void (*)(tEntity &Entity);
-	using tCbDestroy = void (*)(tEntity &Entity);
-	using tCbCollided = bool(*)(tEntity &Entity, tEntity &Collided);
+	using tCbProcess = void (*)(tEntity &Self);
+	using tCbDestroy = void (*)(tEntity &Self);
+	using tCbCollided = bool (*)(tEntity &Self, tEntity &Collided);
+	using tCbInteracted = void (*)(tEntity &Self);
+	using tCbItemUsed = bool (*)(tEntity &Self, tItemKind eItemKind);
 
 	tEntityKind eKind; // for cast safety checks
 	tCbCreate cbCreate;
 	tCbProcess cbProcess;
 	tCbDestroy cbDestroy;
 	tCbCollided cbCollided;
+	tCbInteracted cbInteracted;
+	tCbItemUsed cbItemUsed;
 };
 
 template <typename T>
@@ -61,6 +66,10 @@ struct tEntity {
 
 		return *reinterpret_cast<T*>(this->Data.Data);
 	}
+
+	bool checkForCollisions();
+
+	void tryInteract();
 };
 
 void entityManagerReset(void);
@@ -69,6 +78,5 @@ tEntity *entityManagerSpawnEntity(
 	tEntityKind eKind, UWORD uwX, UWORD uwY, UWORD uwCenterX, UWORD uwCenterY,
 	UWORD uwParam1, UWORD uwParam2
 );
-bool entityCheckForCollisionsWith(tEntity &Entity);
 
 #endif // INC_GAME_ENTITY_ENTITY_HPP

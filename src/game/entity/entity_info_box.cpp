@@ -20,28 +20,30 @@ void entityInfoBoxCreate(
 	Data.uwMessageIndex = uwMessageIndex;
 }
 
-void entityInfoBoxProcess(tEntity &Entity)
+void entityInfoBoxProcess(tEntity &Self)
 {
-	bobPush(&Entity.sBob);
+	bobPush(&Self.sBob);
 }
 
-void entityInfoBoxDestroy(tEntity &Entity)
+bool entityInfoBoxCollided(tEntity &Self, tEntity &Collider)
 {
-
-}
-
-bool entityInfoBoxCollided(tEntity &Entity, tEntity &Collider)
-{
-	auto &Data = Entity.dataAs<tEntityInfoBoxData>();
+	auto &Data = Self.dataAs<tEntityInfoBoxData>();
 	if(!Data.isTriggeringOnCollision || Data.isTriggered) {
 		return false;
 	}
 
 	const auto &ColliderKind = Collider.pDef->eKind;
 	if(ColliderKind == tEntityKind::Erik) {
-		logWrite("Would display message %hu\n", Data.uwMessageIndex);
+		logWrite("Would auto-display message %hu\n", Data.uwMessageIndex);
 		Data.isTriggered = true;
 	}
 
 	return false;
+}
+
+void entityInfoBoxInteracted(tEntity &Self)
+{
+	auto &Data = Self.dataAs<tEntityInfoBoxData>();
+	logWrite("Would use-display message %hu\n", Data.uwMessageIndex);
+	Data.isTriggered = true;
 }

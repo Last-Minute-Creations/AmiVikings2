@@ -231,16 +231,16 @@ void entityVikingProcess(tEntity &Entity) {
 	// 	}
 	// }
 
-	entityCheckForCollisionsWith(Entity);
+	if(steerUse(Data.pSteer, tSteerAction::Interact)) {
+		Entity.tryInteract();
+	}
+
+	Entity.checkForCollisions();
 	Data.sPos.ulYX = sNewPos.ulYX;
 	BYTE bFrameOffsX = -6;
 	Entity.sBob.sPos.uwX = Data.sPos.uwX -10 + bFrameOffsX;
 	Entity.sBob.sPos.uwY = Data.sPos.uwY;
 	bobPush(&Entity.sBob);
-}
-
-void entityVikingDestroy(tEntity &Entity) {
-
 }
 
 tVikingState entityVikingGetState(tEntity *pEntityViking) {

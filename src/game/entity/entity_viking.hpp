@@ -49,8 +49,6 @@ void entityVikingCreate(
 
 void entityVikingProcess(tEntity &Entity);
 
-void entityVikingDestroy(tEntity &Entity);
-
 template<>
 struct tEntityLookup<tEntityVikingData> { static constexpr auto getKind() {return tEntityKind::Erik;} };
 

@@ -7,6 +7,7 @@
 #include <lmc/enum_value.hpp>
 #include <entity/entity_viking.hpp>
 #include <entity/entity_info_box.hpp>
+#include "entity.hpp"
 
 using namespace Lmc;
 
@@ -16,63 +17,79 @@ static const tEntityDef s_pEntityDefs[] = {
 	[enumValue(tEntityKind::Invalid)] = {
 		.eKind = tEntityKind::Invalid,
 		.cbCreate = nullptr, .cbProcess = nullptr, .cbDestroy = nullptr,
-		.cbCollided = nullptr
+		.cbCollided = nullptr, .cbInteracted = nullptr, .cbItemUsed = nullptr
 	},
 	[enumValue(tEntityKind::Erik)] = {
 		.eKind = tEntityKind::Erik,
 		.cbCreate = entityVikingCreate,
 		.cbProcess = entityVikingProcess,
-		.cbDestroy = entityVikingDestroy,
-		.cbCollided = nullptr
+		.cbDestroy = nullptr,
+		.cbCollided = nullptr,
+		.cbInteracted = nullptr,
+		.cbItemUsed = nullptr,
 	},
 	[enumValue(tEntityKind::Olaf)] = {
 		.eKind = tEntityKind::Olaf,
 		.cbCreate = entityVikingCreate,
 		.cbProcess = entityVikingProcess,
-		.cbDestroy = entityVikingDestroy,
-		.cbCollided = nullptr
+		.cbDestroy = nullptr,
+		.cbCollided = nullptr,
+		.cbInteracted = nullptr,
+		.cbItemUsed = nullptr,
 	},
 	[enumValue(tEntityKind::Baelog)] = {
 		.eKind = tEntityKind::Baelog,
 		.cbCreate = entityVikingCreate,
 		.cbProcess = entityVikingProcess,
-		.cbDestroy = entityVikingDestroy,
-		.cbCollided = nullptr
+		.cbDestroy = nullptr,
+		.cbCollided = nullptr,
+		.cbInteracted = nullptr,
+		.cbItemUsed = nullptr,
 	},
 	[enumValue(tEntityKind::Fang)] = {
 		.eKind = tEntityKind::Fang,
 		.cbCreate = nullptr,
 		.cbProcess = nullptr,
 		.cbDestroy = nullptr,
-		.cbCollided = nullptr
+		.cbCollided = nullptr,
+		.cbInteracted = nullptr,
+		.cbItemUsed = nullptr,
 	},
 	[enumValue(tEntityKind::Scorch)] = {
 		.eKind = tEntityKind::Scorch,
 		.cbCreate = nullptr,
 		.cbProcess = nullptr,
 		.cbDestroy = nullptr,
-		.cbCollided = nullptr
+		.cbCollided = nullptr,
+		.cbInteracted = nullptr,
+		.cbItemUsed = nullptr,
 	},
 	[enumValue(tEntityKind::Platform)] = {
 		.eKind = tEntityKind::Platform,
 		.cbCreate = nullptr,
 		.cbProcess = nullptr,
 		.cbDestroy = nullptr,
-		.cbCollided = nullptr
+		.cbCollided = nullptr,
+		.cbInteracted = nullptr,
+		.cbItemUsed = nullptr,
 	},
 	[enumValue(tEntityKind::Block)] = {
 		.eKind = tEntityKind::Block,
 		.cbCreate = nullptr,
 		.cbProcess = nullptr,
 		.cbDestroy = nullptr,
-		.cbCollided = nullptr
+		.cbCollided = nullptr,
+		.cbInteracted = nullptr,
+		.cbItemUsed = nullptr,
 	},
 	[enumValue(tEntityKind::InfoBox)] = {
 		.eKind = tEntityKind::InfoBox,
 		.cbCreate = entityInfoBoxCreate,
 		.cbProcess = entityInfoBoxProcess,
-		.cbDestroy = entityInfoBoxDestroy,
-		.cbCollided = entityInfoBoxCollided
+		.cbDestroy = nullptr,
+		.cbCollided = entityInfoBoxCollided,
+		.cbInteracted = entityInfoBoxInteracted,
+		.cbItemUsed = nullptr,
 	},
 };
 
@@ -125,25 +142,47 @@ tEntity *entityManagerSpawnEntity(
 	return 0;
 }
 
-bool entityCheckForCollisionsWith(tEntity &Entity)
+bool tEntity::checkForCollisions()
 {
 	bool isCollided = true;
 	for(UBYTE i = ENTITY_INSTANCE_MAX; i--;) {
 		auto &Other = s_pEntities[i];
-		if(&Other == &Entity || !Other.isValid()) {
+		if(&Other == this || !Other.isValid()) {
 			continue;
 		}
 
 		if (
-			Entity.sBob.sPos.uwX < Other.sBob.sPos.uwX + Other.sBob.uwWidth &&
-			Entity.sBob.sPos.uwX + Entity.sBob.uwWidth > Other.sBob.sPos.uwX &&
-			Entity.sBob.sPos.uwY < Other.sBob.sPos.uwY + Other.sBob.uwHeight &&
-			Entity.sBob.sPos.uwY + Entity.sBob.uwHeight > Other.sBob.sPos.uwY
+			this->sBob.sPos.uwX < Other.sBob.sPos.uwX + Other.sBob.uwWidth &&
+			this->sBob.sPos.uwX + this->sBob.uwWidth > Other.sBob.sPos.uwX &&
+			this->sBob.sPos.uwY < Other.sBob.sPos.uwY + Other.sBob.uwHeight &&
+			this->sBob.sPos.uwY + this->sBob.uwHeight > Other.sBob.sPos.uwY
 		) {
 			if(Other.pDef->cbCollided != nullptr) {
-				isCollided |= Other.pDef->cbCollided(Other, Entity);
+				isCollided |= Other.pDef->cbCollided(Other, *this);
 			}
 		}
 	}
 	return isCollided;
+}
+
+void tEntity::tryInteract()
+{
+	for(UBYTE i = ENTITY_INSTANCE_MAX; i--;) {
+		auto &Other = s_pEntities[i];
+		if(&Other == this || !Other.isValid()) {
+			continue;
+		}
+
+		if (
+			this->sBob.sPos.uwX < Other.sBob.sPos.uwX + Other.sBob.uwWidth &&
+			this->sBob.sPos.uwX + this->sBob.uwWidth > Other.sBob.sPos.uwX &&
+			this->sBob.sPos.uwY < Other.sBob.sPos.uwY + Other.sBob.uwHeight &&
+			this->sBob.sPos.uwY + this->sBob.uwHeight > Other.sBob.sPos.uwY
+		) {
+			if(Other.pDef->cbInteracted != nullptr) {
+				Other.pDef->cbInteracted(Other);
+				return;
+			}
+		}
+	}
 }
