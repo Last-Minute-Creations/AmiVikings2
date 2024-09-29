@@ -15,6 +15,7 @@
 #include <ace/utils/font.h>
 #include <ace/utils/string.h>
 #include <lmc/array.hpp>
+#include <lmc/span.hpp>
 #include <entity/entity_erik.hpp>
 #include "assets.hpp"
 #include "tile.hpp"
@@ -100,10 +101,10 @@ consteval auto generateCharToGlyph() {
 
 	tArray<UBYTE, 91> CharToGlyphIndex;
 	for(UBYTE i = 0; i < CharToGlyphIndex.uwSize; ++i) {
-		CharToGlyphIndex.Data[i] = 0;
+		CharToGlyphIndex.pData[i] = 0;
 	}
 	for(UBYTE i = 0; i < sizeof(GlyphIndexToChar); ++i) {
-		CharToGlyphIndex.Data[static_cast<UBYTE>(GlyphIndexToChar[i])] = i;
+		CharToGlyphIndex.pData[static_cast<UBYTE>(GlyphIndexToChar[i])] = i;
 	}
 
 	return CharToGlyphIndex;
@@ -179,34 +180,37 @@ static void drawTextLineAt(const char *szText, UWORD uwPosX, UWORD uwPosY) {
 
 	UBYTE ubTextLength = strlen(szText);
 	for(UBYTE ubX = 0; ubX < ubTextLength; ++ubX) {
-		drawGlyphAt(CharToGlyph.Data[(UBYTE)szText[ubX]], uwPosX + ubX * 8, uwPosY);
+		drawGlyphAt(CharToGlyph.pData[(UBYTE)szText[ubX]], uwPosX + ubX * 8, uwPosY);
 	}
 }
 
-static void drawMessageFrameAt(UBYTE ubBgColor, UBYTE ubBlockPosX, UBYTE ubBlockPosY, UBYTE ubLineCount, const char** pText) {
+static void drawMessageFrameAt(
+	UBYTE ubBgColor, UBYTE ubBlockPosX, UBYTE ubBlockPosY,
+	const tSpan<const char*> Lines
+) {
 	// TODO: character indicator: 10, 11
 	// 234
 	// 5 6
 	// 789
 	UWORD uwPosX = ubBlockPosX * 8;
 	UWORD uwPosY = ubBlockPosY * 8;
-	UBYTE ubTextWidth = strlen(pText[0]);
-	blitRect(s_pBufferMain->pScroll->pFront, uwPosX + 4, uwPosY + 6, (ubTextWidth + 2) * 8 - 4 - 3, (ubLineCount + 2) * 8 - 6 - 5, ubBgColor);
+	UBYTE ubTextWidth = strlen(Lines.pData[0]);
+	blitRect(s_pBufferMain->pScroll->pFront, uwPosX + 4, uwPosY + 6, (ubTextWidth + 2) * 8 - 4 - 3, (Lines.uwSize + 2) * 8 - 6 - 5, ubBgColor);
 	drawGlyphAt(2, uwPosX, uwPosY);
-	drawGlyphAt(7, uwPosX, uwPosY + (ubLineCount + 1) * 8);
+	drawGlyphAt(7, uwPosX, uwPosY + (Lines.uwSize + 1) * 8);
 	for(UBYTE i = 1; i < ubTextWidth + 1; ++i) {
 		drawGlyphAt(3, uwPosX + i * 8, uwPosY);
-		drawGlyphAt(8, uwPosX + i * 8, uwPosY + (ubLineCount + 1) * 8);
+		drawGlyphAt(8, uwPosX + i * 8, uwPosY + (Lines.uwSize + 1) * 8);
 	}
-	for(UBYTE i = 1; i < ubLineCount + 1; ++i) {
+	for(UBYTE i = 1; i < Lines.uwSize + 1; ++i) {
 		drawGlyphAt(5, uwPosX, uwPosY + i * 8);
 		drawGlyphAt(6, uwPosX + (ubTextWidth + 1) * 8, uwPosY + i * 8);
 	}
 	drawGlyphAt(4, uwPosX + (ubTextWidth + 1) * 8, uwPosY);
-	drawGlyphAt(9, uwPosX + (ubTextWidth + 1) * 8, uwPosY + (ubLineCount + 1) * 8);
+	drawGlyphAt(9, uwPosX + (ubTextWidth + 1) * 8, uwPosY + (Lines.uwSize + 1) * 8);
 
-	for(UBYTE ubY = 0; ubY < ubLineCount; ++ubY) {
-		drawTextLineAt(pText[ubY], uwPosX + 1 * 8, uwPosY + (ubY + 1) * 8);
+	for(UBYTE ubY = 0; ubY < Lines.uwSize; ++ubY) {
+		drawTextLineAt(Lines.pData[ubY], uwPosX + 1 * 8, uwPosY + (ubY + 1) * 8);
 	}
 }
 
@@ -386,16 +390,16 @@ static void substateInventoryLoop(void) {
 
 static void substateMessageCreate()
 {
-	UBYTE ubPosX = ((256/8 - 16)/2);
-	UBYTE ubPosY = (4);
 
-	static const char* pText[] = {
+	static const auto Lines = toArray({
 		"CAN YOU TAKE US ",
 		"TO THE BIG SHINY",
 		"METAL THING THAT",
 		"BROUGHT US HERE?",
-	};
-	drawMessageFrameAt(s_uwPendingMessageBgColor, ubPosX, ubPosY, 4, pText);
+	});
+	UBYTE ubPosX = (256/8 - strlen(Lines.pData[0]))/2;
+	UBYTE ubPosY = 4;
+	drawMessageFrameAt(s_uwPendingMessageBgColor, ubPosX, ubPosY, Lines);
 	s_uwPendingMessageId = 0;
 }
 
@@ -404,7 +408,10 @@ static void substateMessageLoop()
 	tSteer *pSteer = playerControllerGetSteer(s_eControllingPlayer);
 	steerUpdate(pSteer);
 
-	if(steerUse(pSteer, tSteerAction::Ability1)) {
+	if(
+		steerUse(pSteer, tSteerAction::Ability1) ||
+		steerUse(pSteer, tSteerAction::Interact)
+	) {
 		stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
 		return;
 	}
@@ -427,12 +434,12 @@ static void substatePauseCreate(void) {
 	// 	"          ",
 	// 	" YES   NO ",
 	// };
-	static const char* pText[] = {
+	static const auto Lines = toArray({
 		"GIVE UP?",
 		"        ",
 		"YES   NO",
-	};
-	drawMessageFrameAt(0, GIVE_UP_X, GIVE_UP_Y, 3, pText);
+	});
+	drawMessageFrameAt(0, GIVE_UP_X, GIVE_UP_Y, Lines);
 	s_ubPauseBlinkCooldown = 25;
 	s_isPauseBlinkDraw = 0;
 	s_isPauseYesSelected = 1;

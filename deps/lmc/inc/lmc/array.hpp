@@ -11,9 +11,19 @@ namespace Lmc {
 
 template<typename t_tValue, uint16_t t_uwSize>
 struct tArray {
-	t_tValue Data[t_uwSize];
+	t_tValue pData[t_uwSize];
 	static const uint16_t uwSize = t_uwSize;
 };
+
+template<typename t_tValue, uint16_t t_uwSize>
+consteval tArray<t_tValue, t_uwSize> toArray(t_tValue (&&PodArray)[t_uwSize]) {
+	tArray<t_tValue, t_uwSize> Out;
+	for(decltype(t_uwSize) i = 0; i < t_uwSize; ++i) {
+		Out.pData[i] = PodArray[i];
+	}
+
+	return Out;
+}
 
 } // namespace lmc
 

@@ -64,7 +64,7 @@ struct tEntity {
 		}
 #endif
 
-		return *reinterpret_cast<T*>(this->Data.Data);
+		return *reinterpret_cast<T*>(this->Data.pData);
 	}
 
 	bool checkForCollisions();
