@@ -9,4 +9,6 @@
 
 extern tState g_sStateGame;
 
+void gameSetPendingMessage(UWORD uwMessageId, UWORD uwBgColor);
+
 #endif // INC_GAME_STATE_GAME_HPP

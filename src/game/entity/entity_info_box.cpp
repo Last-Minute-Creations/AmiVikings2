@@ -1,10 +1,11 @@
 #include <entity/entity_info_box.hpp>
 #include "assets.hpp"
 #include "entity_info_box.hpp"
+#include "state_game.hpp"
 
 void entityInfoBoxCreate(
 	tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwCenterX, UWORD uwCenterY,
-	UWORD uwParam1, UWORD uwMessageIndex
+	UWORD uwParam1, UWORD uwMessageId
 )
 {
 	bobInit(
@@ -17,7 +18,7 @@ void entityInfoBoxCreate(
 	auto &Data = Entity.dataAs<tEntityInfoBoxData>();
 	Data.isTriggered = false;
 	Data.isTriggeringOnCollision = true; // todo
-	Data.uwMessageIndex = uwMessageIndex;
+	Data.uwMessageId = uwMessageId;
 }
 
 void entityInfoBoxProcess(tEntity &Self)
@@ -34,7 +35,7 @@ bool entityInfoBoxCollided(tEntity &Self, tEntity &Collider)
 
 	const auto &ColliderKind = Collider.pDef->eKind;
 	if(ColliderKind == tEntityKind::Erik) {
-		logWrite("Would auto-display message %hu\n", Data.uwMessageIndex);
+		gameSetPendingMessage(Data.uwMessageId, 0);
 		Data.isTriggered = true;
 	}
 
@@ -44,6 +45,6 @@ bool entityInfoBoxCollided(tEntity &Self, tEntity &Collider)
 void entityInfoBoxInteracted(tEntity &Self)
 {
 	auto &Data = Self.dataAs<tEntityInfoBoxData>();
-	logWrite("Would use-display message %hu\n", Data.uwMessageIndex);
+	gameSetPendingMessage(Data.uwMessageId, 0);
 	Data.isTriggered = true;
 }

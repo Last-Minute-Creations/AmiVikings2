@@ -31,6 +31,8 @@ static void substatePlayLoop(void);
 static void substateInventoryLoop(void);
 static void substatePauseCreate(void);
 static void substatePauseLoop(void);
+static void substateMessageCreate(void);
+static void substateMessageLoop(void);
 
 static tView *s_pView;
 static tVPort *s_pVpMain;
@@ -44,16 +46,22 @@ static auto s_sGameSubstatePlay = tState::empty()
 	.withLoop(substatePlayLoop);
 static auto s_sGameSubstateInventory = tState::empty()
 	.withLoop(substateInventoryLoop);
+static tState s_sGameSubstateMessage = tState::empty()
+	.withCreate(substateMessageCreate)
+	.withLoop(substateMessageLoop);
 static tState s_sGameSubstatePause = tState::empty()
+	.withCreate(substatePauseCreate)
 	.withLoop(substatePauseLoop);
 tStateManager *s_pGameSubstateMachine;
 static tPlayerIdx s_eControllingPlayer;
 
 static tBitMap *s_pFont;
 static tBitMap *s_pFontMask;
+static UWORD s_uwPendingMessageId;
+static UWORD s_uwPendingMessageBgColor;
 
 // [y][x]
-static UBYTE s_pTilesStrt[][32] = {
+static const UBYTE s_pTilesStrt[][32] = {
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 2, 3, 1, 1, 1, 1, 1},
@@ -254,8 +262,16 @@ static void stateGameCreate(void) {
 
 
 	for(UBYTE i = 0; i < BOB_COUNT; ++i) {
-		bobInit(&s_pBobs[i], 32, 32, 1, bobCalcFrameAddress(g_pBobBmErik, 0), bobCalcFrameAddress(g_pBobBmErikMask, 0), 32 + 48 * (i + 1), 32);
+		bobInit(
+			&s_pBobs[i], 32, 32, 1,
+			bobCalcFrameAddress(g_pBobBmErik, 0),
+			bobCalcFrameAddress(g_pBobBmErikMask, 0),
+			32 + 48 * (i + 1), 32
+		);
 	}
+
+	s_uwPendingMessageId = 0;
+	s_uwPendingMessageBgColor = 0;
 
 	// Init entities
 	s_eControllingPlayer = tPlayerIdx::First;
@@ -325,6 +341,11 @@ static void substatePlayLoop(void) {
 			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePause);
 			return;
 		}
+		if(s_uwPendingMessageId != 0) {
+			s_eControllingPlayer = ePlayerIdx;
+			stateChange(s_pGameSubstateMachine, &s_sGameSubstateMessage);
+			return;
+		}
 
 		tEntity *pActiveEntity = hudProcessPlay(ePlayerIdx, pSteer);
 		if(pActiveEntity) {
@@ -361,6 +382,32 @@ static void substateInventoryLoop(void) {
 	}
 
 	hudProcessInventory(s_eControllingPlayer, pSteer);
+}
+
+static void substateMessageCreate()
+{
+	UBYTE ubPosX = ((256/8 - 16)/2);
+	UBYTE ubPosY = (4);
+
+	static const char* pText[] = {
+		"CAN YOU TAKE US ",
+		"TO THE BIG SHINY",
+		"METAL THING THAT",
+		"BROUGHT US HERE?",
+	};
+	drawMessageFrameAt(s_uwPendingMessageBgColor, ubPosX, ubPosY, 4, pText);
+	s_uwPendingMessageId = 0;
+}
+
+static void substateMessageLoop()
+{
+	tSteer *pSteer = playerControllerGetSteer(s_eControllingPlayer);
+	steerUpdate(pSteer);
+
+	if(steerUse(pSteer, tSteerAction::Ability1)) {
+		stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
+		return;
+	}
 }
 
 static UBYTE s_ubPauseBlinkCooldown;
@@ -472,3 +519,9 @@ tState g_sStateGame = tState::empty()
 	.withCreate(stateGameCreate)
 	.withLoop(stateGameLoop)
 	.withDestroy(stateGameDestroy);
+
+void gameSetPendingMessage(UWORD uwMessageId, UWORD uwBgColor)
+{
+	s_uwPendingMessageId = uwMessageId;
+	s_uwPendingMessageBgColor = uwBgColor;
+}
