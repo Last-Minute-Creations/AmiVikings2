@@ -1,12 +1,12 @@
 Level load:
-	☐ Extract slope collision data from ROM
-	☐ Extract tiles from ROM
-	☐ Load tiles in game
+	✔ Extract tiles from ROM @done(24-10-02)
+	✔ Load tiles in game @done(24-10-02)
 	☐ Load tilemap in game
+		☐ Load tile front/back placement data
 	☐ Load entities in game
 	☐ Load palette cycling in game
-	☐
 	☐ Use same attribute values for collision as the original
+	☐ Extract slope collision data from ROM
 
 Mechanics for Vikings:
 	✔ Collision with terrain @done(21-11-27)

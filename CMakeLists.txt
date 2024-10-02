@@ -83,10 +83,12 @@ if(AMIGA AND BUILD_GAME)
 			assets/extracted/converted/hud_items.png
 			assets/extracted/converted/hud_portraits.png
 			assets/extracted/converted/hud_border.png
+			assets/extracted/converted/tiles_w1.png
 		INTERLEAVED EHB DESTINATIONS # TODO: remove EHB flag, store 4bpp bitmaps
 			${DATA_DIR}/hud_items.bm
 			${DATA_DIR}/hud_portraits.bm
 			${DATA_DIR}/hud_border.bm
+			${DATA_DIR}/tiles_w1.bm
 	)
 	convertBitmaps(
 		TARGET ${LV2_EXECUTABLE} PALETTE ${HUD_PLT} MASK_COLOR "#000000"
@@ -114,13 +116,6 @@ if(AMIGA AND BUILD_GAME)
 	file(COPY tmp/aminer.plt DESTINATION ${DATA_DIR})
 	file(COPY tmp/vikings.plt DESTINATION ${DATA_DIR})
 	convertBitmaps(
-		TARGET ${LV2_EXECUTABLE} PALETTE ${DATA_DIR}/aminer.plt INTERLEAVED
-		SOURCES
-			tmp/tiles.png
-		DESTINATIONS
-			${DATA_DIR}/tiles.bm
-	)
-	convertBitmaps(
 		TARGET ${LV2_EXECUTABLE} PALETTE ${DATA_DIR}/vikings.plt EHB INTERLEAVED
 		MASK_COLOR "#FF00FF"
 		SOURCES
@@ -132,5 +127,4 @@ if(AMIGA AND BUILD_GAME)
 			${DATA_DIR}/erik_mask.bm ${DATA_DIR}/baelog_mask.bm ${DATA_DIR}/olaf_mask.bm
 			${DATA_DIR}/fang_mask.bm ${DATA_DIR}/scorch_mask.bm
 	)
-
 endif()

@@ -28,6 +28,12 @@ using namespace Lmc;
 #define MAIN_BPP 6
 #define BOB_COUNT 4
 
+// BUDGET:
+// tiles: 700 16x16 6bpp: 131KB
+// viking: 70KB one-side, 140KB two-side, 3x: 421KB, masked: 842KB
+// items: 13,5KB
+// font: 7,5KB
+
 static void substatePlayLoop(void);
 static void substateInventoryLoop(void);
 static void substatePauseCreate(void);
@@ -226,7 +232,7 @@ static void stateGameCreate(void) {
 		TAG_VIEW_WINDOW_HEIGHT, 224,
 	TAG_END);
 
-	s_pTileset = bitmapCreateFromFile("data/tiles.bm", 0);
+	s_pTileset = bitmapCreateFromFile("data/tiles_w1.bm", 0);
 	s_pFont = bitmapCreateFromFile("data/font.bm", 0);
 	s_pFontMask = bitmapCreateFromFile("data/font_mask.bm", 0);
 

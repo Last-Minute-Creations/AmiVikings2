@@ -138,6 +138,17 @@ std::vector<std::shared_ptr<tChunkyBitmap>> extractTiles(
 	return vTiles;
 }
 
+std::vector<std::shared_ptr<tChunkyBitmap>> extractIndexedTiles(
+	tAssetBytes vDataRaw, uint8_t ubBpp
+)
+{
+	static const tPalette PaletteIndexed({
+		tRgb(0), tRgb(1), tRgb(2), tRgb(3), tRgb(4), tRgb(5), tRgb(6), tRgb(7),
+		tRgb(8), tRgb(9), tRgb(10), tRgb(11), tRgb(12), tRgb(13), tRgb(14), tRgb(15)
+	});
+	return extractTiles(vDataRaw, ubBpp, PaletteIndexed);
+}
+
 //------------------------------------------------------ ASSET PROCESS CALLBACKS
 
 // void handleExtractTileset(
@@ -214,7 +225,7 @@ static tAssetBytes extractAsset(std::ifstream &FileRom, uint32_t ulOffsStart, ui
 static tAssetBytes decompressAsset(tAssetBytes vAssetData) {
 	uint16_t uwReadPos = 0;
 
-	auto readU8 = [&uwReadPos, &vAssetData]() -> std::uint16_t {
+	auto readU8 = [&uwReadPos, &vAssetData]() -> std::uint8_t {
 		std::uint8_t ubValue = vAssetData[uwReadPos++];
 		return ubValue;
 	};
@@ -461,6 +472,100 @@ std::vector<std::shared_ptr<tChunkyBitmap>> composeTiles(
 	return vMerged;
 }
 
+std::vector<std::array<std::uint16_t, 4>> extractTileDefs(tAssetBytes Bytes)
+{
+	std::vector<std::array<std::uint16_t, 4>> TileDefs;
+	auto EntrySize = 4 * sizeof(std::uint16_t);
+	auto DefCount = Bytes.size() / EntrySize;
+	for(auto i = 0; i < DefCount; ++i) {
+		auto TileDef = std::to_array({
+			static_cast<std::uint16_t>(Bytes[i * EntrySize + 0] | (Bytes[i * EntrySize + 1] << 8)),
+			static_cast<std::uint16_t>(Bytes[i * EntrySize + 2] | (Bytes[i * EntrySize + 3] << 8)),
+			static_cast<std::uint16_t>(Bytes[i * EntrySize + 4] | (Bytes[i * EntrySize + 5] << 8)),
+			static_cast<std::uint16_t>(Bytes[i * EntrySize + 6] | (Bytes[i * EntrySize + 7] << 8)),
+		});
+		TileDefs.push_back(TileDef);
+	}
+
+	return TileDefs;
+}
+
+tChunkyBitmap mirrorBitmap(const tChunkyBitmap &Source, bool isUpDown)
+{
+	tChunkyBitmap Dst(Source.m_uwWidth, Source.m_uwHeight);
+	if(isUpDown) {
+		for(auto X = 0; X < Source.m_uwWidth; ++X) {
+			for(auto Y = 0; Y < Source.m_uwHeight; ++Y) {
+				Dst.pixelAt(X, Y) = Source.pixelAt(X, (Source.m_uwHeight - 1) - Y);
+			}
+		}
+	}
+	else {
+		for(auto X = 0; X < Source.m_uwWidth; ++X) {
+			for(auto Y = 0; Y < Source.m_uwHeight; ++Y) {
+				Dst.pixelAt(X, Y) = Source.pixelAt((Source.m_uwWidth - 1) - X, Y);
+			}
+		}
+	}
+	return Dst;
+}
+
+void composeMinitile(
+	tChunkyBitmap &Tile,
+	const std::vector<std::shared_ptr<tChunkyBitmap>> &vMinitiles,
+	std::uint16_t uwTileDef, std::uint8_t ubOffsX, std::uint8_t ubOffsY,
+	const tPalette &Palette
+)
+{
+	constexpr auto MinitileIndexMaskSize = 10;
+	constexpr std::uint16_t uwMinitileIndexMask = (1 << MinitileIndexMaskSize) - 1;
+	constexpr auto MinitileAttributeBitFlipX = 5;
+	constexpr auto MinitileAttributeBitFlipY = 4;
+	constexpr auto MinitileAttributeBitFront = 3;
+	constexpr std::uint8_t ubAttributePaletteMask = 0b111; // using here 0b1111 yields bad data
+
+	auto Index = uwTileDef & uwMinitileIndexMask;
+	auto Attribute = uwTileDef >> MinitileIndexMaskSize;
+	auto Palette_index = Attribute & ubAttributePaletteMask;
+	auto &Minitile_data = vMinitiles[Index];
+
+	auto Minitile = *vMinitiles[Index];
+	if((Attribute & (1 << (MinitileAttributeBitFlipY))) != 0) {
+			Minitile = mirrorBitmap(Minitile, false);
+	}
+	if((Attribute & (1 << (MinitileAttributeBitFlipX))) != 0) {
+			Minitile = mirrorBitmap(Minitile, true);
+	}
+	bool IsFront = ((Attribute & (1 << (MinitileAttributeBitFront))) != 0);
+	Minitile.copyRect(0, 0, Tile, ubOffsX, ubOffsY, 8, 8);
+
+	// TODO: use colors from level palette, convert colors later on
+	for(std::uint8_t ubY = 0; ubY < 8; ++ubY) {
+		for(std::uint8_t ubX = 0; ubX < 8; ++ubX) {
+			Tile.pixelAt(ubOffsX + ubX, ubOffsY + ubY) = Palette.m_vColors[Tile.pixelAt(ubOffsX + ubX, ubOffsY + ubY).ubB];
+		}
+	}
+}
+
+std::vector<std::shared_ptr<tChunkyBitmap>> composeWorldTiles(
+	const std::vector<std::shared_ptr<tChunkyBitmap>> &vMiniTiles,
+	const std::vector<std::array<std::uint16_t, 4>> &TileDefs,
+	const tPalette &Palette
+)
+{
+	std::vector<std::shared_ptr<tChunkyBitmap>> worldTiles;
+	for(const auto &TileDef: TileDefs) {
+		auto Tile = std::make_shared<tChunkyBitmap>(16, 16);
+		composeMinitile(*Tile, vMiniTiles, TileDef[0], 0, 0, Palette);
+		composeMinitile(*Tile, vMiniTiles, TileDef[1], 8, 0, Palette);
+		composeMinitile(*Tile, vMiniTiles, TileDef[2], 0, 8, Palette);
+		composeMinitile(*Tile, vMiniTiles, TileDef[3], 8, 8, Palette);
+		worldTiles.push_back(Tile);
+	}
+
+	return worldTiles;
+}
+
 std::vector<std::shared_ptr<tChunkyBitmap>> remapTiles(
 	const std::vector<std::shared_ptr<tChunkyBitmap>> &vTiles,
 	std::span<const std::uint16_t> RemapIndices
@@ -580,9 +685,14 @@ void convertAssets(
 		decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("interact_help_box")]),
 		4, PaletteHud
 	), 2, 2).front()->toPng(ConvertedAssetPath + "/help_box.png");
+
+	auto tileDefsWorld1 = extractTileDefs(decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("tiledef_w1")]));
+	auto miniTilesWorld1 = extractIndexedTiles(decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("tileset_w1")]), 4);
+	auto tilesWorld1 = composeWorldTiles(miniTilesWorld1, tileDefsWorld1, PaletteHud);
+	writeTilesToPng(tilesWorld1, ConvertedAssetPath + "/tiles_w1.png");
 }
 
-}
+} // namespace AmiLostVikings2::AssetExtract
 
 using namespace AmiLostVikings2::AssetExtract;
 
