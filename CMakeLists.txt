@@ -37,6 +37,7 @@ endif()
 
 # game
 if(AMIGA AND BUILD_GAME)
+	set(ACE_TILEBUFFER_TILE_TYPE UWORD)
 	add_subdirectory(deps/ace)
 	add_subdirectory(deps/lmc)
 

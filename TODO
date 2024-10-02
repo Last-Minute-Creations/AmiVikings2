@@ -1,13 +1,28 @@
-Reverse engineering:
-	☐ Tilemaps
-	☐ Map collisions
+Level load:
+	☐ Extract slope collision data from ROM
+	☐ Extract tiles from ROM
+	☐ Load tiles in game
+	☐ Load tilemap in game
+	☐ Load entities in game
+	☐ Load palette cycling in game
+	☐
+	☐ Use same attribute values for collision as the original
 
 Mechanics for Vikings:
-	✔ Collision with terrain @done(21-11-27 21:37)
-	✔ Walking across slopes @done(24-06-12 16:46)
+	✔ Collision with terrain @done(21-11-27)
+	✔ Walking across slopes @done(24-06-12)
+	☐ Flipped frames
 	☐ Climbing
 	☐ Fall damage
-	☐ Elevators - collision with platform, collision with ceiling while moving up, collision with terrain while moving down
+	☐ Lifts
+		☐ movement across the track
+		☐ (lack of) collision with platform
+			☐ up
+			☐ down
+			☐ left
+			☐ right
+		☐ collision with ceiling while moving up
+		☐ collision with terrain while moving down
 	☐ Steerable elevators
 	☐ Jumpy swings
 	☐ Weighted elevators
@@ -33,12 +48,14 @@ Mechanics for Baelog:
 Mechanics for Olaf:
 	☐ Shield left-right
 	☐ Shield top
+	☐ Platforming other viking
 	☐ Gliding
 	☐ Farting
 	☐ Minimizing
 
 Mechanics for Fang:
-	☐ Climb-jump
+	☐ Jump
+	☐ Attaching to walls
 	☐ Claw slash
 
 Mechanics for Scorch:
@@ -47,13 +64,14 @@ Mechanics for Scorch:
 	☐ Fireball
 
 Misc mechanics:
+	✔ Help blocks - onInteract(this) @done(24-10-02)
+	✔ Displaying text @done(24-10-02)
+	✔ Inventory management @done(24-10-02)
 	☐ Using buttons - onInteract(this)
 	☐ Using switches - onInteract(this)
 	☐ Talking with NPCS - onInteract(this)
-	☐ Help blocks - onInteract(this)
 	☐ Events on entering location - first help panel, kid talk, first Fang/Scorch encounter
 	☐ Getting out of levels
-	☐ Displaying text
 	☐ Detonating blocks
 	☐ Bombs
 	☐ Darkness and torch
