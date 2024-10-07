@@ -66,23 +66,8 @@ static tBitMap *s_pFont;
 static tBitMap *s_pFontMask;
 static UWORD s_uwPendingMessageId;
 static UWORD s_uwPendingMessageBgColor;
-
-// [y][x]
-static const UBYTE s_pTilesStrt[][32] = {
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 2, 3, 1, 1, 1, 1, 1},
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 5, 4, 5, 1, 1, 6, 7, 1},
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 8, 9, 8, 9, 1, 1, 10, 11, 1},
-	{12, 13, 14, 15, 16, 17, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 18, 19, 20, 21, 20, 21, 22, 23, 24, 25, 26},
-	{27, 28, 29, 30, 31, 32, 19, 33, 34, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 35, 36, 37, 36, 37, 38, 37, 36, 39, 40, 36},
-	{37, 36, 36, 37, 36, 37, 36, 37, 36, 41, 42, 43, 1, 1, 1, 1, 1, 1, 44, 45, 46, 47, 48, 49, 50, 49, 48, 50, 51, 52, 53, 48},
-	{50, 49, 50, 48, 50, 49, 50, 50, 48, 54, 55, 56, 57, 58, 14, 15, 1, 18, 59, 60, 61, 48, 50, 62, 63, 64, 65, 66, 67, 68, 69, 48},
-	{48, 50, 48, 62, 51, 70, 71, 53, 48, 48, 50, 72, 41, 73, 29, 30, 19, 35, 74, 48, 50, 75, 50, 49, 76, 77, 78, 50, 50, 79, 69, 62},
-	{50, 66, 53, 50, 69, 68, 80, 81, 52, 63, 64, 48, 54, 55, 37, 37, 36, 47, 49, 62, 65, 71, 66, 53, 48, 50, 51, 70, 82, 65, 83, 48},
-	{84, 85, 86, 87, 71, 52, 48, 50, 63, 88, 77, 50, 75, 48, 50, 50, 62, 78, 50, 48, 50, 89, 51, 67, 50, 49, 69, 49, 90, 91, 92, 48},
-	{93, 49, 48, 94, 89, 50, 49, 48, 76, 77, 50, 68, 81, 53, 49, 48, 50, 49, 49, 50, 49, 69, 81, 70, 53, 50, 95, 96, 97, 50, 49, 50},
-};
+static UWORD s_uwMapTileWidth;
+static UWORD s_uwMapTileHeight;
 
 consteval auto generateCharToGlyph() {
 	const char GlyphIndexToChar[] = {
@@ -119,33 +104,40 @@ consteval auto generateCharToGlyph() {
 static void loadMap(void) {
 	tileReset();
 
-	for(UBYTE y = 0; y < 13; ++y) {
-		for(UBYTE x = 0; x < 32; ++x) {
-			UBYTE ubTileIdx = s_pTilesStrt[y][x] - 1;
-			s_pBufferMain->pTileData[x][y] = ubTileIdx;
-			if(
-				(35 <= ubTileIdx && ubTileIdx <= 39) || ubTileIdx == 54 ||
-				ubTileIdx == 71 || ubTileIdx == 46 || ubTileIdx == 73 ||
-				ubTileIdx == 59
-			) {
+	systemUse();
+	auto *pFileTilemap = fileOpen("data/tilemap_w1_a0.dat", "rb");
+	fileRead(pFileTilemap, &s_uwMapTileWidth, sizeof(s_uwMapTileWidth));
+	fileRead(pFileTilemap, &s_uwMapTileHeight, sizeof(s_uwMapTileHeight));
+
+	for(UBYTE y = 0; y < s_uwMapTileHeight; ++y) {
+		for(UBYTE x = 0; x < s_uwMapTileWidth; ++x) {
+			constexpr UBYTE ubTileIndexMaskSize = 10;
+			constexpr UWORD uwTileIndexMask = (1 << ubTileIndexMaskSize) - 1;
+
+			UWORD uwTileData;
+			fileRead(pFileTilemap, &uwTileData, sizeof(uwTileData));
+			s_pBufferMain->pTileData[x][y] = uwTileData & uwTileIndexMask;
+
+			UBYTE ubAttribute = uwTileData >> ubTileIndexMaskSize;
+			if(ubAttribute == 0x01) {
 				tileSetType(x, y, tTile::FloorFlat);
 			}
-			else if(ubTileIdx == 40) {
+			else if(ubAttribute == 0x32) {
 				tileSetType(x, y, tTile::FloorRamp22DownA);
 			}
-			else if(ubTileIdx == 41 || ubTileIdx == 72) {
+			else if(ubAttribute == 0x33) {
 				tileSetType(x, y, tTile::FloorRamp22DownB);
 			}
-			else if(ubTileIdx == 55) {
+			else if(ubAttribute == 0x30) {
 				tileSetType(x, y, tTile::FloorRamp45Down);
 			}
-			else if(ubTileIdx == 34 || ubTileIdx == 58) {
+			else if(ubAttribute == 0x31) {
 				tileSetType(x, y, tTile::FloorRamp45Up);
 			}
-			else if(ubTileIdx == 44) {
+			else if(ubAttribute == 0x35) {
 				tileSetType(x, y, tTile::FloorRamp22UpA);
 			}
-			else if(ubTileIdx == 45) {
+			else if(ubAttribute == 0x34) {
 				tileSetType(x, y, tTile::FloorRamp22UpB);
 			}
 			else {
@@ -153,7 +145,10 @@ static void loadMap(void) {
 			}
 		}
 	}
-	cameraReset(s_pBufferMain->pCamera, 0, 0, 32*16, 13 * 16, 1);
+	fileClose(pFileTilemap);
+	systemUnuse();
+
+	cameraReset(s_pBufferMain->pCamera, 0, 0, s_uwMapTileWidth*16, s_uwMapTileHeight * 16, 1);
 }
 
 static void onTileDraw(

@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef AMILOSTVIKINGS2_ASSET_EXTRACT_ROM_METADATA_HPP
-#define AMILOSTVIKINGS2_ASSET_EXTRACT_ROM_METADATA_HPP
+#ifndef INC_AMILOSTVIKINGS2_ASSET_EXTRACT_ROM_METADATA_HPP
+#define INC_AMILOSTVIKINGS2_ASSET_EXTRACT_ROM_METADATA_HPP
 
 #include <algorithm>
 #include <array>
@@ -49,4 +49,4 @@ extern const tRomMetadata g_PalRomMetadata;
 } // namespace AmiLostVikings2::AssetExtract
 
 
-#endif // AMILOSTVIKINGS2_ASSET_EXTRACT_ROM_METADATA_HPP
+#endif // INC_AMILOSTVIKINGS2_ASSET_EXTRACT_ROM_METADATA_HPP

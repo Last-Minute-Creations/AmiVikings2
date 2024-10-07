@@ -16,6 +16,7 @@ SET(BUILD_GAME ON)
 if(BUILD_ASSET_EXTRACT)
 	#fmt
 	add_subdirectory(deps/fmt)
+	add_subdirectory(deps/lv2)
 	target_include_directories(fmt PUBLIC ${fmt_INCLUDE_DIRS})
 
 	# Asset-extracting tool
@@ -77,6 +78,7 @@ if(AMIGA AND BUILD_GAME)
 	# Semi-final assets
 	set(HUD_PLT assets/extracted/converted/hud.plt)
 	file(COPY ${HUD_PLT} DESTINATION ${DATA_DIR})
+	file(COPY  assets/extracted/converted/tilemap_w1_a0.dat DESTINATION ${DATA_DIR})
 	convertBitmaps(
 		TARGET ${LV2_EXECUTABLE} PALETTE ${HUD_PLT}
 		SOURCES

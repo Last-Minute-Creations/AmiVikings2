@@ -530,13 +530,22 @@ def compose(level_def_index: int, is_display: bool):
                             tile_index = value & tile_index_mask
                             tile_attribute = value >> 10
                             if background_tilemap != None:
-                                level_background.paste(tiles[background_tilemap[x % background_width][y % background_height]], [x * (tile_size + tile_separation), y * (tile_size + tile_separation)])
+                                level_background.paste(
+                                    tiles[background_tilemap[x % background_width][y % background_height]],
+                                    [x * (tile_size + tile_separation), y * (tile_size + tile_separation)]
+                                )
                             if tiles != None:
                                 level_preview.paste(tiles[tile_index], [x * (tile_size + tile_separation), y * (tile_size + tile_separation)])
                                 tile_index_color = (0, 0, 255, 192) if front_tiles[tile_index] > 0 else (128, 128, 0, 192)
-                                # annotate_context.text([x * (tile_size + tile_separation), y * (tile_size + tile_separation) - 2], f"{tile_index:02X}", font = fnt, fill = tile_index_color)
-                                # if tile_attribute != 0:
-                                #     annotate_context.text([x * (tile_size + tile_separation), y * (tile_size + tile_separation) - 2 + 8], "{:02X}".format(tile_attribute), font=fnt, fill=(255, 128, 0, 192))
+                                annotate_context.text(
+                                    [x * (tile_size + tile_separation), y * (tile_size + tile_separation) - 2],
+                                    f"{tile_index:02X}", font = fnt, fill = tile_index_color
+                                )
+                                if tile_attribute != 0:
+                                    annotate_context.text(
+                                        [x * (tile_size + tile_separation), y * (tile_size + tile_separation) - 2 + 8],
+                                        "{:02X}".format(tile_attribute), font=fnt, fill=(255, 128, 0, 192)
+                                    )
                             else:
                                 tile_image = Image.new("RGBA", [tile_size, tile_size], (0, 0, 0, 0))
                                 compose_minitile(tile_image, mini_tiles, level_palette, tile_index, [0, 0])

@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <map>
 #include <optional>
+#include <lv2/level/level_def.hpp>
 
 #include "logging.h"
 #include "fs.h"
@@ -13,99 +14,186 @@
 #include "bitmap.h"
 #include "rle_table.hpp"
 #include "rom_metadata.hpp"
+#include "vector_reader.hpp"
 
 namespace AmiLostVikings2::AssetExtract {
 
-struct tAssetDef {
-	std::string AssetName;
-	std::optional<bool> isCompressed;
+struct tAssetTocEntry {
+	uint32_t ulOffs;
+	uint32_t ulSizeInRom;
 };
 
 using tAssetBytes = std::vector<std::uint8_t>;
 
-static const tPalette s_PaletteErik({
-	tRgb(0xff00ff), tRgb(0xf8a870),
-	tRgb(0xb86830), tRgb(0x703808),
-	tRgb(0x301000), tRgb(0xd8d8e8),
-	tRgb(0x8890a8), tRgb(0x505070),
-	tRgb(0x202038), tRgb(0xc83008),
-	tRgb(0x780800), tRgb(0x300000),
-	tRgb(0x6858f0), tRgb(0x3028a8),
-	tRgb(0x100868), tRgb(0xf0d000)
-});
+void transcodeTileMap(
+	const tAssetBytes &AssetBytes, std::uint16_t uwWidth, std::uint16_t uwHeight,
+	const std::string &OutPath
+) {
+	static const auto writeU16BigEndian = [](
+		std::ofstream &OutFile, std::uint16_t uwData
+	) {
+		std::uint8_t Hi = uwData >> 8;
+		std::uint8_t Lo = uwData & 0xFF;
+		OutFile.write(reinterpret_cast<char*>(&Hi), sizeof(Hi));
+		OutFile.write(reinterpret_cast<char*>(&Lo), sizeof(Lo));
+	};
 
-static const tPalette s_PaletteBaelog({
-	tRgb(0xff00ff), tRgb(0xf8a870),
-	tRgb(0xb06838), tRgb(0x784018),
-	tRgb(0x482000), tRgb(0xf8f8f8),
-	tRgb(0xc8c8c8), tRgb(0x787878),
-	tRgb(0x383838), tRgb(0xf8f800),
-	tRgb(0xb8b800), tRgb(0x888800),
-	tRgb(0x0080f8), tRgb(0x0050b8),
-	tRgb(0x001890), tRgb(0x000001)
-});
+	std::ofstream OutFile;
+	OutFile.open(OutPath, std::ios::binary);
+	writeU16BigEndian(OutFile, uwWidth);
+	writeU16BigEndian(OutFile, uwHeight);
+	auto Reader = tVectorReader(AssetBytes);
+	for(auto i = 0; i < AssetBytes.size() / 2; ++i) {
+		auto Lo = Reader.readU8();
+		auto Hi = Reader.readU8();
+		OutFile.write(reinterpret_cast<char*>(&Hi), sizeof(Hi));
+		OutFile.write(reinterpret_cast<char*>(&Lo), sizeof(Lo));
+	}
+}
 
-static const tPalette s_PaletteFang({
-	tRgb(0xff00ff), tRgb(0xe0e0e0),
-	tRgb(0x989898), tRgb(0x505050),
-	tRgb(0xc8c800), tRgb(0xb08000),
-	tRgb(0xe0a880), tRgb(0xb88050),
-	tRgb(0x906030), tRgb(0x704010),
-	tRgb(0x482000), tRgb(0x201000),
-	tRgb(0x000001), tRgb(0xf80000),
-	tRgb(0xa00000), tRgb(0x500000)
-});
+std::shared_ptr<lv2::level::tLevelDef> loadLevelDef(const tAssetBytes &vAssetBytes) {
+	auto Reader = tVectorReader(vAssetBytes);
 
-static const tPalette s_PaletteScorch({ // TODO: proper palette
-	tRgb(0xff00ff), tRgb(0xB5FF00),
-	tRgb(0x8CD600), tRgb(0x63B500),
-	tRgb(0x428C00), tRgb(0x296B00),
-	tRgb(0x004A00), tRgb(0x002900),
-	tRgb(0x000000), tRgb(0xD6D6D6),
-	tRgb(0x8C8C8C), tRgb(0x424242),
-	tRgb(0xDEDE00), tRgb(0xA59C00),
-	tRgb(0x635A00), tRgb(0x292100)
-});
+	auto LevelDef = std::make_shared<lv2::level::tLevelDef>();
+	Reader.readTo(LevelDef->Header.ubUnk0);
+	Reader.readTo(LevelDef->Header.ubUnk1);
+	Reader.readTo(LevelDef->Header.ubUnk2);
+	Reader.readTo(LevelDef->Header.ubUnk3);
+	Reader.readTo(LevelDef->Header.ubUnk4);
+	Reader.readTo(LevelDef->Header.ubMusic);
+	Reader.readTo(LevelDef->Header.ubUnk6);
+	Reader.readTo(LevelDef->Header.ubUnk7);
+	Reader.readTo(LevelDef->Header.ubUnk8);
+	Reader.readTo(LevelDef->Header.ubUnk9);
+	Reader.readTo(LevelDef->Header.ubUnk10);
+	Reader.readTo(LevelDef->Header.uwNextLevelHeaderIdx);
+	Reader.readTo(LevelDef->Header.ubUnk13);
+	Reader.readTo(LevelDef->Header.ubUnk14);
+	Reader.readTo(LevelDef->Header.ubUnk15);
+	Reader.readTo(LevelDef->Header.ubUnk16);
+	Reader.readTo(LevelDef->Header.ubUnk17);
+	Reader.readTo(LevelDef->Header.ubUnk18);
+	Reader.readTo(LevelDef->Header.ubUnk19);
+	Reader.readTo(LevelDef->Header.ubUnk20);
+	Reader.readTo(LevelDef->Header.ubUnk21);
+	Reader.readTo(LevelDef->Header.ubUnk22);
+	Reader.readTo(LevelDef->Header.ubUnk23);
+	Reader.readTo(LevelDef->Header.ubUnk24);
+	Reader.readTo(LevelDef->Header.ubUnk25);
+	Reader.readTo(LevelDef->Header.ubUnk26);
+	Reader.readTo(LevelDef->Header.ubUnk27);
+	Reader.readTo(LevelDef->Header.ubUnk28);
+	Reader.readTo(LevelDef->Header.ubUnk29);
+	Reader.readTo(LevelDef->Header.ubUnk30);
+	Reader.readTo(LevelDef->Header.uwTileWidth);
+	Reader.readTo(LevelDef->Header.uwTileHeight);
+	Reader.readTo(LevelDef->Header.ubUnk35);
+	Reader.readTo(LevelDef->Header.uwTilemapFileIndex);
+	Reader.readTo(LevelDef->Header.uwTilesetFileIndex);
+	Reader.readTo(LevelDef->Header.uwTiledefFileIndex);
+	Reader.readTo(LevelDef->Header.uwBackgroundWidth);
+	Reader.readTo(LevelDef->Header.uwBackgroundHeight);
+	Reader.readTo(LevelDef->Header.ubUnk46);
+	Reader.readTo(LevelDef->Header.uwTilemapBackground);
 
-static const tPalette s_PaletteOlaf({
-	tRgb(0xff00ff), tRgb(0xf8a870),
-	tRgb(0xb86830), tRgb(0x703808),
-	tRgb(0xe8e8e8), tRgb(0xb8b8b8),
-	tRgb(0x888888), tRgb(0x585860),
-	tRgb(0x383838), tRgb(0xf8e800),
-	tRgb(0xc09000), tRgb(0x0030a8),
-	tRgb(0x0080f8), tRgb(0x0038c0),
-	tRgb(0x001088), tRgb(0x101010)
-});
+	Reader.readTo(LevelDef->uwUnk1);
+	Reader.readTo(LevelDef->uwUnk2);
+	Reader.readTo(LevelDef->uwUnk3);
+	Reader.readTo(LevelDef->uwUnk4);
 
-struct tMergeRule {
-	uint8_t m_ubTileWidth;
-	uint8_t m_ubTileHeight;
-	std::string m_Name;
-	std::vector<uint32_t> m_vTileIndices;
-
-	tMergeRule(
-		uint8_t ubTileWidth, uint8_t ubTileHeight,
-		const std::string &Name, uint32_t ulFirstTile
-	):
-		m_ubTileWidth(ubTileWidth), m_ubTileHeight(ubTileHeight),
-		m_Name(Name)
-	{
-		for(uint32_t i = ulFirstTile; i < ulFirstTile + ubTileHeight * ubTileWidth; ++i) {
-			m_vTileIndices.push_back(i);
+	while(true) {
+		lv2::level::tLevelObjectDef ObjectDef;
+		Reader.readTo(ObjectDef.wX);
+		if(ObjectDef.wX == -1) {
+			break;
 		}
+
+		Reader.readTo(ObjectDef.wY);
+		Reader.readTo(ObjectDef.wCenterX);
+		Reader.readTo(ObjectDef.wCenterY);
+		Reader.readTo(ObjectDef.uwEntityKind);
+		Reader.readTo(ObjectDef.uwParam1);
+		Reader.readTo(ObjectDef.uwParam2);
+		LevelDef->vObjects.push_back(ObjectDef);
 	}
 
-	tMergeRule(
-		uint8_t ubTileWidth, uint8_t ubTileHeight,
-		const std::string &Name, const std::vector<uint32_t> &vTileIndices
-	):
-		m_ubTileWidth(ubTileWidth), m_ubTileHeight(ubTileHeight),
-		m_Name(Name), m_vTileIndices(vTileIndices)
-	{
-
+	while(true) {
+		lv2::level::tPaletteFragmentLoadDef PaletteFragment;
+		Reader.readTo(PaletteFragment.uwFileIndex);
+		if(PaletteFragment.uwFileIndex == 0xFFFF) {
+			break;
+		}
+		Reader.readTo(PaletteFragment.ubPaletePosStart);
+		LevelDef->vPaletteFragments.push_back(PaletteFragment);
 	}
-};
+
+	Reader.readTo(LevelDef->uwColorCycleActivationMask);
+	while(true) {
+		lv2::level::tColorCycleDef ColorCycleDef;
+		Reader.readTo(ColorCycleDef.ubCooldown);
+		if(ColorCycleDef.ubCooldown == 0) {
+			break;
+		}
+		Reader.readTo(ColorCycleDef.ubFirstIndex);
+		Reader.readTo(ColorCycleDef.ubLastIndex);
+
+		while(true) {
+			std::uint16_t uwColorCode;
+			Reader.readTo(uwColorCode);
+			if(uwColorCode == 0xFFFF) {
+				break;
+			}
+			ColorCycleDef.vCycleColors.push_back(uwColorCode);
+		}
+
+		LevelDef->vColorCycles.push_back(ColorCycleDef);
+	}
+
+	Reader.readTo(LevelDef->uwTileCycleActivationMask);
+	while(true) {
+		lv2::level::tTileCycleDef TileCycleDef;
+		Reader.readTo(TileCycleDef.ubCooldown);
+		if(TileCycleDef.ubCooldown == 0) {
+			break;
+		}
+
+		Reader.readTo(TileCycleDef.ubFramesPerTile);
+		Reader.readTo(TileCycleDef.ubUnk1);
+		Reader.readTo(TileCycleDef.ubUnk2);
+		Reader.readTo(TileCycleDef.uwUnk3);
+		Reader.readTo(TileCycleDef.uwFileIndex);
+
+		LevelDef->vTileCycles.push_back(TileCycleDef);
+	}
+
+	while(true) {
+		lv2::level::tGfxPreloadDef GfxPreloadDef;
+		Reader.readTo(GfxPreloadDef.uwFileIndex);
+		if(GfxPreloadDef.uwFileIndex == 0xFFFF) {
+			break;
+		}
+
+		Reader.readTo(GfxPreloadDef.uwUnk1);
+		Reader.readTo(GfxPreloadDef.ubBlockWidth);
+		Reader.readTo(GfxPreloadDef.ubBlockHeight);
+		LevelDef->vGfxPreloads.push_back(GfxPreloadDef);
+	}
+
+	while(true) {
+		lv2::level::tGfxAnimPreloadDef GfxAnimPreloadDef;
+		Reader.readTo(GfxAnimPreloadDef.uwFileIndex);
+		if(GfxAnimPreloadDef.uwFileIndex == 0xFFFF) {
+			break;
+		}
+
+		Reader.readTo(GfxAnimPreloadDef.ubBlockWidth);
+		Reader.readTo(GfxAnimPreloadDef.ubBlockHeight);
+		Reader.readTo(GfxAnimPreloadDef.isCompressed);
+		LevelDef->vAnimPreloads.push_back(GfxAnimPreloadDef);
+	}
+
+	return LevelDef;
+}
 
 //-------------------------------------------------------------- TILE EXTRACTING
 
@@ -149,46 +237,6 @@ std::vector<std::shared_ptr<tChunkyBitmap>> extractIndexedTiles(
 	return extractTiles(vDataRaw, ubBpp, PaletteIndexed);
 }
 
-//------------------------------------------------------ ASSET PROCESS CALLBACKS
-
-// void handleExtractTileset(
-// 	const tAssetBytes &vDataUnprocessed, const std::string &PathOut
-// )
-// {
-// 	const std::uint8_t ubBpp = 4;
-// 	std::vector<tRgb> vColors;
-// 	for(std::uint16_t i = 0; i < (1 << ubBpp); ++i) {
-// 		std::uint8_t ubComponent = 0xFF * i / ((1 << ubBpp) - 1);
-// 		vColors.push_back(tRgb(ubComponent, ubComponent, ubComponent));
-// 	}
-// 	tPalette Palette(vColors);
-
-// 	std::filesystem::create_directories(PathOut);
-// 	uint32_t ulFrameByteSize = (8 * 8 * ubBpp) / 8; // w * h * bpp / bitsInByte
-// 	uint32_t ulFrameCount = uint32_t(vDataUnprocessed.size()) / ulFrameByteSize;
-
-// 	std::vector<tMergeRule> vMergeRules;
-// 	for(uint32_t i = 0; i < ulFrameCount; ++i) {
-// 		vMergeRules.push_back(tMergeRule(
-// 			1, 1, fmt::format(FMT_STRING("{}"), i), i
-// 		));
-// 	}
-// 	extractTiles(vDataUnprocessed, ubBpp, vMergeRules, Palette, PathOut);
-// }
-
-// void handleExtractFont(
-// 	const tAssetBytes &vDataUnprocessed, const std::string &PathOut
-// ) {
-// 	std::filesystem::create_directories(PathOut);
-
-// 	tPalette Palette(std::vector<tRgb> {tRgb(0x000000), tRgb(0x555555), tRgb(0xAAAAAA), tRgb(0xFFFFFF)});
-// 	std::vector<tMergeRule> vMergeRules;
-// 	for(uint8_t i = 0; i < 80; ++i) {
-// 		vMergeRules.push_back(tMergeRule(1, 1, fmt::format(FMT_STRING("{}"), i), i));
-// 	}
-// 	extractTiles(vDataUnprocessed, 2, vMergeRules, Palette, PathOut);
-// }
-
 //-------------------------------------------------------------- EXTRACT: EFFECT
 static const uint32_t s_ulOffsEffectStart = 0xC2418;
 static const uint32_t s_ulOffsEffectEnd = 0xC4818;
@@ -223,21 +271,9 @@ static tAssetBytes extractAsset(std::ifstream &FileRom, uint32_t ulOffsStart, ui
 
 [[nodiscard]]
 static tAssetBytes decompressAsset(tAssetBytes vAssetData) {
-	uint16_t uwReadPos = 0;
+	auto Reader = tVectorReader(vAssetData);
 
-	auto readU8 = [&uwReadPos, &vAssetData]() -> std::uint8_t {
-		std::uint8_t ubValue = vAssetData[uwReadPos++];
-		return ubValue;
-	};
-
-	auto readU16 = [&uwReadPos, &vAssetData]() -> std::uint16_t {
-		std::uint16_t uwValue = 0;
-		uwValue |= vAssetData[uwReadPos++];
-		uwValue |= vAssetData[uwReadPos++] << 8;
-		return uwValue;
-	};
-
-	uint16_t uwDecompressedSize = readU16();
+	uint16_t uwDecompressedSize = Reader.readU16();
 	uint8_t ubRepeatBits;
 	if(uwDecompressedSize == 0) {
 		throw std::runtime_error(fmt::format(FMT_STRING("Decompressed size = %hu"), uwDecompressedSize));
@@ -254,7 +290,7 @@ static tAssetBytes decompressAsset(tAssetBytes vAssetData) {
 			fmt::print("\n");
 		}
 		wasCopy = false;
-		ubRepeatBits = readU8();
+		ubRepeatBits = Reader.readU8();
 
 		for(uint8_t ubBit = 0; ubBit < 8 && vDecoded.size() < uwDecompressedSize; ++ubBit) {
 			bool isCopy = ((ubRepeatBits & 1) == 1);
@@ -266,7 +302,7 @@ static tAssetBytes decompressAsset(tAssetBytes vAssetData) {
 				}
 
 				std::uint8_t ubReadValue;
-				ubReadValue = readU8();
+				ubReadValue = Reader.readU8();
 				vDecoded.push_back(ubReadValue);
 				RleTable.writeValue(ubReadValue);
 
@@ -280,7 +316,7 @@ static tAssetBytes decompressAsset(tAssetBytes vAssetData) {
 			else {
 				// Decompress stuff
 				uint16_t uwDecompressControl;
-				uwDecompressControl = readU16();
+				uwDecompressControl = Reader.readU16();
 				uint16_t uwRlePos = uwDecompressControl & 0xFFF;
 				uint16_t uwRlePosEnd = ((uwDecompressControl >> 12) + 3 + uwRlePos) & 0x0FFF;
 
@@ -310,6 +346,7 @@ static tAssetBytes decompressAsset(tAssetBytes vAssetData) {
 	return vDecoded;
 }
 
+[[nodiscard]]
 static uint32_t snesAddressToRomOffset(uint32_t ulBaseAddress) {
 	ulBaseAddress &= 0x3FFFFF;
 	uint32_t ulBank = ulBaseAddress >> 16;
@@ -330,11 +367,6 @@ static uint32_t snesAddressToRomOffset(uint32_t ulBaseAddress) {
 
 	return ulRomOffset;
 }
-
-struct tAssetTocEntry {
-	uint32_t ulOffs;
-	uint32_t ulSizeInRom;
-};
 
 void readPakFileToc(std::ifstream &FileRom, std::vector<tAssetTocEntry> &vToc)
 {
@@ -370,6 +402,7 @@ void readPakFileToc(std::ifstream &FileRom, std::vector<tAssetTocEntry> &vToc)
 	vToc.back().ulSizeInRom = g_PalRomMetadata.m_uwLastPakFileSize;
 }
 
+[[nodiscard]]
 std::string getAssetPath(const std::string &BasePath, std::uint16_t uwAssetIndex) {
 	auto szAssetName = g_PalRomMetadata.m_PakFileEntries[uwAssetIndex];
 	auto OutPath = fmt::format(
@@ -380,6 +413,7 @@ std::string getAssetPath(const std::string &BasePath, std::uint16_t uwAssetIndex
 	return OutPath;
 }
 
+[[nodiscard]]
 std::vector<tAssetBytes> extractRawAssets(
 	std::ifstream &FileRom,
 	const std::string &OutDirPath,
@@ -444,6 +478,7 @@ void writeTilesToPng(
 	Merged.toPng(OutPath);
 }
 
+[[nodiscard]]
 std::vector<std::shared_ptr<tChunkyBitmap>> composeTiles(
 	const std::vector<std::shared_ptr<tChunkyBitmap>> &vTiles,
 	std::uint8_t ubTileWidth, std::uint8_t ubTileHeight
@@ -472,6 +507,7 @@ std::vector<std::shared_ptr<tChunkyBitmap>> composeTiles(
 	return vMerged;
 }
 
+[[nodiscard]]
 std::vector<std::array<std::uint16_t, 4>> extractTileDefs(tAssetBytes Bytes)
 {
 	std::vector<std::array<std::uint16_t, 4>> TileDefs;
@@ -490,20 +526,22 @@ std::vector<std::array<std::uint16_t, 4>> extractTileDefs(tAssetBytes Bytes)
 	return TileDefs;
 }
 
-tChunkyBitmap mirrorBitmap(const tChunkyBitmap &Source, bool isUpDown)
+[[nodiscard]]
+tChunkyBitmap mirrorTile(const tChunkyBitmap &Source, bool isUpDown)
 {
+	constexpr auto TileWidth = 8;
 	tChunkyBitmap Dst(Source.m_uwWidth, Source.m_uwHeight);
 	if(isUpDown) {
-		for(auto X = 0; X < Source.m_uwWidth; ++X) {
-			for(auto Y = 0; Y < Source.m_uwHeight; ++Y) {
+		for(auto Y = 0; Y < Source.m_uwHeight; ++Y) {
+			for(auto X = 0; X < TileWidth; ++X) {
 				Dst.pixelAt(X, Y) = Source.pixelAt(X, (Source.m_uwHeight - 1) - Y);
 			}
 		}
 	}
 	else {
-		for(auto X = 0; X < Source.m_uwWidth; ++X) {
-			for(auto Y = 0; Y < Source.m_uwHeight; ++Y) {
-				Dst.pixelAt(X, Y) = Source.pixelAt((Source.m_uwWidth - 1) - X, Y);
+		for(auto Y = 0; Y < Source.m_uwHeight; ++Y) {
+			for(auto X = 0; X < TileWidth; ++X) {
+				Dst.pixelAt(X, Y) = Source.pixelAt((TileWidth - 1) - X, Y);
 			}
 		}
 	}
@@ -531,10 +569,10 @@ void composeMinitile(
 
 	auto Minitile = *vMinitiles[Index];
 	if((Attribute & (1 << (MinitileAttributeBitFlipY))) != 0) {
-			Minitile = mirrorBitmap(Minitile, false);
+			Minitile = mirrorTile(Minitile, false);
 	}
 	if((Attribute & (1 << (MinitileAttributeBitFlipX))) != 0) {
-			Minitile = mirrorBitmap(Minitile, true);
+			Minitile = mirrorTile(Minitile, true);
 	}
 	bool IsFront = ((Attribute & (1 << (MinitileAttributeBitFront))) != 0);
 	Minitile.copyRect(0, 0, Tile, ubOffsX, ubOffsY, 8, 8);
@@ -547,6 +585,7 @@ void composeMinitile(
 	}
 }
 
+[[nodiscard]]
 std::vector<std::shared_ptr<tChunkyBitmap>> composeWorldTiles(
 	const std::vector<std::shared_ptr<tChunkyBitmap>> &vMiniTiles,
 	const std::vector<std::array<std::uint16_t, 4>> &TileDefs,
@@ -566,6 +605,7 @@ std::vector<std::shared_ptr<tChunkyBitmap>> composeWorldTiles(
 	return worldTiles;
 }
 
+[[nodiscard]]
 std::vector<std::shared_ptr<tChunkyBitmap>> remapTiles(
 	const std::vector<std::shared_ptr<tChunkyBitmap>> &vTiles,
 	std::span<const std::uint16_t> RemapIndices
@@ -579,6 +619,7 @@ std::vector<std::shared_ptr<tChunkyBitmap>> remapTiles(
 	return vRemapped;
 }
 
+[[nodiscard]]
 tPalette loadPalette(const tAssetBytes &AssetBytes) {
 	std::uint16_t uwReadPos = 0;
 	auto readU16 = [&uwReadPos, &AssetBytes]() -> std::uint16_t {
@@ -601,6 +642,7 @@ tPalette loadPalette(const tAssetBytes &AssetBytes) {
 	return Palette;
 }
 
+[[nodiscard]]
 tPalette amigafyPalette(const tPalette &PaletteIn) {
 	tPalette PaletteOut;
 	for(const auto &Color: PaletteIn.m_vColors) {
@@ -686,10 +728,18 @@ void convertAssets(
 		4, PaletteHud
 	), 2, 2).front()->toPng(ConvertedAssetPath + "/help_box.png");
 
-	auto tileDefsWorld1 = extractTileDefs(decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("tiledef_w1")]));
-	auto miniTilesWorld1 = extractIndexedTiles(decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("tileset_w1")]), 4);
-	auto tilesWorld1 = composeWorldTiles(miniTilesWorld1, tileDefsWorld1, PaletteHud);
-	writeTilesToPng(tilesWorld1, ConvertedAssetPath + "/tiles_w1.png");
+	auto TileDefsWorld1 = extractTileDefs(decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("tiledef_w1")]));
+	auto MiniTilesWorld1 = extractIndexedTiles(decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("tileset_w1")]), 4);
+	auto TilesWorld1 = composeWorldTiles(MiniTilesWorld1, TileDefsWorld1, PaletteHud);
+	writeTilesToPng(TilesWorld1, ConvertedAssetPath + "/tiles_w1.png");
+
+	auto LevelDefW1A0 = loadLevelDef(decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("level_w1_a0_strt_defs")]));
+	transcodeTileMap(
+		decompressAsset(vRawAssets[LevelDefW1A0->Header.uwTilemapFileIndex]),
+		LevelDefW1A0->Header.uwTileWidth,
+		LevelDefW1A0->Header.uwTileHeight,
+		ConvertedAssetPath + "/tilemap_w1_a0.dat"
+	);
 }
 
 } // namespace AmiLostVikings2::AssetExtract
