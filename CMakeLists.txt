@@ -33,7 +33,7 @@ if(BUILD_ASSET_EXTRACT)
 		target_link_libraries(asset_extract -static)
 	endif()
 
-	target_link_libraries(asset_extract fmt::fmt)
+	target_link_libraries(asset_extract fmt::fmt lv2)
 endif()
 
 # game
