@@ -325,6 +325,8 @@ void hudDestroy(void) {
 
 	bitmapDestroy(s_pPortraits);
 	bitmapDestroy(s_pItems);
+	bitmapDestroy(s_pCursor);
+	bitmapDestroy(s_pCursorMask);
 }
 
 void hudReset(void) {

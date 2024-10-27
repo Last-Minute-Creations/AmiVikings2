@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "state_game.hpp"
+#include <ace/generic/screen.h>
 #include <ace/managers/viewport/tilebuffer.h>
 #include <ace/managers/viewport/simplebuffer.h>
 #include <ace/managers/system.h>
@@ -225,6 +226,8 @@ static void stateGameCreate(void) {
 		TAG_VIEW_COPLIST_MODE, COPPER_MODE_RAW,
 		TAG_VIEW_COPLIST_RAW_COUNT, uwCopListSize,
 		TAG_VIEW_WINDOW_HEIGHT, 224,
+		TAG_VIEW_WINDOW_WIDTH, 256,
+		TAG_VIEW_WINDOW_START_X, SCREEN_XOFFSET + (SCREEN_PAL_WIDTH - 256) / 2,
 	TAG_END);
 
 	s_pTileset = bitmapCreateFromFile("data/tiles_w1.bm", 0);
@@ -250,6 +253,7 @@ static void stateGameCreate(void) {
 		TAG_TILEBUFFER_COPLIST_OFFSET_START, uwCopHudSize,
 		TAG_TILEBUFFER_COPLIST_OFFSET_BREAK, uwCopHudSize + uwCopMainStartSize,
 		TAG_TILEBUFFER_CALLBACK_TILE_DRAW, onTileDraw,
+		TAG_TILEBUFFER_MAX_TILESET_SIZE, 1024,
 	TAG_END);
 
 	s_pGameSubstateMachine = stateManagerCreate();
@@ -314,6 +318,7 @@ static void stateGameLoop(void) {
 static void stateGameDestroy(void) {
 	viewLoad(0);
 	systemUse();
+	stateManagerDestroy(s_pGameSubstateMachine);
 	bobManagerDestroy();
 	assetsGlobalDestroy();
 	// fontDestroy(s_pFont);
