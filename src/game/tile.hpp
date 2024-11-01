@@ -8,22 +8,11 @@
 #include <ace/types.h>
 
 #define TILE_SHIFT 4
-
-enum class tTile: UBYTE {
-	Empty,
-	FloorFlat,
-	FloorRamp22DownA,
-	FloorRamp22DownB,
-	FloorRamp45Down,
-	FloorRamp45Up,
-	FloorRamp22UpA,
-	FloorRamp22UpB,
-};
-
+#define TILE_MAP_SIZE 128
 
 void tileReset(void);
 
-void tileSetType(UWORD uwTileX, UWORD uwTileY, tTile eTile);
+void tileSetAttribute(UWORD uwTileX, UWORD uwTileY, UBYTE ubAttribute);
 
 UWORD tileGetHeightAtPosX(UWORD uwX, UWORD uwY);
 

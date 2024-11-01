@@ -18,6 +18,7 @@
 #include <lmc/array.hpp>
 #include <lmc/span.hpp>
 #include <entity/entity_erik.hpp>
+#include <dialogue/dialogue.hpp>
 #include "assets.hpp"
 #include "tile.hpp"
 #include "steer.hpp"
@@ -39,8 +40,8 @@ static void substatePlayLoop(void);
 static void substateInventoryLoop(void);
 static void substatePauseCreate(void);
 static void substatePauseLoop(void);
-static void substateMessageCreate(void);
-static void substateMessageLoop(void);
+static void substateDialogueCreate(void);
+static void substateDialogueLoop(void);
 
 static tView *s_pView;
 static tVPort *s_pVpMain;
@@ -54,9 +55,9 @@ static auto s_sGameSubstatePlay = tState::empty()
 	.withLoop(substatePlayLoop);
 static auto s_sGameSubstateInventory = tState::empty()
 	.withLoop(substateInventoryLoop);
-static tState s_sGameSubstateMessage = tState::empty()
-	.withCreate(substateMessageCreate)
-	.withLoop(substateMessageLoop);
+static tState s_sGameSubstateDialogue = tState::empty()
+	.withCreate(substateDialogueCreate)
+	.withLoop(substateDialogueLoop);
 static tState s_sGameSubstatePause = tState::empty()
 	.withCreate(substatePauseCreate)
 	.withLoop(substatePauseLoop);
@@ -65,10 +66,12 @@ static tPlayerIdx s_eControllingPlayer;
 
 static tBitMap *s_pFont;
 static tBitMap *s_pFontMask;
-static UWORD s_uwPendingMessageId;
+static UWORD s_uwPendingDialogueId;
 static UWORD s_uwPendingMessageBgColor;
 static UWORD s_uwMapTileWidth;
 static UWORD s_uwMapTileHeight;
+static tActiveDialogue s_ActiveDialogue;
+static tUwRect s_LastMessageFrameRect;
 
 consteval auto generateCharToGlyph() {
 	const char GlyphIndexToChar[] = {
@@ -120,30 +123,7 @@ static void loadMap(void) {
 			s_pBufferMain->pTileData[x][y] = uwTileData & uwTileIndexMask;
 
 			UBYTE ubAttribute = uwTileData >> ubTileIndexMaskSize;
-			if(ubAttribute == 0x01) {
-				tileSetType(x, y, tTile::FloorFlat);
-			}
-			else if(ubAttribute == 0x32) {
-				tileSetType(x, y, tTile::FloorRamp22DownA);
-			}
-			else if(ubAttribute == 0x33) {
-				tileSetType(x, y, tTile::FloorRamp22DownB);
-			}
-			else if(ubAttribute == 0x30) {
-				tileSetType(x, y, tTile::FloorRamp45Down);
-			}
-			else if(ubAttribute == 0x31) {
-				tileSetType(x, y, tTile::FloorRamp45Up);
-			}
-			else if(ubAttribute == 0x35) {
-				tileSetType(x, y, tTile::FloorRamp22UpA);
-			}
-			else if(ubAttribute == 0x34) {
-				tileSetType(x, y, tTile::FloorRamp22UpB);
-			}
-			else {
-				tileSetType(x, y, tTile::Empty);
-			}
+			tileSetAttribute(x, y, ubAttribute);
 		}
 	}
 	fileClose(pFileTilemap);
@@ -177,43 +157,71 @@ static void drawGlyphAt(UBYTE ubGlyphIndex, UWORD uwPosX, UWORD uwPosY) {
 	blitCopyMask(s_pFont, uwGlyphX, uwGlyphY, s_pBufferMain->pScroll->pFront, uwPosX, uwPosY, 8, 8, s_pFontMask->Planes[0]);
 }
 
-static void drawTextLineAt(const char *szText, UWORD uwPosX, UWORD uwPosY) {
+static void drawTextAt(const char *szText, UWORD uwStartPosX, UWORD uwStartPosY) {
 	static const auto CharToGlyph = generateCharToGlyph();
 
-	UBYTE ubTextLength = strlen(szText);
-	for(UBYTE ubX = 0; ubX < ubTextLength; ++ubX) {
-		drawGlyphAt(CharToGlyph.pData[(UBYTE)szText[ubX]], uwPosX + ubX * 8, uwPosY);
+	UWORD uwPosX = uwStartPosX;
+	UWORD uwPosY = uwStartPosY;
+	for(const char *pCurrent = szText; *pCurrent != '\0'; ++pCurrent) {
+		if(*pCurrent == '\r' || *pCurrent == '\n') {
+			uwPosX = uwStartPosX;
+			uwPosY += 8;
+		}
+		else {
+			drawGlyphAt(CharToGlyph.pData[(UBYTE)*pCurrent], uwPosX, uwPosY);
+			uwPosX += 8;
+		}
 	}
 }
 
-static void drawMessageFrameAt(
-	UBYTE ubBgColor, UBYTE ubBlockPosX, UBYTE ubBlockPosY,
-	const tSpan<const char*> Lines
+static void undrawMessageFrame() {
+	blitCopy(
+		s_pBufferMain->pScroll->pBack, s_LastMessageFrameRect.uwX, s_LastMessageFrameRect.uwY,
+		s_pBufferMain->pScroll->pFront, s_LastMessageFrameRect.uwX, s_LastMessageFrameRect.uwY,
+		s_LastMessageFrameRect.uwWidth, s_LastMessageFrameRect.uwHeight, MINTERM_COOKIE
+	);
+}
+
+static void drawMessageFrame(
+	UBYTE ubBgColor,
+	tUwCoordYX WorldPosition,
+	const tBoxedMessage &Message
 ) {
-	// TODO: character indicator: 10, 11
+	// Save relevant portion in backbuffer
+	s_LastMessageFrameRect.uwX = WorldPosition.uwX;
+	s_LastMessageFrameRect.uwY = WorldPosition.uwY;
+	s_LastMessageFrameRect.uwWidth = Message.m_Size.ubX * 8;
+	s_LastMessageFrameRect.uwHeight = Message.m_Size.ubY * 8;
+	blitCopy(
+		s_pBufferMain->pScroll->pFront, s_LastMessageFrameRect.uwX, s_LastMessageFrameRect.uwY,
+		s_pBufferMain->pScroll->pBack, s_LastMessageFrameRect.uwX, s_LastMessageFrameRect.uwY,
+		s_LastMessageFrameRect.uwWidth, s_LastMessageFrameRect.uwHeight, MINTERM_COOKIE
+	);
+
 	// 234
 	// 5 6
 	// 789
-	UWORD uwPosX = ubBlockPosX * 8;
-	UWORD uwPosY = ubBlockPosY * 8;
-	UBYTE ubTextWidth = strlen(Lines.pData[0]);
-	blitRect(s_pBufferMain->pScroll->pFront, uwPosX + 4, uwPosY + 6, (ubTextWidth + 2) * 8 - 4 - 3, (Lines.uwSize + 2) * 8 - 6 - 5, ubBgColor);
-	drawGlyphAt(2, uwPosX, uwPosY);
-	drawGlyphAt(7, uwPosX, uwPosY + (Lines.uwSize + 1) * 8);
-	for(UBYTE i = 1; i < ubTextWidth + 1; ++i) {
-		drawGlyphAt(3, uwPosX + i * 8, uwPosY);
-		drawGlyphAt(8, uwPosX + i * 8, uwPosY + (Lines.uwSize + 1) * 8);
-	}
-	for(UBYTE i = 1; i < Lines.uwSize + 1; ++i) {
-		drawGlyphAt(5, uwPosX, uwPosY + i * 8);
-		drawGlyphAt(6, uwPosX + (ubTextWidth + 1) * 8, uwPosY + i * 8);
-	}
-	drawGlyphAt(4, uwPosX + (ubTextWidth + 1) * 8, uwPosY);
-	drawGlyphAt(9, uwPosX + (ubTextWidth + 1) * 8, uwPosY + (Lines.uwSize + 1) * 8);
+	// TODO: character direction indicator: 10, 11
 
-	for(UBYTE ubY = 0; ubY < Lines.uwSize; ++ubY) {
-		drawTextLineAt(Lines.pData[ubY], uwPosX + 1 * 8, uwPosY + (ubY + 1) * 8);
+	blitRect(
+		s_pBufferMain->pScroll->pFront,
+		WorldPosition.uwX + 4, WorldPosition.uwY + 6,
+		Message.m_Size.ubX * 8 - 4 - 3, (Message.m_Size.ubY) * 8 - 6 - 5, ubBgColor
+	);
+	drawGlyphAt(2, WorldPosition.uwX, WorldPosition.uwY);
+	drawGlyphAt(7, WorldPosition.uwX, WorldPosition.uwY + (Message.m_Size.ubY - 2 + 1) * 8);
+	for(UBYTE i = 1; i < Message.m_Size.ubX - 1; ++i) {
+		drawGlyphAt(3, WorldPosition.uwX + i * 8, WorldPosition.uwY);
+		drawGlyphAt(8, WorldPosition.uwX + i * 8, WorldPosition.uwY + (Message.m_Size.ubY - 2 + 1) * 8);
 	}
+	for(UBYTE i = 1; i < Message.m_Size.ubY - 2 + 1; ++i) {
+		drawGlyphAt(5, WorldPosition.uwX, WorldPosition.uwY + i * 8);
+		drawGlyphAt(6, WorldPosition.uwX + (Message.m_Size.ubX - 1) * 8, WorldPosition.uwY + i * 8);
+	}
+	drawGlyphAt(4, WorldPosition.uwX + (Message.m_Size.ubX - 1) * 8, WorldPosition.uwY);
+	drawGlyphAt(9, WorldPosition.uwX + (Message.m_Size.ubX - 1) * 8, WorldPosition.uwY + (Message.m_Size.ubY - 2 + 1) * 8);
+
+	drawTextAt(Message.m_szText, WorldPosition.uwX + 8, WorldPosition.uwY + 8);
 }
 
 static void stateGameCreate(void) {
@@ -244,8 +252,8 @@ static void stateGameCreate(void) {
 	s_pBufferMain = tileBufferCreate(0,
 		TAG_TILEBUFFER_BITMAP_FLAGS, BMF_CLEAR | BMF_INTERLEAVED,
 		TAG_TILEBUFFER_IS_DBLBUF, 1,
-		TAG_TILEBUFFER_BOUND_TILE_X, 40,
-		TAG_TILEBUFFER_BOUND_TILE_Y, 40,
+		TAG_TILEBUFFER_BOUND_TILE_X, TILE_MAP_SIZE,
+		TAG_TILEBUFFER_BOUND_TILE_Y, TILE_MAP_SIZE,
 		TAG_TILEBUFFER_REDRAW_QUEUE_LENGTH, 15,
 		TAG_TILEBUFFER_TILE_SHIFT, 4,
 		TAG_TILEBUFFER_TILESET, s_pTileset,
@@ -279,7 +287,7 @@ static void stateGameCreate(void) {
 		);
 	}
 
-	s_uwPendingMessageId = 0;
+	s_uwPendingDialogueId = 0;
 	s_uwPendingMessageBgColor = 0;
 
 	// Init entities
@@ -351,9 +359,11 @@ static void substatePlayLoop(void) {
 			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePause);
 			return;
 		}
-		if(s_uwPendingMessageId != 0) {
+		if(s_uwPendingDialogueId != 0) {
 			s_eControllingPlayer = ePlayerIdx;
-			stateChange(s_pGameSubstateMachine, &s_sGameSubstateMessage);
+			s_ActiveDialogue = tActiveDialogue(dialogueGetChain(s_uwPendingDialogueId));
+			s_uwPendingDialogueId = 0;
+			stateChange(s_pGameSubstateMachine, &s_sGameSubstateDialogue);
 			return;
 		}
 
@@ -394,22 +404,38 @@ static void substateInventoryLoop(void) {
 	hudProcessInventory(s_eControllingPlayer, pSteer);
 }
 
-static void substateMessageCreate()
-{
-
-	static const auto Lines = toArray({
-		"CAN YOU TAKE US ",
-		"TO THE BIG SHINY",
-		"METAL THING THAT",
-		"BROUGHT US HERE?",
-	});
-	UBYTE ubPosX = (256/8 - strlen(Lines.pData[0]))/2;
-	UBYTE ubPosY = 4;
-	drawMessageFrameAt(s_uwPendingMessageBgColor, ubPosX, ubPosY, Lines);
-	s_uwPendingMessageId = 0;
+static tUwCoordYX EntryToWorldPosition(const tDialogueEntry &Entry) {
+	auto &EntityBob = entityManagerGetEntityFromIndex(Entry.m_ubActorIndex).sBob;
+	tUwCoordYX Pos;
+	if(Entry.m_eCornerFlags == tMsgPosFlag::CAM) {
+		Pos.ulYX = s_pBufferMain->pCamera->uPos.ulYX;
+	}
+	else {
+		Pos.uwX = EntityBob.sPos.uwX + EntityBob.uwWidth / 2;
+		Pos.uwY = EntityBob.sPos.uwY + EntityBob.uwHeight / 2;
+		if((Entry.m_eCornerFlags & tMsgPosFlag::RIGHT) == tMsgPosFlag::RIGHT) {
+			Pos.uwX -= Entry.getMessage().m_Size.ubX * 8;
+		}
+		if((Entry.m_eCornerFlags & tMsgPosFlag::DOWN) == tMsgPosFlag::DOWN) {
+			Pos.uwY -= Entry.getMessage().m_Size.ubY * 8;
+		}
+	}
+	Pos.uwX += Entry.m_ActorOffset.wX;
+	Pos.uwY += Entry.m_ActorOffset.wY;
+	return Pos;
 }
 
-static void substateMessageLoop()
+static void substateDialogueShowCurrent() {
+	auto &Entry = s_ActiveDialogue.getCurrentEntry();
+	drawMessageFrame(s_uwPendingMessageBgColor, EntryToWorldPosition(Entry), Entry.getMessage());
+}
+
+static void substateDialogueCreate()
+{
+	substateDialogueShowCurrent();
+}
+
+static void substateDialogueLoop()
 {
 	tSteer *pSteer = playerControllerGetSteer(s_eControllingPlayer);
 	steerUpdate(pSteer);
@@ -418,8 +444,14 @@ static void substateMessageLoop()
 		steerUse(pSteer, tSteerAction::Ability1) ||
 		steerUse(pSteer, tSteerAction::Interact)
 	) {
-		stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
-		return;
+		undrawMessageFrame();
+		if(s_ActiveDialogue.tryAdvance()) {
+			substateDialogueShowCurrent();
+		}
+		else {
+			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
+			return;
+		}
 	}
 }
 
@@ -427,64 +459,48 @@ static UBYTE s_ubPauseBlinkCooldown;
 static UBYTE s_isPauseBlinkDraw;
 static UBYTE s_isPauseYesSelected;
 
-#define GIVE_UP_X ((256/8 - 8)/2)
-#define GIVE_UP_Y (4)
-#define GIVE_UP_YES_OFFS_X 1
-#define GIVE_UP_YES_OFFS_Y 3
-#define GIVE_UP_NO_OFFS_X (GIVE_UP_YES_OFFS_X + 6)
+#define GIVE_UP_X ((256 - 8 * 8)/2)
+#define GIVE_UP_Y (4 * 8)
+#define GIVE_UP_YES_OFFS_X (1 * 8)
+#define GIVE_UP_YES_OFFS_Y (3 * 8)
+#define GIVE_UP_NO_OFFS_X (GIVE_UP_YES_OFFS_X + 6 * 8)
 #define GIVE_UP_NO_OFFS_Y GIVE_UP_YES_OFFS_Y
 
 static void substatePauseCreate(void) {
-	// static const char* pText[] = {
-	// 	"TRY AGAIN?",
-	// 	"          ",
-	// 	" YES   NO ",
-	// };
-	static const auto Lines = toArray({
-		"GIVE UP?",
-		"        ",
-		"YES   NO",
-	});
-	drawMessageFrameAt(0, GIVE_UP_X, GIVE_UP_Y, Lines);
+	// static const auto Message = tBoxedMessage("TRY AGAIN?\r\r YES   NO ");
+	static const auto Message = tBoxedMessage("GIVE UP?\r\rYES   NO");
+
+	tUwCoordYX Pos = {.uwY = GIVE_UP_Y, .uwX = GIVE_UP_X};
+	Pos.ulYX += s_pBufferMain->pCamera->uPos.ulYX;
+	drawMessageFrame(0, Pos, Message);
 	s_ubPauseBlinkCooldown = 25;
 	s_isPauseBlinkDraw = 0;
 	s_isPauseYesSelected = 1;
 }
 
 static void updateYesNoBlink(UBYTE isYes, UBYTE isDraw) {
-	if(isDraw) {
-		if(isYes) {
-			drawTextLineAt(
-				"YES",
-				(GIVE_UP_X + GIVE_UP_YES_OFFS_X) * 8,
-				(GIVE_UP_Y + GIVE_UP_YES_OFFS_Y) * 8
-			);
-		}
-		else {
-			drawTextLineAt(
-				"NO",
-				(GIVE_UP_X + GIVE_UP_NO_OFFS_X) * 8,
-				(GIVE_UP_Y + GIVE_UP_NO_OFFS_Y) * 8
-			);
-		}
+	const char *szMsg;
+	tUwCoordYX Pos = {.uwY = GIVE_UP_Y, .uwX = GIVE_UP_X};
+	Pos.ulYX += s_pBufferMain->pCamera->uPos.ulYX;
+	if(isYes) {
+		Pos.uwX += GIVE_UP_YES_OFFS_X;
+		Pos.uwY += GIVE_UP_YES_OFFS_Y;
+		szMsg = "YES";
 	}
 	else {
-		if(isYes) {
-			blitRect(
-				s_pBufferMain->pScroll->pFront,
-				(GIVE_UP_X + GIVE_UP_YES_OFFS_X) * 8,
-				(GIVE_UP_Y + GIVE_UP_YES_OFFS_Y) * 8,
-				strlen("YES") * 8, 8, 0
-			);
-		}
-		else {
-			blitRect(
-				s_pBufferMain->pScroll->pFront,
-				(GIVE_UP_X + GIVE_UP_NO_OFFS_X) * 8,
-				(GIVE_UP_Y + GIVE_UP_NO_OFFS_Y) * 8,
-				strlen("NO") * 8, 8, 0
-			);
-		}
+		Pos.uwX += GIVE_UP_NO_OFFS_X;
+		Pos.uwY += GIVE_UP_NO_OFFS_Y;
+		szMsg = "NO";
+	}
+
+	if(isDraw) {
+		drawTextAt(szMsg, Pos.uwX, Pos.uwY);
+	}
+	else {
+		blitRect(
+			s_pBufferMain->pScroll->pFront,
+			Pos.uwX, Pos.uwY, strlen(szMsg) * 8, 8, 0
+		);
 	}
 }
 
@@ -514,6 +530,7 @@ static void substatePauseLoop(void) {
 			return;
 		}
 		else {
+			undrawMessageFrame();
 			stateChange(s_pGameSubstateMachine, &s_sGameSubstatePlay);
 			return;
 		}
@@ -533,8 +550,8 @@ tState g_sStateGame = tState::empty()
 	.withLoop(stateGameLoop)
 	.withDestroy(stateGameDestroy);
 
-void gameSetPendingMessage(UWORD uwMessageId, UWORD uwBgColor)
+void gameSetPendingDialogue(UWORD uwDialogueId, UWORD uwBgColor)
 {
-	s_uwPendingMessageId = uwMessageId;
+	s_uwPendingDialogueId = uwDialogueId;
 	s_uwPendingMessageBgColor = uwBgColor;
 }

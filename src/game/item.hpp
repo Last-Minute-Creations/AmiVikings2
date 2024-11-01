@@ -7,7 +7,6 @@
 
 #include <ace/types.h>
 
-// TODO: sized enum
 enum class tItemKind: BYTE {
 	Invalid = -1,
 	None = 0,

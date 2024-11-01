@@ -35,7 +35,7 @@ bool entityInfoBoxCollided(tEntity &Self, tEntity &Collider)
 
 	const auto &ColliderKind = Collider.pDef->eKind;
 	if(ColliderKind == tEntityKind::Erik) {
-		gameSetPendingMessage(Data.uwMessageId, 0);
+		gameSetPendingDialogue(Data.uwMessageId, 0);
 		Data.isTriggered = true;
 	}
 
@@ -45,6 +45,6 @@ bool entityInfoBoxCollided(tEntity &Self, tEntity &Collider)
 void entityInfoBoxInteracted(tEntity &Self)
 {
 	auto &Data = Self.dataAs<tEntityInfoBoxData>();
-	gameSetPendingMessage(Data.uwMessageId, 0);
+	gameSetPendingDialogue(Data.uwMessageId, 0);
 	Data.isTriggered = true;
 }

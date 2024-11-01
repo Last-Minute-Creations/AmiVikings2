@@ -5,6 +5,7 @@
 #include <entity/entity.hpp>
 #include <ace/managers/log.h>
 #include <lmc/enum_value.hpp>
+#include <lmc/assert.hpp>
 #include <entity/entity_viking.hpp>
 #include <entity/entity_info_box.hpp>
 #include "entity.hpp"
@@ -140,6 +141,12 @@ tEntity *entityManagerSpawnEntity(
 	}
 	logWrite("ERR: Can't add entity %d - no more space!", enumValue(eKind));
 	return 0;
+}
+
+tEntity &entityManagerGetEntityFromIndex(UBYTE ubEntityIndex)
+{
+	LMC_ASSERT(ubEntityIndex < ENTITY_INSTANCE_MAX);
+	return s_pEntities[ubEntityIndex];
 }
 
 bool tEntity::checkForCollisions()

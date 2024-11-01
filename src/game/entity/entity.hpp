@@ -73,10 +73,14 @@ struct tEntity {
 };
 
 void entityManagerReset(void);
+
 void entityManagerProcess(void);
+
 tEntity *entityManagerSpawnEntity(
 	tEntityKind eKind, UWORD uwX, UWORD uwY, UWORD uwCenterX, UWORD uwCenterY,
 	UWORD uwParam1, UWORD uwParam2
 );
+
+tEntity &entityManagerGetEntityFromIndex(UBYTE ubEntityIndex);
 
 #endif // INC_GAME_ENTITY_ENTITY_HPP

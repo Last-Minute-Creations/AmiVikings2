@@ -1,11 +1,11 @@
 Level load:
 	✔ Extract tiles from ROM @done(24-10-02)
 	✔ Load tiles in game @done(24-10-02)
-	☐ Load tilemap in game
+	✔ Use same attribute values for collision as the original @done(24-10-27)
+	☐ Load tilemap file in game
 		☐ Load tile front/back placement data
-	☐ Load entities in game
-	☐ Load palette cycling in game
-	☐ Use same attribute values for collision as the original
+	☐ Load entities from file in game
+	☐ Load palette from file cycling in game
 	☐ Extract slope collision data from ROM
 
 Mechanics for Vikings:
@@ -107,6 +107,13 @@ Enemies - world 5:
 Game parts:
 	☐ Menu
 	☐ Intro
+	☐ Dialogue system
+		✔ Type for message having box width/height and contents string @done(24-10-30)
+		✔ Support \r for newline @done(24-11-01)
+		✔ Chain of dialogue entries @done(24-11-01)
+		✔ Dialogue entry having actor ref (Erik, Olaf, Baelog, NPC), message ref and x/y offset from entity center @done(24-11-01)
+		✔ Trigger the dialogue @done(24-11-01)
+		✔ Undraw dialogue boxes @done(24-11-01)
 	☐ Entering level - scripted cutscene with text
 	☐ Exiting level - scripted cutscene with text
 	☐ Going to next level

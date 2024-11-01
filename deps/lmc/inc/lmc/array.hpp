@@ -13,6 +13,12 @@ template<typename t_tValue, uint16_t t_uwSize>
 struct tArray {
 	t_tValue pData[t_uwSize];
 	static const uint16_t uwSize = t_uwSize;
+
+	consteval auto withElement(uint16_t uwIndex, t_tValue Value) {
+		auto copy = *this;
+		copy.pData[uwIndex] = Value;
+		return copy;
+	}
 };
 
 template<typename t_tValue, uint16_t t_uwSize>
