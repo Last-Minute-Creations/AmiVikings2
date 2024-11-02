@@ -19,13 +19,12 @@ Mechanics for Vikings:
 	✔ Collision with terrain @done(21-11-27)
 	✔ Walking across slopes @done(24-06-12)
 	✔ Flipped frames @done(24-11-02)
-	☐ Base implementation of 3 different vikings
+	✔ Base implementation of 3 different vikings @done(24-11-02)
 		✔ Add groups/base classes to entity system @done(24-11-02)
-		☐ Use separate animation frames
-		☐ Support different order of frames for same animations (walk, fall, idle)
-		☐ Use different portraits
-		☐ Share collision code
-		☐ Add room for extra behavior
+		✔ Use separate animation frames @done(24-11-02)
+		✔ Use different portraits @done(24-11-02)
+		✔ Share collision code @done(24-11-02)
+		✔ Support different order of frames for same animations (walk, fall, idle) @done(24-11-02)
 	☐ Climbing
 	☐ Taking damage
 	☐ Healing
@@ -95,28 +94,33 @@ Misc mechanics:
 	☐ Darkness and torch
 	☐ Items dropped by enemies
 
-Enemies - world 1:
+Entities - world 1:
+	☐ Witch
 	☐ Skeleton
 	☐ Bat
 	☐ Shooting face
 	☐ Flame turret - horizontal
 	☐ Flame turret - vertical
 
-Enemies - world 2:
+Entities - world 2:
+	☐ Sorceress
 	☐ Wizard
 	☐ Dragon
 	☐ Knight
 
-Enemies - world 3:
+Entities - world 3:
+	☐ Gypsy
 	☐ Pirate
 	☐ Parrot
 	☐ Cannon - destructible
 
-Enemies - world 4:
+Entities - world 4:
+	☐ Shaman
 	☐ Monkey
 	☐ Vines
 
-Enemies - world 5:
+Entities - world 5:
+	☐ Kyle
 	☐ Xenomorph
 	☐ Flying/driving robot
 	☐ Zap fields

@@ -2,12 +2,14 @@
 #include <tile.hpp>
 #include <assets.hpp>
 
+using namespace Lmc;
+
 void entityVikingSetSteer(tEntity *pEntity, tSteer *pSteer) {
 	auto &Data = pEntity->dataAs<tEntityVikingData>();
 	Data.pSteer = pSteer;
 }
 
-#define ERIK_SIZE 32
+#define VIKING_SIZE 32
 #define ERIK_OFFS_RIGHT 9
 #define ERIK_OFFS_LEFT 10
 
@@ -22,13 +24,14 @@ void entityVikingCreate(
 	Data.sPos.uwY = uwPosY;
 	Data.ubAnimFrameIdx = 0;
 	Data.ubSelectedSlot = 0;
+	Data.eCurrentAnimation = tEntityVikingAnimationKind::Count;
 
 	for(UBYTE i = 0; i < VIKING_INVENTORY_SIZE; ++i) {
 		Data.pInventory[i] = tItemKind::None;
 	}
 
 	bobInit(
-		&Entity.sBob, ERIK_SIZE, ERIK_SIZE, 1,
+		&Entity.sBob, VIKING_SIZE, VIKING_SIZE, 1,
 		bobCalcFrameAddress(g_pBobBmErikRight, 0), bobCalcFrameAddress(g_pBobBmErikRightMask, 0),
 		uwPosX, uwPosY
 	);
@@ -41,6 +44,7 @@ void entityVikingProcess(tEntity &Entity) {
 
 	tUwCoordYX sNewPos = {.ulYX = Data.sPos.ulYX};
 	BYTE bMovingX = 0;
+	tEntityVikingAnimationKind eNewAnimation = tEntityVikingAnimationKind::Stand;
 
 	if(Data.eMoveState == tMoveState::Falling) {
 		if(Data.pSteer) {
@@ -54,16 +58,15 @@ void entityVikingProcess(tEntity &Entity) {
 
 		// Gravity - not proper
 		sNewPos.uwY += 1;
-		UWORD uwBottomY = (sNewPos.uwY + ERIK_SIZE);
+		UWORD uwBottomY = (sNewPos.uwY + VIKING_SIZE);
 		UWORD uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY);
 		if(uwBottomY < uwMidTerrainPos) {
 			// still falling
 		}
 		else {
 			// Fell to the ground
-			sNewPos.uwY = uwMidTerrainPos - ERIK_SIZE;
+			sNewPos.uwY = uwMidTerrainPos - VIKING_SIZE;
 			Data.eMoveState = tMoveState::Walking;
-			Data.ubAnimFrameIdx = 0;
 		}
 	}
 	else if(Data.eMoveState == tMoveState::Climbing) {
@@ -75,21 +78,12 @@ void entityVikingProcess(tEntity &Entity) {
 		if(Data.pSteer) {
 			if(steerCheck(Data.pSteer, tSteerAction::Left)) {
 				bMovingX = -ubSpeedX;
-				Data.bDirection = -1;
+				Data.eFacing = tEntityVikingFacing::Left;
 			}
 			if(steerCheck(Data.pSteer, tSteerAction::Right)) {
 				bMovingX = ubSpeedX;
-				Data.bDirection = 1;
+				Data.eFacing = tEntityVikingFacing::Right;
 			}
-		}
-		tBitMap *pFramesBitmap, *pFramesBitmapMask;
-		if((Data.bDirection < 0)) {
-			pFramesBitmap = g_pBobBmErikLeft;
-			pFramesBitmapMask = g_pBobBmErikLeftMask;
-		}
-		else {
-			pFramesBitmap = g_pBobBmErikRight;
-			pFramesBitmapMask = g_pBobBmErikRightMask;
 		}
 
 		sNewPos.uwX += bMovingX;
@@ -99,7 +93,7 @@ void entityVikingProcess(tEntity &Entity) {
 		UWORD uwLeftTileX = uwLeftX >> TILE_SHIFT;
 		UWORD uwRightX = sNewPos.uwX + ERIK_OFFS_RIGHT;
 		UWORD uwRightTileX = uwRightX >> TILE_SHIFT;
-		UWORD uwBottomY = (sNewPos.uwY + ERIK_SIZE - 1); // Last row of character bob
+		UWORD uwBottomY = (sNewPos.uwY + VIKING_SIZE - 1); // Last row of character bob
 		UWORD uwMidTileX = sNewPos.uwX >> TILE_SHIFT;
 		UWORD uwMidTerrainPos;
 		if(
@@ -108,15 +102,10 @@ void entityVikingProcess(tEntity &Entity) {
 			uwBottomY >= (uwMidTerrainPos = tileGetHeightAtPosX(sNewPos.uwX, uwBottomY + ubSpeedX)) -2 * ubSpeedX
 		) {
 			// There's terrain at last character bob's row or directly below it
-			sNewPos.uwY = uwMidTerrainPos - ERIK_SIZE;
+			sNewPos.uwY = uwMidTerrainPos - VIKING_SIZE;
 			uwBottomY = uwMidTerrainPos - 1;
 			if(bMovingX == 0) {
-				Data.ubAnimFrameIdx = 0;
-				bobSetFrame(
-					&Entity.sBob,
-					bobCalcFrameAddress(pFramesBitmap, 17 * ERIK_SIZE),
-					bobCalcFrameAddress(pFramesBitmapMask, 17 * ERIK_SIZE)
-				);
+				eNewAnimation = tEntityVikingAnimationKind::Stand;
 				// Check if char is sliding to the side
 				// UBYTE isFallingLeft = tileGetHeightAtPosX(uwLeftX, uwBottomY) > sNewPos.uwY;
 				// UBYTE isFallingRight = tileGetHeightAtPosX(uwRightX, uwBottomY) > sNewPos.uwY;
@@ -125,7 +114,7 @@ void entityVikingProcess(tEntity &Entity) {
 				// }
 				// else {
 				// 	// No falling now, maybe sliding to the hole
-				// 	sNewPos.uwY = uwMidTerrainPos - ERIK_SIZE;
+				// 	sNewPos.uwY = uwMidTerrainPos - VIKING_SIZE;
 				// 	UWORD uwBottomTileY = uwBottomY;
 
 				// 	if(isFallingLeft) {
@@ -155,17 +144,12 @@ void entityVikingProcess(tEntity &Entity) {
 				// }
 			}
 			else {
-				bobSetFrame(
-					&Entity.sBob,
-					bobCalcFrameAddress(pFramesBitmap, Data.ubAnimFrameIdx * ERIK_SIZE),
-					bobCalcFrameAddress(pFramesBitmapMask, Data.ubAnimFrameIdx * ERIK_SIZE)
-				);
-				Data.ubAnimFrameIdx = (Data.ubAnimFrameIdx + 1) & 7;
+				eNewAnimation = tEntityVikingAnimationKind::Walk;
 			}
 		}
 		else {
 			// Fall only if there's at least 1px gap between ground and char
-			Data.eMoveState = tMoveState::Falling;
+			Data.eMoveState = tMoveState::Walking;
 		}
 	}
 
@@ -224,7 +208,7 @@ void entityVikingProcess(tEntity &Entity) {
 	// 	UWORD uwRightTileX = (sNewPos.uwX + ERIK_OFFS_RIGHT) >> TILE_SHIFT;
 	// 	UWORD uwUpperTileY = (sNewPos.uwY) >> TILE_SHIFT;
 	// 	UWORD uwMidTileY = (sNewPos.uwY + 16) >> TILE_SHIFT;
-	// 	UWORD uwLowerTileY = (sNewPos.uwY + ERIK_SIZE - 1) >> TILE_SHIFT;
+	// 	UWORD uwLowerTileY = (sNewPos.uwY + VIKING_SIZE - 1) >> TILE_SHIFT;
 	// 	if(bMovingX) {
 	// 		if(
 	// 			tileIsSolid(uwRightTileX, uwUpperTileY) ||
@@ -242,6 +226,28 @@ void entityVikingProcess(tEntity &Entity) {
 	// 		}
 	// 	}
 	// }
+
+	const auto &AnimDefs = Data.pVikingDefs->AnimDefs;
+	if(eNewAnimation != Data.eCurrentAnimation) {
+		Data.eCurrentAnimation = eNewAnimation;
+		Data.ubAnimFrameIdx = AnimDefs.pData[enumValue(Data.eCurrentAnimation)].ubFrameFirst;
+	}
+	else {
+		if(++Data.ubAnimFrameIdx > AnimDefs.pData[enumValue(Data.eCurrentAnimation)].ubFrameLast) {
+			Data.ubAnimFrameIdx = AnimDefs.pData[enumValue(Data.eCurrentAnimation)].ubFrameFirst;
+		}
+	}
+	bobSetFrame(
+		&Entity.sBob,
+		bobCalcFrameAddress(
+			Data.pFrames[enumValue(Data.eFacing)],
+			Data.ubAnimFrameIdx * VIKING_SIZE
+		),
+		bobCalcFrameAddress(
+			Data.pMasks[enumValue(Data.eFacing)],
+			Data.ubAnimFrameIdx * VIKING_SIZE
+		)
+	);
 
 	if(steerUse(Data.pSteer, tSteerAction::Interact)) {
 		Entity.tryInteract();

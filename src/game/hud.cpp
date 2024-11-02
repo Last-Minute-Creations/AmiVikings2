@@ -52,6 +52,18 @@ static constexpr tHudIcon operator + (tHudIcon eLeft, tHudIcon eRight)
 	return static_cast<tHudIcon>(enumValue(eLeft) + enumValue(eRight));
 }
 
+
+static constexpr tHudIcon hudIconFromEntity(const tEntity &Entity) {
+	// ensure same order of vikings as in tEntity
+	static_assert(enumValue(tHudIcon::ErikActive) == enumValue(tEntityKind::Erik) - 1);
+	static_assert(enumValue(tHudIcon::BaelogActive) == enumValue(tEntityKind::Baelog) - 1);
+	static_assert(enumValue(tHudIcon::OlafActive) == enumValue(tEntityKind::Olaf) - 1);
+	static_assert(enumValue(tHudIcon::FangActive) == enumValue(tEntityKind::Fang) - 1);
+	static_assert(enumValue(tHudIcon::ScorchActive) == enumValue(tEntityKind::Scorch) - 1);
+
+	return static_cast<tHudIcon>(enumValue(Entity.pDef->eKind) - 1);
+}
+
 static tVPort *s_pVpHud;
 static tSimpleBufferManager *s_pBufferHud;
 static tBitMap *s_pPortraits;
@@ -165,9 +177,10 @@ static void hudDrawItemSlot(UBYTE ubVikingIdx, UBYTE ubSlotIdx) {
 }
 
 static void hudDrawPortrait(UBYTE ubIdx) {
-	tHudIcon eIcon = tHudIcon::ErikActive;
 	tEntity *pEntity = (tEntity*)playerControllerGetVikingByIndex(ubIdx);
+	tHudIcon eIcon;
 	if(pEntity) {
+		eIcon = hudIconFromEntity(*pEntity);
 		const auto &VikingData = pEntity->dataAs<tEntityVikingData>();
 		if(VikingData.eState == tVikingState::Alive) {
 			if(

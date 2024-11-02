@@ -16,8 +16,8 @@ struct tEntity;
 enum class tEntityKind: UWORD {
 	Invalid = 0,
 	Erik,
-	Olaf,
 	Baelog,
+	Olaf,
 	Fang,
 	Scorch,
 	Platform,

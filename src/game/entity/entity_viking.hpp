@@ -19,15 +19,47 @@ enum class tMoveState: UBYTE {
 	Climbing,
 };
 
+enum class tEntityVikingAnimationKind: UBYTE {
+	Stand,
+	Walk,
+	Attack,
+	Hit,
+	Die,
+
+	Count
+};
+
+enum class tEntityVikingFacing: UBYTE {
+	Right,
+	Left,
+
+	Count
+};
+
+struct tEntityVikingAnimDef {
+	UBYTE ubFrameFirst;
+	UBYTE ubFrameLast;
+};
+
+struct tEntityVikingDefs {
+	using tAnimDefArray = Lmc::tArray<tEntityVikingAnimDef, Lmc::enumValue(tEntityVikingAnimationKind::Count)>;
+
+	tAnimDefArray AnimDefs;
+};
+
 struct tEntityVikingData {
 	union {
 		tEntity::tData sEntityData;
 		struct {
 			tSteer *pSteer;
+			tBitMap *pFrames[Lmc::enumValue(tEntityVikingFacing::Count)];
+			tBitMap *pMasks[Lmc::enumValue(tEntityVikingFacing::Count)];
+			const tEntityVikingDefs *pVikingDefs;
 			tItemKind pInventory[VIKING_INVENTORY_SIZE];
 			tVikingState eState;
 			tMoveState eMoveState;
-			BYTE bDirection;
+			tEntityVikingFacing eFacing;
+			tEntityVikingAnimationKind eCurrentAnimation;
 			UBYTE ubAnimFrameIdx;
 			UBYTE ubSelectedSlot;
 			tUwCoordYX sPos;

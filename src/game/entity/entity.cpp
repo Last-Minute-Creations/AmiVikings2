@@ -7,6 +7,9 @@
 #include <lmc/enum_value.hpp>
 #include <lmc/assert.hpp>
 #include <entity/entity_viking.hpp>
+#include <entity/entity_erik.hpp>
+#include <entity/entity_olaf.hpp>
+#include <entity/entity_baelog.hpp>
 #include <entity/entity_info_box.hpp>
 #include "entity.hpp"
 
@@ -22,16 +25,7 @@ static const tEntityDef s_pEntityDefs[] = {
 	},
 	[enumValue(tEntityKind::Erik)] = {
 		.eKind = tEntityKind::GroupViking | tEntityKind::Erik,
-		.cbCreate = entityVikingCreate,
-		.cbProcess = entityVikingProcess,
-		.cbDestroy = nullptr,
-		.cbCollided = nullptr,
-		.cbInteracted = nullptr,
-		.cbItemUsed = nullptr,
-	},
-	[enumValue(tEntityKind::Olaf)] = {
-		.eKind = tEntityKind::GroupViking | tEntityKind::Olaf,
-		.cbCreate = entityVikingCreate,
+		.cbCreate = entityErikCreate,
 		.cbProcess = entityVikingProcess,
 		.cbDestroy = nullptr,
 		.cbCollided = nullptr,
@@ -40,7 +34,16 @@ static const tEntityDef s_pEntityDefs[] = {
 	},
 	[enumValue(tEntityKind::Baelog)] = {
 		.eKind = tEntityKind::GroupViking | tEntityKind::Baelog,
-		.cbCreate = entityVikingCreate,
+		.cbCreate = entityBaelogCreate,
+		.cbProcess = entityVikingProcess,
+		.cbDestroy = nullptr,
+		.cbCollided = nullptr,
+		.cbInteracted = nullptr,
+		.cbItemUsed = nullptr,
+	},
+	[enumValue(tEntityKind::Olaf)] = {
+		.eKind = tEntityKind::GroupViking | tEntityKind::Olaf,
+		.cbCreate = entityOlafCreate,
 		.cbProcess = entityVikingProcess,
 		.cbDestroy = nullptr,
 		.cbCollided = nullptr,
