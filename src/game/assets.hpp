@@ -12,7 +12,9 @@ void assetsGlobalCreate(void);
 void assetsGlobalDestroy(void);
 
 // Global assets
-extern tBitMap *g_pBobBmErik, *g_pBobBmErikMask;
+extern tBitMap *g_pBobBmErikLeft, *g_pBobBmErikLeftMask, *g_pBobBmErikRight, *g_pBobBmErikRightMask;
+extern tBitMap *g_pBobBmOlafLeft, *g_pBobBmOlafLeftMask, *g_pBobBmOlafRight, *g_pBobBmOlafRightMask;
+extern tBitMap *g_pBobBmBaelogLeft, *g_pBobBmBaelogLeftMask, *g_pBobBmBaelogRight, *g_pBobBmBaelogRightMask;
 extern tBitMap *g_pBobBmHelpBox, *g_pBobBmMaskFull16;
 
 #endif // INC_GAME_ASSETS_HPP

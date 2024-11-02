@@ -8,12 +8,31 @@ Level load:
 	☐ Load palette from file cycling in game
 	☐ Extract slope collision data from ROM
 
+Display:
+	☐ Tiles in front of vikings
+	☐ Background tiles
+	☐ Palette cycling
+	☐ Animated tiles (water, fire)
+	☐ Draw bobs only when safe to do so
+
 Mechanics for Vikings:
 	✔ Collision with terrain @done(21-11-27)
 	✔ Walking across slopes @done(24-06-12)
-	☐ Flipped frames
+	✔ Flipped frames @done(24-11-02)
+	☐ Base implementation of 3 different vikings
+		☐ Use separate animation frames
+		☐ Support different order of frames for same animations (walk, fall, idle)
+		☐ Use different portraits
+		☐ Share collision code
+		☐ Add room for extra behavior
 	☐ Climbing
+	☐ Taking damage
+	☐ Healing
+	☐ Dying from damage
 	☐ Fall damage
+	☐ Drowning
+	☐ Spike death
+	☐ Crush death
 	☐ Lifts
 		☐ movement across the track
 		☐ (lack of) collision with platform
@@ -28,11 +47,7 @@ Mechanics for Vikings:
 	☐ Weighted elevators
 	☐ Grabbing items
 	☐ Using items (doors)
-	☐ Taking damage
-	☐ Healing
-	☐ Dying
 	☐ Moving on line
-	☐ Tiles with mask - future world tunnels, grass - on snes made with tile priority
 
 Mechanics for Erik:
 	☐ Jump
@@ -67,8 +82,10 @@ Misc mechanics:
 	✔ Help blocks - onInteract(this) @done(24-10-02)
 	✔ Displaying text @done(24-10-02)
 	✔ Inventory management @done(24-10-02)
+	☐ Separate spawnpoint/size and bob coords
 	☐ Using buttons - onInteract(this)
 	☐ Using switches - onInteract(this)
+	☐ Doors
 	☐ Talking with NPCS - onInteract(this)
 	☐ Events on entering location - first help panel, kid talk, first Fang/Scorch encounter
 	☐ Getting out of levels
@@ -105,26 +122,41 @@ Enemies - world 5:
 	☐ Tomator
 
 Game parts:
-	☐ Menu
-	☐ Intro
-	☐ Dialogue system
+	✔ Dialogue system @done(24-11-01)
 		✔ Type for message having box width/height and contents string @done(24-10-30)
 		✔ Support \r for newline @done(24-11-01)
 		✔ Chain of dialogue entries @done(24-11-01)
 		✔ Dialogue entry having actor ref (Erik, Olaf, Baelog, NPC), message ref and x/y offset from entity center @done(24-11-01)
 		✔ Trigger the dialogue @done(24-11-01)
 		✔ Undraw dialogue boxes @done(24-11-01)
-	☐ Entering level - scripted cutscene with text
-	☐ Exiting level - scripted cutscene with text
-	☐ Going to next level
-	☐ Retry
-	☐ Display level password only once
-	☐ Working password system in menu
+	☐ Intro
+		☐ License text
+		☐ Inerplay logo
+		☐ Blizzard logo
+	☐ Menu
+		☐ Title screen background
+		☐ Falling letters
+		☐ Start
+		☐ Options
+		☐ Working password system
+	☐ Level flow
+		☐ Entering level
+			☐ Display password
+			☐ Initial text
+			☐ Add scripted movement
+		☐ Exiting level - scripted cutscene with text
+		☐ Going to next level
+		☐ Retry
+			☐ Dummy
+			☐ Valkyrie level
+			☐ Display level password only once
 	☐ Cutscenes between worlds
 	☐ Outro
 	☐ Cheats
-	☐ Additional cheats in HRDR
-	☐ Title screen fully implemented
+		☐ Erik
+		☐ Baelog
+		☐ Olaf
+		☐ Additional cheats in HRDR
 
 Playable levels - world 1:
 	☐ STRT

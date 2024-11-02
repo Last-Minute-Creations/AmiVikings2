@@ -1,6 +1,9 @@
 # C compiler intermediate files
 *.o
 
+# python
+__pycache__
+
 # Input file types
 *.jpg
 *.png

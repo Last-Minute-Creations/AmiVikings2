@@ -29,7 +29,7 @@ void entityVikingCreate(
 
 	bobInit(
 		&Entity.sBob, ERIK_SIZE, ERIK_SIZE, 1,
-		bobCalcFrameAddress(g_pBobBmErik, 0), bobCalcFrameAddress(g_pBobBmErikMask, 0),
+		bobCalcFrameAddress(g_pBobBmErikRight, 0), bobCalcFrameAddress(g_pBobBmErikRightMask, 0),
 		uwPosX, uwPosY
 	);
 	Data.eState = tVikingState::Alive;
@@ -75,11 +75,23 @@ void entityVikingProcess(tEntity &Entity) {
 		if(Data.pSteer) {
 			if(steerCheck(Data.pSteer, tSteerAction::Left)) {
 				bMovingX = -ubSpeedX;
+				Data.bDirection = -1;
 			}
 			if(steerCheck(Data.pSteer, tSteerAction::Right)) {
 				bMovingX = ubSpeedX;
+				Data.bDirection = 1;
 			}
 		}
+		tBitMap *pFramesBitmap, *pFramesBitmapMask;
+		if((Data.bDirection < 0)) {
+			pFramesBitmap = g_pBobBmErikLeft;
+			pFramesBitmapMask = g_pBobBmErikLeftMask;
+		}
+		else {
+			pFramesBitmap = g_pBobBmErikRight;
+			pFramesBitmapMask = g_pBobBmErikRightMask;
+		}
+
 		sNewPos.uwX += bMovingX;
 
 		// Gravity - not proper
@@ -102,8 +114,8 @@ void entityVikingProcess(tEntity &Entity) {
 				Data.ubAnimFrameIdx = 0;
 				bobSetFrame(
 					&Entity.sBob,
-					bobCalcFrameAddress(g_pBobBmErik, 17 * ERIK_SIZE),
-					bobCalcFrameAddress(g_pBobBmErikMask, 17 * ERIK_SIZE)
+					bobCalcFrameAddress(pFramesBitmap, 17 * ERIK_SIZE),
+					bobCalcFrameAddress(pFramesBitmapMask, 17 * ERIK_SIZE)
 				);
 				// Check if char is sliding to the side
 				// UBYTE isFallingLeft = tileGetHeightAtPosX(uwLeftX, uwBottomY) > sNewPos.uwY;
@@ -145,8 +157,8 @@ void entityVikingProcess(tEntity &Entity) {
 			else {
 				bobSetFrame(
 					&Entity.sBob,
-					bobCalcFrameAddress(g_pBobBmErik, Data.ubAnimFrameIdx * ERIK_SIZE),
-					bobCalcFrameAddress(g_pBobBmErikMask, Data.ubAnimFrameIdx * ERIK_SIZE)
+					bobCalcFrameAddress(pFramesBitmap, Data.ubAnimFrameIdx * ERIK_SIZE),
+					bobCalcFrameAddress(pFramesBitmapMask, Data.ubAnimFrameIdx * ERIK_SIZE)
 				);
 				Data.ubAnimFrameIdx = (Data.ubAnimFrameIdx + 1) & 7;
 			}

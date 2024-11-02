@@ -27,6 +27,7 @@ struct tEntityVikingData {
 			tItemKind pInventory[VIKING_INVENTORY_SIZE];
 			tVikingState eState;
 			tMoveState eMoveState;
+			BYTE bDirection;
 			UBYTE ubAnimFrameIdx;
 			UBYTE ubSelectedSlot;
 			tUwCoordYX sPos;

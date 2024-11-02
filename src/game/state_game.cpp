@@ -281,8 +281,8 @@ static void stateGameCreate(void) {
 	for(UBYTE i = 0; i < BOB_COUNT; ++i) {
 		bobInit(
 			&s_pBobs[i], 32, 32, 1,
-			bobCalcFrameAddress(g_pBobBmErik, 0),
-			bobCalcFrameAddress(g_pBobBmErikMask, 0),
+			bobCalcFrameAddress(g_pBobBmErikLeft, 0),
+			bobCalcFrameAddress(g_pBobBmErikLeftMask, 0),
 			32 + 48 * (i + 1), 32
 		);
 	}

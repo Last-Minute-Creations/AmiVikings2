@@ -121,12 +121,17 @@ if(AMIGA AND BUILD_GAME)
 		TARGET ${LV2_EXECUTABLE} PALETTE ${DATA_DIR}/vikings.plt EHB INTERLEAVED
 		MASK_COLOR "#FF00FF"
 		SOURCES
-			tmp/erik.png tmp/baelog.png tmp/olaf.png tmp/fang.png tmp/scorch.png
+			tmp/erik_left.png tmp/baelog_left.png tmp/olaf_left.png tmp/fang_left.png tmp/scorch_left.png
+			tmp/erik_right.png tmp/baelog_right.png tmp/olaf_right.png tmp/fang_right.png tmp/scorch_right.png
 		DESTINATIONS
-			${DATA_DIR}/erik.bm ${DATA_DIR}/baelog.bm ${DATA_DIR}/olaf.bm
-			${DATA_DIR}/fang.bm ${DATA_DIR}/scorch.bm
+			${DATA_DIR}/erik_left.bm ${DATA_DIR}/baelog_left.bm ${DATA_DIR}/olaf_left.bm
+			${DATA_DIR}/fang_left.bm ${DATA_DIR}/scorch_left.bm
+			${DATA_DIR}/erik_right.bm ${DATA_DIR}/baelog_right.bm ${DATA_DIR}/olaf_right.bm
+			${DATA_DIR}/fang_right.bm ${DATA_DIR}/scorch_right.bm
 		MASKS
-			${DATA_DIR}/erik_mask.bm ${DATA_DIR}/baelog_mask.bm ${DATA_DIR}/olaf_mask.bm
-			${DATA_DIR}/fang_mask.bm ${DATA_DIR}/scorch_mask.bm
+			${DATA_DIR}/erik_left_mask.bm ${DATA_DIR}/baelog_left_mask.bm ${DATA_DIR}/olaf_left_mask.bm
+			${DATA_DIR}/fang_left_mask.bm ${DATA_DIR}/scorch_left_mask.bm
+			${DATA_DIR}/erik_right_mask.bm ${DATA_DIR}/baelog_right_mask.bm ${DATA_DIR}/olaf_right_mask.bm
+			${DATA_DIR}/fang_right_mask.bm ${DATA_DIR}/scorch_right_mask.bm
 	)
 endif()
