@@ -14,7 +14,7 @@ UBYTE itemIsDiscardable(tItemKind eItemKind)
 		logWrite("ERR: itemIsDiscardable(ITEM_NONE)\n");
 	}
 
-	if(enumValue(tItemKind::W1RedKey) <= enumValue(eItemKind) && enumValue(eItemKind) <= enumValue(tItemKind::Torch)) {
+	if(tItemKind::W1RedKey <= eItemKind && eItemKind <= tItemKind::Torch) {
 		return 1;
 	}
 	return 0;

@@ -6,6 +6,7 @@
 #define INC_GAME_ITEM_HPP
 
 #include <ace/types.h>
+#include <lmc/enum_value.hpp>
 
 enum class tItemKind: BYTE {
 	Invalid = -1,
@@ -45,6 +46,11 @@ enum class tItemKind: BYTE {
 	Banana,
 	Burger,
 };
+
+static constexpr auto operator < (tItemKind eLeft, tItemKind eRight)
+{
+	return Lmc::enumValue(eLeft) < Lmc::enumValue(eRight);
+}
 
 UBYTE itemIsDiscardable(tItemKind eItemKind);
 

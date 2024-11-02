@@ -47,6 +47,11 @@ enum class tHudIcon: UBYTE {
 	Locked,
 };
 
+static constexpr tHudIcon operator + (tHudIcon eLeft, tHudIcon eRight)
+{
+	return static_cast<tHudIcon>(enumValue(eLeft) + enumValue(eRight));
+}
+
 static tVPort *s_pVpHud;
 static tSimpleBufferManager *s_pBufferHud;
 static tBitMap *s_pPortraits;
@@ -170,11 +175,11 @@ static void hudDrawPortrait(UBYTE ubIdx) {
 				(!playerIsActive(tPlayerIdx::Second) || ubIdx != playerControllerGetVikingIndexByPlayer(tPlayerIdx::Second))
 			) {
 				// Inactive portrait
-				eIcon = static_cast<tHudIcon>(enumValue(eIcon) + enumValue(tHudIcon::ErikInactive));
+				eIcon = eIcon + tHudIcon::ErikInactive;
 			}
 		}
 		else if(VikingData.eState == tVikingState::Dead) {
-			eIcon = static_cast<tHudIcon>(enumValue(eIcon) + enumValue(tHudIcon::ErikDead));
+			eIcon = eIcon + tHudIcon::ErikDead;
 		}
 		else if(VikingData.eState == tVikingState::Locked) {
 			eIcon = tHudIcon::Locked;

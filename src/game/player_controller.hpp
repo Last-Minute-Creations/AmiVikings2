@@ -2,6 +2,7 @@
 #define INC_GAME_PLAYER_CONTROLLER_HPP
 
 #include <ace/types.h>
+#include <lmc/enum_value.hpp>
 #include "steer.hpp"
 #include <entity/entity.hpp>
 
@@ -13,6 +14,11 @@ enum class tPlayerIdx: UBYTE {
 	Count,
 	None = Count,
 };
+
+static constexpr auto operator < (tPlayerIdx eLeft, tPlayerIdx eRight)
+{
+	return Lmc::enumValue(eLeft) < Lmc::enumValue(eRight);
+}
 
 constexpr tPlayerIdx playerGetOther(tPlayerIdx eIdx) {
 	if(eIdx == tPlayerIdx::First) {

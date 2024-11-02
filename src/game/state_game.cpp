@@ -343,7 +343,7 @@ static void stateGameDestroy(void) {
 static void substatePlayLoop(void) {
 	for(
 		tPlayerIdx ePlayerIdx = (tPlayerIdx)0;
-		enumValue(ePlayerIdx) < enumValue(tPlayerIdx::Count);
+		ePlayerIdx < tPlayerIdx::Count;
 		ePlayerIdx = static_cast<tPlayerIdx>(enumValue(ePlayerIdx) + 1)
 	) {
 		tSteer *pSteer = playerControllerGetSteer(ePlayerIdx);
