@@ -51,6 +51,6 @@ void entityVikingCreate(
 void entityVikingProcess(tEntity &Entity);
 
 template<>
-struct tEntityLookup<tEntityVikingData> { static constexpr auto getKind() {return tEntityKind::Erik;} };
+struct tEntityLookup<tEntityVikingData> { static constexpr auto getKind() {return tEntityKind::GroupViking;} };
 
 #endif // INC_GAME_ENTITY_ENTITY_VIKING_HPP

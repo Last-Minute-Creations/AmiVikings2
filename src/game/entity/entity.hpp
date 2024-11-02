@@ -7,12 +7,13 @@
 
 #include <ace/managers/bob.h>
 #include <lmc/array.hpp>
+#include <lmc/enum_value.hpp>
 #include "steer.hpp"
 #include "item.hpp"
 
 struct tEntity;
 
-enum class tEntityKind: UBYTE {
+enum class tEntityKind: UWORD {
 	Invalid = 0,
 	Erik,
 	Olaf,
@@ -22,7 +23,17 @@ enum class tEntityKind: UBYTE {
 	Platform,
 	Block,
 	InfoBox,
+	GroupViking = BV(8),
 };
+
+static constexpr tEntityKind operator & (tEntityKind eLeft, tEntityKind eRight) {
+	return static_cast<tEntityKind>(Lmc::enumValue(eLeft) & Lmc::enumValue(eRight));
+}
+static constexpr tEntityKind operator | (tEntityKind eLeft, tEntityKind eRight) {
+	return static_cast<tEntityKind>(Lmc::enumValue(eLeft) | Lmc::enumValue(eRight));
+}
+
+constexpr tEntityKind g_eEntityGroupMask = tEntityKind::GroupViking;
 
 struct tEntityDef {
 	using tCbCreate = void (*)(
@@ -56,11 +67,24 @@ struct tEntity {
 
 	constexpr bool isValid() const { return pDef != nullptr; }
 
+	constexpr bool isInGroup(tEntityKind eGroup)
+	{
+		return (pDef->eKind & g_eEntityGroupMask) == eGroup;
+	}
+
 	template<typename T>
-	constexpr T &dataAs() {
+	constexpr T &dataAs()
+	{
 #if defined(GAME_DEBUG)
-		if(tEntityLookup<T>::getKind() != pDef->eKind) {
-			logWrite("Invalid entity cast, should be %d", Lmc::enumValue(pDef->eKind));
+		auto eTargetKind = tEntityLookup<T>::getKind();
+		if(
+			eTargetKind != pDef->eKind &&
+			!isInGroup(eTargetKind)
+		) {
+			logWrite(
+				"Can't convert entity kind %d to %d",
+				Lmc::enumValue(pDef->eKind), Lmc::enumValue(eTargetKind)
+			);
 		}
 #endif
 

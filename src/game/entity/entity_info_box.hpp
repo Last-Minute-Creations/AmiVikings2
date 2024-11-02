@@ -10,7 +10,7 @@ struct tEntityInfoBoxData {
 	union {
 		tEntity::tData sEntityData;
 		struct {
-			UWORD uwMessageId;
+			UWORD uwDialogueId;
 			bool isTriggeringOnCollision;
 			bool isTriggered;
 		};
@@ -19,7 +19,7 @@ struct tEntityInfoBoxData {
 
 void entityInfoBoxCreate(
 	tEntity &Entity, UWORD uwPosX, UWORD uwPosY, UWORD uwCenterX, UWORD uwCenterY,
-	UWORD uwParam1, UWORD uwMessageId
+	UWORD uwParam1, UWORD uwDialogueId
 );
 
 void entityInfoBoxProcess(tEntity &Self);

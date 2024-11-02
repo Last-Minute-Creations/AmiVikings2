@@ -21,7 +21,7 @@ static const tEntityDef s_pEntityDefs[] = {
 		.cbCollided = nullptr, .cbInteracted = nullptr, .cbItemUsed = nullptr
 	},
 	[enumValue(tEntityKind::Erik)] = {
-		.eKind = tEntityKind::Erik,
+		.eKind = tEntityKind::GroupViking | tEntityKind::Erik,
 		.cbCreate = entityVikingCreate,
 		.cbProcess = entityVikingProcess,
 		.cbDestroy = nullptr,
@@ -30,7 +30,7 @@ static const tEntityDef s_pEntityDefs[] = {
 		.cbItemUsed = nullptr,
 	},
 	[enumValue(tEntityKind::Olaf)] = {
-		.eKind = tEntityKind::Olaf,
+		.eKind = tEntityKind::GroupViking | tEntityKind::Olaf,
 		.cbCreate = entityVikingCreate,
 		.cbProcess = entityVikingProcess,
 		.cbDestroy = nullptr,
@@ -39,7 +39,7 @@ static const tEntityDef s_pEntityDefs[] = {
 		.cbItemUsed = nullptr,
 	},
 	[enumValue(tEntityKind::Baelog)] = {
-		.eKind = tEntityKind::Baelog,
+		.eKind = tEntityKind::GroupViking | tEntityKind::Baelog,
 		.cbCreate = entityVikingCreate,
 		.cbProcess = entityVikingProcess,
 		.cbDestroy = nullptr,
@@ -48,7 +48,7 @@ static const tEntityDef s_pEntityDefs[] = {
 		.cbItemUsed = nullptr,
 	},
 	[enumValue(tEntityKind::Fang)] = {
-		.eKind = tEntityKind::Fang,
+		.eKind = tEntityKind::GroupViking | tEntityKind::Fang,
 		.cbCreate = nullptr,
 		.cbProcess = nullptr,
 		.cbDestroy = nullptr,
@@ -57,7 +57,7 @@ static const tEntityDef s_pEntityDefs[] = {
 		.cbItemUsed = nullptr,
 	},
 	[enumValue(tEntityKind::Scorch)] = {
-		.eKind = tEntityKind::Scorch,
+		.eKind = tEntityKind::GroupViking | tEntityKind::Scorch,
 		.cbCreate = nullptr,
 		.cbProcess = nullptr,
 		.cbDestroy = nullptr,

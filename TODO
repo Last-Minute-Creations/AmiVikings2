@@ -20,6 +20,7 @@ Mechanics for Vikings:
 	✔ Walking across slopes @done(24-06-12)
 	✔ Flipped frames @done(24-11-02)
 	☐ Base implementation of 3 different vikings
+		✔ Add groups/base classes to entity system @done(24-11-02)
 		☐ Use separate animation frames
 		☐ Support different order of frames for same animations (walk, fall, idle)
 		☐ Use different portraits

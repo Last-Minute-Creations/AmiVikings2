@@ -294,12 +294,13 @@ static void stateGameCreate(void) {
 	s_eControllingPlayer = tPlayerIdx::First;
 	entityManagerReset();
 	tEntity *pPlayerEntity1 = entityManagerSpawnEntity(tEntityKind::Erik, 32, 32, 16, 16, 0, 0);
-	tEntity *pPlayerEntity2 = entityManagerSpawnEntity(tEntityKind::Erik, 64, 32, 16, 16, 0, 0);
+	tEntity *pPlayerEntity2 = entityManagerSpawnEntity(tEntityKind::Olaf, 64, 32, 16, 16, 0, 0);
+	tEntity *pPlayerEntity3 = entityManagerSpawnEntity(tEntityKind::Baelog, 96, 32, 16, 16, 0, 0);
 	entityManagerSpawnEntity(tEntityKind::InfoBox, 128, 104, 8, 8, 0x0024, 0x0106);
 
 	playerControllerSetVikingEntity(0, pPlayerEntity1);
 	playerControllerSetVikingEntity(1, pPlayerEntity2);
-	playerControllerSetVikingEntity(2, 0);
+	playerControllerSetVikingEntity(2, pPlayerEntity3);
 
 	playerControllerSetDefaultSelection();
 
