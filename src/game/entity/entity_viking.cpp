@@ -1,6 +1,7 @@
 #include <entity/entity_viking.hpp>
-#include <tile.hpp>
-#include <assets.hpp>
+#include "tile.hpp"
+#include "assets.hpp"
+#include "state_game.hpp"
 
 using namespace Lmc;
 
@@ -258,7 +259,7 @@ void entityVikingProcess(tEntity &Entity) {
 	BYTE bFrameOffsX = -6;
 	Entity.sBob.sPos.uwX = Data.sPos.uwX -10 + bFrameOffsX;
 	Entity.sBob.sPos.uwY = Data.sPos.uwY;
-	bobPush(&Entity.sBob);
+	gameTryPushBob(&Entity.sBob);
 }
 
 tVikingState entityVikingGetState(tEntity *pEntityViking) {

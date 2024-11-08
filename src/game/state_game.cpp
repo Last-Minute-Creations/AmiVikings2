@@ -556,3 +556,16 @@ void gameSetPendingDialogue(UWORD uwDialogueId, UWORD uwBgColor)
 	s_uwPendingDialogueId = uwDialogueId;
 	s_uwPendingMessageBgColor = uwBgColor;
 }
+
+void gameTryPushBob(tBob *pBob)
+{
+	if(tileBufferIsRectFullyOnBuffer(
+		s_pBufferMain,
+		pBob->sPos.uwX,
+		pBob->sPos.uwY,
+		pBob->uwWidth,
+		pBob->uwHeight
+	)) {
+		bobPush(pBob);
+	}
+}

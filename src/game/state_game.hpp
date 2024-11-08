@@ -6,9 +6,12 @@
 #define INC_GAME_STATE_GAME_HPP
 
 #include <ace/managers/state.h>
+#include <ace/managers/bob.h>
 
 extern tState g_sStateGame;
 
 void gameSetPendingDialogue(UWORD uwDialogueId, UWORD uwBgColor);
+
+void gameTryPushBob(tBob *pBob);
 
 #endif // INC_GAME_STATE_GAME_HPP

@@ -23,7 +23,7 @@ void entityInfoBoxCreate(
 
 void entityInfoBoxProcess(tEntity &Self)
 {
-	bobPush(&Self.sBob);
+	gameTryPushBob(&Self.sBob);
 }
 
 bool entityInfoBoxCollided(tEntity &Self, tEntity &Collider)
