@@ -49,7 +49,7 @@ struct tLevelHeader {
 	uint16_t uwBackgroundWidth;
 	uint16_t uwBackgroundHeight;
 	uint8_t ubUnk46;
-	uint16_t uwTilemapBackground; // Set to FFFF for no background
+	uint16_t uwBackgroundFileIndex; // Set to FFFF for no background
 };
 
 } // namespace lv2::level

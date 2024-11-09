@@ -1,19 +1,22 @@
 Level load:
-	✔ Extract tiles from ROM @done(24-10-02)
-	✔ Load tiles in game @done(24-10-02)
+	✔ Extract tileset from ROM @done(24-10-02)
+	✔ Load tileset in game @done(24-10-02)
 	✔ Use same attribute values for collision as the original @done(24-10-27)
-	☐ Load tilemap file in game
-		☐ Load tile front/back placement data
+	✔ Load tilemap file in game @done(24-11-09)
+		✔ Load main tiles @done(24-11-08)
+		✔ Load tile front/back placement data @done(24-11-09)
+		✔ Load the background tiles @done(24-11-09)
 	☐ Load entities from file in game
 	☐ Load palette from file cycling in game
 	☐ Extract slope collision data from ROM
 
 Display:
+	✔ Draw bobs only when safe to do so @done(24-11-08)
 	☐ Tiles in front of vikings
 	☐ Background tiles
 	☐ Palette cycling
 	☐ Animated tiles (water, fire)
-	☐ Draw bobs only when safe to do so
+	☐ Enlarge the clean tile margin to 32px
 
 Mechanics for Vikings:
 	✔ Collision with terrain @done(21-11-27)

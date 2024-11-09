@@ -27,6 +27,18 @@ void assetsGlobalCreate(void) {
 void assetsGlobalDestroy(void) {
 	bitmapDestroy(g_pBobBmErikLeft);
 	bitmapDestroy(g_pBobBmErikLeftMask);
+	bitmapDestroy(g_pBobBmErikRight);
+	bitmapDestroy(g_pBobBmErikRightMask);
+
+	bitmapDestroy(g_pBobBmOlafLeft);
+	bitmapDestroy(g_pBobBmOlafLeftMask);
+	bitmapDestroy(g_pBobBmOlafRight);
+	bitmapDestroy(g_pBobBmOlafRightMask);
+
+	bitmapDestroy(g_pBobBmBaelogLeft);
+	bitmapDestroy(g_pBobBmBaelogLeftMask);
+	bitmapDestroy(g_pBobBmBaelogRight);
+	bitmapDestroy(g_pBobBmBaelogRightMask);
 
 	bitmapDestroy(g_pBobBmHelpBox);
 	bitmapDestroy(g_pBobBmMaskFull16);

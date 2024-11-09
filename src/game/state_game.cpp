@@ -48,6 +48,7 @@ static tVPort *s_pVpMain;
 static tTileBufferManager *s_pBufferMain;
 
 static tBitMap *s_pTileset;
+static tBitMap *s_pTilesetMask;
 static tBob s_pBobs[BOB_COUNT];
 // static tFont *s_pFont;
 // static tTextBitMap *s_pTextTile;
@@ -72,6 +73,7 @@ static UWORD s_uwMapTileWidth;
 static UWORD s_uwMapTileHeight;
 static tActiveDialogue s_ActiveDialogue;
 static tUwRect s_LastMessageFrameRect;
+static UWORD s_pFrontTileMap[TILE_MAP_SIZE][TILE_MAP_SIZE];
 
 consteval auto generateCharToGlyph() {
 	const char GlyphIndexToChar[] = {
@@ -115,14 +117,17 @@ static void loadMap(void) {
 
 	for(UBYTE y = 0; y < s_uwMapTileHeight; ++y) {
 		for(UBYTE x = 0; x < s_uwMapTileWidth; ++x) {
+			constexpr UWORD uwFrontTileMask = 0x8000;
 			constexpr UBYTE ubTileIndexMaskSize = 10;
 			constexpr UWORD uwTileIndexMask = (1 << ubTileIndexMaskSize) - 1;
 
-			UWORD uwTileData;
+			UWORD uwTileData, uwBgData;
 			fileRead(pFileTilemap, &uwTileData, sizeof(uwTileData));
-			s_pBufferMain->pTileData[x][y] = uwTileData & uwTileIndexMask;
+			fileRead(pFileTilemap, &uwBgData, sizeof(uwBgData));
+			s_pBufferMain->pTileData[x][y] = uwBgData & ~uwFrontTileMask;
+			s_pFrontTileMap[x][y] = (uwTileData & uwTileIndexMask) | (uwBgData & uwFrontTileMask);
 
-			UBYTE ubAttribute = uwTileData >> ubTileIndexMaskSize;
+			UBYTE ubAttribute = (uwTileData >> ubTileIndexMaskSize);
 			tileSetAttribute(x, y, ubAttribute);
 		}
 	}
@@ -136,10 +141,22 @@ static void onTileDraw(
 	UWORD uwTileX, UWORD uwTileY,
 	tBitMap *pBitMap, UWORD uwBitMapX, UWORD uwBitMapY
 ) {
+	UWORD uwFrontTile = s_pFrontTileMap[uwTileX][uwTileY] & ~0x8000;
+	if(uwFrontTile == 0) {
+		return;
+	}
+	constexpr UBYTE ubTileSize = 1 << TILE_SHIFT;
+	blitUnsafeCopyMask(
+		s_pTileset, 0, uwFrontTile * ubTileSize,
+		pBitMap, uwBitMapX, uwBitMapY, ubTileSize, ubTileSize, s_pTilesetMask->Planes[0]
+	);
+
+	// Debug draw of slopes
 	// const UBYTE *pTileHeightmap = tileGetHeightmap(uwTileX, uwTileY);
 	// for(UBYTE x = 0; x < 16; ++x) {
 	// 	chunkyToPlanar(8, uwBitMapX + x, uwBitMapY + pTileHeightmap[x], pBitMap);
 	// }
+	// Debug draw of tile indices
 	// UBYTE ubTileIdx = s_pTilesStrt[uwTileY][uwTileX] - 1;
 	// if(ubTileIdx) {
 	// 	char szTileIdx[4];
@@ -239,6 +256,7 @@ static void stateGameCreate(void) {
 	TAG_END);
 
 	s_pTileset = bitmapCreateFromFile("data/tiles_w1.bm", 0);
+	s_pTilesetMask = bitmapCreateFromFile("data/tiles_w1_mask.bm", 0);
 	s_pFont = bitmapCreateFromFile("data/font.bm", 0);
 	s_pFontMask = bitmapCreateFromFile("data/font_mask.bm", 0);
 
@@ -333,6 +351,7 @@ static void stateGameDestroy(void) {
 	// fontDestroy(s_pFont);
 	// fontDestroyTextBitMap(s_pTextTile);
 	bitmapDestroy(s_pTileset);
+	bitmapDestroy(s_pTilesetMask);
 	bitmapDestroy(s_pFont);
 	bitmapDestroy(s_pFontMask);
 	hudDestroy();

@@ -1,6 +1,5 @@
 from common.find_path import find_path
 from PIL import Image, ImageFont, ImageDraw
-from glob import glob
 import struct
 import os
 
@@ -357,7 +356,7 @@ def compose(level_def_index: int, is_display: bool):
         for i in range(256):
             if i % 16 == 0:
                 print(f"\t{(i // 16 * 16):02X}: ", end="")
-            print(rgb_to_hex(level_palette[i]), end=(f"\n" if (i % 16 == 15) else " "))
+            print(rgb_to_hex(level_palette[i]), end=("\n" if (i % 16 == 15) else " "))
 
         # Color cycle section
         [color_cycle_active_mask] = struct.unpack("<H", file_level_def.read(2))
@@ -448,7 +447,7 @@ def compose(level_def_index: int, is_display: bool):
     tile_defs = None
     tiles = None
     if tile_defs_index == 65535:
-        print(f"WARN: No tile defs specified")
+        print("WARN: No tile defs specified")
         print(f"Reading 8bpp mini tiles from {mini_tiles_path}...")
         mini_tiles = read_mini_tiles(mini_tiles_path, True)
         print(f"Found {len(mini_tiles)} 8bpp tiles")
@@ -497,9 +496,9 @@ def compose(level_def_index: int, is_display: bool):
 
     background_tilemap = None
     if background_tilemap_index == 0xFFFF:
-        print(f"WARN: No background tilemap")
+        print("WARN: No background tilemap")
     else:
-        background_tilemap = [[0 for y in range(background_height)] for x in range(background_width)]
+        background_tilemap = [[0 for _ in range(background_height)] for _ in range(background_width)]
         background_tilemap_path = find_path(background_tilemap_index)
         print(f"Loading bg from {background_tilemap_path}...")
         with open(background_tilemap_path, "rb") as background_tilemap_file:
@@ -510,7 +509,7 @@ def compose(level_def_index: int, is_display: bool):
     tiles_per_line = level_width
     tiles_lines = level_height
     tile_size = 16
-    if tile_defs == None:
+    if tile_defs is None:
         tiles_per_line *= 2
         tiles_lines *= 2
         tile_size //= 2
@@ -529,12 +528,12 @@ def compose(level_def_index: int, is_display: bool):
                             # value = (y * level_width + x) % len(tiles) # debug all tiles
                             tile_index = value & tile_index_mask
                             tile_attribute = value >> 10
-                            if background_tilemap != None:
+                            if background_tilemap is not None:
                                 level_background.paste(
                                     tiles[background_tilemap[x % background_width][y % background_height]],
                                     [x * (tile_size + tile_separation), y * (tile_size + tile_separation)]
                                 )
-                            if tiles != None:
+                            if tiles is not None:
                                 level_preview.paste(tiles[tile_index], [x * (tile_size + tile_separation), y * (tile_size + tile_separation)])
                                 tile_index_color = (0, 0, 255, 192) if front_tiles[tile_index] > 0 else (128, 128, 0, 192)
                                 annotate_context.text(

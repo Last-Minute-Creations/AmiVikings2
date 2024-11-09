@@ -19,16 +19,62 @@
 namespace AmiLostVikings2::AssetExtract {
 
 struct tAssetTocEntry {
-	uint32_t ulOffs;
-	uint32_t ulSizeInRom;
+	std::uint32_t ulOffs;
+	std::uint32_t ulSizeInRom;
+};
+
+struct tTileMap {
+	std::uint16_t m_uwWidth;
+	std::uint16_t m_uwHeight;
+	std::vector<std::uint16_t> m_Tiles;
+
+	tTileMap(std::uint16_t uwWidth, std::uint16_t uwHeight):
+		m_uwWidth(uwWidth),
+		m_uwHeight(uwHeight)
+	{
+		m_Tiles.resize(m_uwWidth * m_uwHeight);
+	}
+
+	std::uint16_t &tileAt(std::uint16_t uwX, std::uint16_t uwY)
+	{
+		return m_Tiles[uwX + uwY * m_uwWidth];
+	}
+
+	std::uint16_t tileAt(std::uint16_t uwX, std::uint16_t uwY) const
+	{
+		return m_Tiles[uwX + uwY * m_uwWidth];
+	}
 };
 
 using tAssetBytes = std::vector<std::uint8_t>;
 
-void transcodeTileMap(
-	const tAssetBytes &AssetBytes, std::uint16_t uwWidth, std::uint16_t uwHeight,
+std::shared_ptr<tTileMap> extractTileMap(
+	const tAssetBytes &AssetBytes,
+	std::uint16_t uwWidth,
+	std::uint16_t uwHeight
+)
+{
+	auto TileMap = std::make_shared<tTileMap>(uwWidth, uwHeight);
+	auto Reader = tVectorReader(AssetBytes);
+	for(std::uint16_t uwY = 0; uwY < uwHeight; ++uwY) {
+		for(std::uint16_t uwX = 0; uwX < uwWidth; ++uwX) {
+			auto Lo = Reader.readU8();
+			auto Hi = Reader.readU8();
+			std::uint16_t uwTile = (Hi << 8) | Lo;
+			TileMap->tileAt(uwX, uwY) = uwTile;
+		}
+	}
+
+	return TileMap;
+}
+
+void transcodeLevelTiles(
+	const std::shared_ptr<const tTileMap> ForegroundTiles,
+	const std::shared_ptr<const tTileMap> BackgroundTiles,
+	const std::vector<bool> &FrontFlags,
 	const std::string &OutPath
-) {
+)
+{
 	static const auto writeU16BigEndian = [](
 		std::ofstream &OutFile, std::uint16_t uwData
 	) {
@@ -40,14 +86,16 @@ void transcodeTileMap(
 
 	std::ofstream OutFile;
 	OutFile.open(OutPath, std::ios::binary);
-	writeU16BigEndian(OutFile, uwWidth);
-	writeU16BigEndian(OutFile, uwHeight);
-	auto Reader = tVectorReader(AssetBytes);
-	for(auto i = 0; i < AssetBytes.size() / 2; ++i) {
-		auto Lo = Reader.readU8();
-		auto Hi = Reader.readU8();
-		OutFile.write(reinterpret_cast<char*>(&Hi), sizeof(Hi));
-		OutFile.write(reinterpret_cast<char*>(&Lo), sizeof(Lo));
+	writeU16BigEndian(OutFile, ForegroundTiles->m_uwWidth);
+	writeU16BigEndian(OutFile, ForegroundTiles->m_uwHeight);
+	for(std::uint16_t uwY = 0; uwY < ForegroundTiles->m_uwHeight; ++uwY) {
+		for(std::uint16_t uwX = 0; uwX < BackgroundTiles->m_uwWidth; ++uwX) {
+			writeU16BigEndian(OutFile, ForegroundTiles->tileAt(uwX, uwY));
+			writeU16BigEndian(OutFile,  BackgroundTiles->tileAt(
+				uwX % BackgroundTiles->m_uwWidth,
+				uwY % BackgroundTiles->m_uwHeight
+			) | (FrontFlags[uwX + uwY * ForegroundTiles->m_uwWidth] ? 0x8000 : 0));
+		}
 	}
 }
 
@@ -94,7 +142,7 @@ std::shared_ptr<lv2::level::tLevelDef> loadLevelDef(const tAssetBytes &vAssetByt
 	Reader.readTo(LevelDef->Header.uwBackgroundWidth);
 	Reader.readTo(LevelDef->Header.uwBackgroundHeight);
 	Reader.readTo(LevelDef->Header.ubUnk46);
-	Reader.readTo(LevelDef->Header.uwTilemapBackground);
+	Reader.readTo(LevelDef->Header.uwBackgroundFileIndex);
 
 	Reader.readTo(LevelDef->uwUnk1);
 	Reader.readTo(LevelDef->uwUnk2);
@@ -548,9 +596,9 @@ tChunkyBitmap mirrorTile(const tChunkyBitmap &Source, bool isUpDown)
 	return Dst;
 }
 
-void composeMinitile(
+bool composeMinitile(
 	tChunkyBitmap &Tile,
-	const std::vector<std::shared_ptr<tChunkyBitmap>> &vMinitiles,
+	const std::vector<std::shared_ptr<tChunkyBitmap>> &vMiniTiles,
 	std::uint16_t uwTileDef, std::uint8_t ubOffsX, std::uint8_t ubOffsY,
 	const tPalette &Palette
 )
@@ -565,9 +613,9 @@ void composeMinitile(
 	auto Index = uwTileDef & uwMinitileIndexMask;
 	auto Attribute = uwTileDef >> MinitileIndexMaskSize;
 	auto Palette_index = Attribute & ubAttributePaletteMask;
-	auto &Minitile_data = vMinitiles[Index];
+	auto &Minitile_data = vMiniTiles[Index];
 
-	auto Minitile = *vMinitiles[Index];
+	auto Minitile = *vMiniTiles[Index];
 	if((Attribute & (1 << (MinitileAttributeBitFlipY))) != 0) {
 			Minitile = mirrorTile(Minitile, false);
 	}
@@ -583,23 +631,39 @@ void composeMinitile(
 			Tile.pixelAt(ubOffsX + ubX, ubOffsY + ubY) = Palette.m_vColors[Tile.pixelAt(ubOffsX + ubX, ubOffsY + ubY).ubB];
 		}
 	}
+
+	return IsFront;
 }
 
 [[nodiscard]]
 std::vector<std::shared_ptr<tChunkyBitmap>> composeWorldTiles(
 	const std::vector<std::shared_ptr<tChunkyBitmap>> &vMiniTiles,
 	const std::vector<std::array<std::uint16_t, 4>> &TileDefs,
-	const tPalette &Palette
+	const tPalette &Palette,
+	std::vector<bool> &r_TileFrontFlags
 )
 {
 	std::vector<std::shared_ptr<tChunkyBitmap>> worldTiles;
 	for(const auto &TileDef: TileDefs) {
 		auto Tile = std::make_shared<tChunkyBitmap>(16, 16);
-		composeMinitile(*Tile, vMiniTiles, TileDef[0], 0, 0, Palette);
-		composeMinitile(*Tile, vMiniTiles, TileDef[1], 8, 0, Palette);
-		composeMinitile(*Tile, vMiniTiles, TileDef[2], 0, 8, Palette);
-		composeMinitile(*Tile, vMiniTiles, TileDef[3], 8, 8, Palette);
+		auto isFront = composeMinitile(
+			*Tile, vMiniTiles, TileDef[0],
+			0, 0, Palette
+		);
+		isFront |= composeMinitile(
+			*Tile, vMiniTiles, TileDef[1],
+			8, 0, Palette
+		);
+		isFront |= composeMinitile(
+			*Tile, vMiniTiles, TileDef[2],
+			0, 8, Palette
+		);
+		isFront |= composeMinitile(
+			*Tile, vMiniTiles, TileDef[3],
+			8, 8, Palette
+		);
 		worldTiles.push_back(Tile);
+		r_TileFrontFlags.push_back(isFront);
 	}
 
 	return worldTiles;
@@ -661,6 +725,10 @@ void convertAssets(
 	auto PaletteHud = amigafyPalette(loadPalette(decompressAsset(
 		vRawAssets[g_PalRomMetadata.getAssetIndexByName("palette_hud")]
 	)));
+	auto PaletteTiles = amigafyPalette(loadPalette(decompressAsset(
+		vRawAssets[g_PalRomMetadata.getAssetIndexByName("palette_hud")]
+	)));
+	PaletteTiles.m_vColors[0] = tRgb(255, 0, 255);
 
 	writeTilesToPng(composeTiles(
 		extractTiles(vRawAssets[g_PalRomMetadata.getAssetIndexByName("hud_items")], 4, PaletteHud),
@@ -730,14 +798,23 @@ void convertAssets(
 
 	auto TileDefsWorld1 = extractTileDefs(decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("tiledef_w1")]));
 	auto MiniTilesWorld1 = extractIndexedTiles(decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("tileset_w1")]), 4);
-	auto TilesWorld1 = composeWorldTiles(MiniTilesWorld1, TileDefsWorld1, PaletteHud);
+	std::vector<bool> FrontFlagsW1;
+	auto TilesWorld1 = composeWorldTiles(MiniTilesWorld1, TileDefsWorld1, PaletteTiles, FrontFlagsW1);
 	writeTilesToPng(TilesWorld1, ConvertedAssetPath + "/tiles_w1.png");
 
 	auto LevelDefW1A0 = loadLevelDef(decompressAsset(vRawAssets[g_PalRomMetadata.getAssetIndexByName("level_w1_a0_strt_defs")]));
-	transcodeTileMap(
-		decompressAsset(vRawAssets[LevelDefW1A0->Header.uwTilemapFileIndex]),
+	auto BackgroundW1 = extractTileMap(
+		decompressAsset(vRawAssets[LevelDefW1A0->Header.uwBackgroundFileIndex]),
+		LevelDefW1A0->Header.uwBackgroundWidth,
+		LevelDefW1A0->Header.uwBackgroundHeight
+	);
+	auto TilesW1A0 = extractTileMap(
+	decompressAsset(vRawAssets[LevelDefW1A0->Header.uwTilemapFileIndex]),
 		LevelDefW1A0->Header.uwTileWidth,
-		LevelDefW1A0->Header.uwTileHeight,
+		LevelDefW1A0->Header.uwTileHeight
+	);
+	transcodeLevelTiles(
+		TilesW1A0, BackgroundW1, FrontFlagsW1,
 		ConvertedAssetPath + "/tilemap_w1_a0.dat"
 	);
 }

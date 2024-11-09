@@ -78,19 +78,17 @@ if(AMIGA AND BUILD_GAME)
 	# Semi-final assets
 	set(HUD_PLT assets/extracted/converted/hud.plt)
 	file(COPY ${HUD_PLT} DESTINATION ${DATA_DIR})
-	file(COPY  assets/extracted/converted/tilemap_w1_a0.dat DESTINATION ${DATA_DIR})
+	file(COPY assets/extracted/converted/tilemap_w1_a0.dat DESTINATION ${DATA_DIR})
 	convertBitmaps(
 		TARGET ${LV2_EXECUTABLE} PALETTE ${HUD_PLT}
 		SOURCES
 			assets/extracted/converted/hud_items.png
 			assets/extracted/converted/hud_portraits.png
 			assets/extracted/converted/hud_border.png
-			assets/extracted/converted/tiles_w1.png
-		INTERLEAVED EHB DESTINATIONS # TODO: remove EHB flag, store 4bpp bitmaps
+			INTERLEAVED EHB DESTINATIONS # TODO: remove EHB flag, store 4bpp bitmaps
 			${DATA_DIR}/hud_items.bm
 			${DATA_DIR}/hud_portraits.bm
 			${DATA_DIR}/hud_border.bm
-			${DATA_DIR}/tiles_w1.bm
 	)
 	convertBitmaps(
 		TARGET ${LV2_EXECUTABLE} PALETTE ${HUD_PLT} MASK_COLOR "#000000"
@@ -108,10 +106,13 @@ if(AMIGA AND BUILD_GAME)
 		TARGET ${LV2_EXECUTABLE} PALETTE ${HUD_PLT} MASK_COLOR "#FF00FF"
 		SOURCES
 			assets/extracted/converted/font.png
-		INTERLEAVED EHB DESTINATIONS
+			assets/extracted/converted/tiles_w1.png
+			INTERLEAVED EHB DESTINATIONS
 			${DATA_DIR}/font.bm
-		MASKS
+			${DATA_DIR}/tiles_w1.bm
+			MASKS
 			${DATA_DIR}/font_mask.bm
+			${DATA_DIR}/tiles_w1_mask.bm
 	)
 
 	# Temporary assets
